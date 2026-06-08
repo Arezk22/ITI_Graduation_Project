@@ -90,28 +90,46 @@ class TenderSubmissions(models.Model):
 
 
 class SubmissionFiles(models.Model):
-    FILE_TYPE_CHOICES = (
-        ("pdf", "PDF"),
-        ("docx", "DOCX"),
-        ("img", "Image"),
-    )
-
+    
     submission = models.ForeignKey(
         TenderSubmissions, on_delete=models.CASCADE, related_name="files"
     )
 
     file_url = models.URLField()
 
-    file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
+    file_type = models.CharField(max_length=100,null=True,blank=True)
 
 
-class RiskReports(models.Model):
-    submission = models.OneToOneField(
-        TenderSubmissions, on_delete=models.CASCADE, related_name="risk_report"
+class RiskItem(models.Model):
+    submission = models.ForeignKey(
+        TenderSubmissions, on_delete=models.CASCADE, related_name="risk_items"
     )
-
-    risk_score = models.FloatField()
-
+    title=models.CharField(max_length=150)
     risk_level = models.CharField(max_length=50)
 
-    summary = models.TextField()
+    description = models.TextField()
+    
+    
+class BoqItems(models.Model):
+    tender = models.ForeignKey(Tenders, on_delete=models.CASCADE,related_name="boq_items")
+    item_name = models.CharField(max_length=255)
+    quantity = models.FloatField()
+    unit = models.CharField(max_length=50)
+    
+class BoqPrice(models.Model):
+    submission = models.ForeignKey(
+        TenderSubmissions, on_delete=models.CASCADE, related_name="boq_prices"
+    )
+    boq_item = models.ForeignKey(BoqItems, on_delete=models.CASCADE, related_name="prices")
+    unit_price = models.DecimalField(max_digits=14, decimal_places=2)
+    
+class HumanReview(models.Model):
+    DICISION_CHOICES = (
+        ("approved", "Approved"),
+        ("rejected", "Rejected")
+    )
+    
+    submission=models.ForeignKey(TenderSubmissions,on_delete=models.CASCADE,related_name="human_reviews")
+    reason=models.TextField()
+    dicision=models.CharField(max_length=10,choices=DICISION_CHOICES)
+    
