@@ -6,8 +6,6 @@ from api.models import Tenders
 from api.serializers import TendersSerializer
 from rest_framework.views import APIView
 
-# Create your views here.
-# Get all tenders
 class TendersListView(APIView):
     def get(self, request):
         tenders = Tenders.objects.all()
@@ -20,8 +18,6 @@ class TendersListView(APIView):
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
-
-# Get single tender by id
 
 class TenderDetailView(APIView):
     def get_object(self, pk):
