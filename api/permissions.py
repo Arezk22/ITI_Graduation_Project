@@ -18,3 +18,12 @@ class IsTenderOwner(BasePermission):
     message = "You are not the owner of this tender."    
     def has_permission(self, request, view,obj):
         return request.user == obj.owner
+    
+    
+class IsSubmissionOwnerOrTenderOwner(BasePermission):
+    message = "You do not have access to this submission."
+    def has_permission(self, request, view, obj):
+        if request.user == obj.tender.owner:
+            return True
+        contractor_profile = getattr(request.user, "contractor_profile", None)
+        return contractor_profile is not None and contractor_profile == obj.contractor
