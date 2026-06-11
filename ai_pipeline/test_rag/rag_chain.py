@@ -58,10 +58,10 @@ Answer in Arabic unless requested otherwise. Always mention the page number(s) y
 
 def format_docs(docs):
   formatted_texts = []
-    for doc in docs:
-        page_num = doc.metadata.get("page_number", "Unknown")
-        formatted_texts.append(f"[Page {page_num}]: {doc.page_content}")
-    return "\n\n".join(formatted_texts)
+  for doc in docs:
+    page_num = doc.metadata.get("page_number", "Unknown")
+    formatted_texts.append(f"[Page {page_num}]: {doc.page_content}")
+  return "\n\n".join(formatted_texts)
 
 # search in pdf and get response streaming to real time feel in UI
 def get_chat_response_stream(query, connection_string, collection_name="tender_documents"):

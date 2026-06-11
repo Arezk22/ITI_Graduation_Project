@@ -1,8 +1,8 @@
 # ai_agent/pipeline.py
 
 from asyncio.log import logger
-from .extractor import extract_pdf_content
-from .partitioner import chunk_documents
+from .rag_chain import extract_pdf_content
+from .rag_chain import chunk_documents
 from .rag_chain import store_chunks_in_pgvector, get_chat_response_stream
 
 def process_and_store_tender(pdf_source, connection_string, collection_name):
