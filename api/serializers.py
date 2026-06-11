@@ -37,6 +37,7 @@ class TenderSubmissionsSerializer(serializers.ModelSerializer):
             'rank', 'recommendation', 'submitted_at',
         ]
         read_only_fields = [
+            'tender', 'contractor',
             'technical_score', 'financial_score', 'risk_score', 'final_score',
             'rank', 'recommendation', 'submitted_at',
         ]
