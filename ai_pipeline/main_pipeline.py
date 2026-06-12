@@ -19,22 +19,28 @@ def run_tender_analysis_job(tender_id: str, file_path: str, db_connection_string
     try:
         # 1. تهيئة النماذج الذكية
         # نستخدم gpt-4o-mini لأنه يوازن بشكل ممتاز بين الدقة والتكلفة
-        # llm = ChatOpenAI(
-        #     model="meta-llama/llama-3.2-11b-vision-instruct:free", 
-        #     temperature=0, # صفر لضمان دقة التحليل المالي والقانوني بدون "هلوسة"
-        #     api_key=os.getenv("OPENAI_API_KEY"),
-        #     openai_api_base=os.getenv("OPENAI_API_BASE")
-        # )
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash", 
+        llm = ChatOpenAI(
+            model="meta-llama/llama-3.2-11b-vision-instruct", 
             temperature=0, # صفر لضمان دقة التحليل المالي والقانوني بدون "هلوسة"
-            api_key=os.getenv("GOOGLE_API_KEY"),
+            api_key=os.getenv("OPENAI_API_KEY"),
+            openai_api_base=os.getenv("OPENAI_API_BASE")
         )
-        vision_llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash", 
+        # llm = ChatGoogleGenerativeAI(
+        #     model="gemini-2.5-flash", 
+        #     temperature=0, # صفر لضمان دقة التحليل المالي والقانوني بدون "هلوسة"
+        #     api_key=os.getenv("GOOGLE_API_KEY"),
+        # )
+        vision_llm = ChatOpenAI(
+            model="meta-llama/llama-3.2-11b-vision-instruct", 
             max_tokens=1500, 
-            api_key=os.getenv("GOOGLE_API_KEY"),  
+            api_key=os.getenv("OPENAI_API_KEY"), 
+            openai_api_base=os.getenv("OPENAI_API_BASE")
         )
+        # vision_llm = ChatGoogleGenerativeAI(
+        #     model="gemini-2.5-flash", 
+        #     max_tokens=1500, 
+        #     api_key=os.getenv("GOOGLE_API_KEY"),  
+        # )
 
         # ==========================================
         # المرحلة الأولى: استخراج البيانات وتجهيزها

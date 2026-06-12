@@ -10,14 +10,14 @@ def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     """
     # استخدام نموذج text-embedding-3-small لأنه أسرع وأرخص بـ 5 مرات من الإصدار القديم
     # مع الحفاظ على كفاءة ممتازة في البحث الدلالي
-    # embeddings = OpenAIEmbeddings(
-    #     model="text-embedding-3-small", 
-    #     api_key=os.getenv("OPENAI_API_KEY")
-    # )
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004", 
-        api_key=os.getenv("GOOGLE_API_KEY"),        
+    embeddings = OpenAIEmbeddings(
+        model="text-embedding-3-small", 
+        api_key=os.getenv("OPENAI_API_KEY")
     )
+    # embeddings = GoogleGenerativeAIEmbeddings(
+    #     model="models/text-embedding-004", 
+    #     api_key=os.getenv("GOOGLE_API_KEY"),        
+    # )
 
     # تهيئة الاتصال بقاعدة بيانات PostgreSQL بملحق pgvector
     vector_store = PGVector(

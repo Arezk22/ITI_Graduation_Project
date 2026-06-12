@@ -5,6 +5,7 @@ from io import BytesIO
 from pdf2image import convert_from_path
 from langchain_core.messages import HumanMessage
 from langchain_core.documents import Document
+import time
 
 class BOQExtractionRouter:
     def __init__(self, vision_llm):
@@ -28,6 +29,7 @@ class BOQExtractionRouter:
                 else:
                     # print("⚠️ جدول معقد أو ممسوح ضوئياً! جاري التحويل للـ Vision API...")
                     print("⚠️ Complex or scanned table detected! Converting to Vision API...")
+                    time.sleep(5)
                     # تحويل الصفحة المعينة فقط إلى صورة
                     images = convert_from_path(pdf_path, first_page=page_num+1, last_page=page_num+1,poppler_path=r"C:\poppler\Library\bin")
                     page_image = images[0]

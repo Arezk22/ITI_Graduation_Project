@@ -6,13 +6,13 @@ from ai_pipeline.main_pipeline import run_tender_analysis_job
 # 1. تحميل المتغيرات البيئية من ملف .env
 load_dotenv()
 
-# التأكد من وجود مفتاح OpenAI
-if not os.getenv("OPENAI_API_KEY"):
-    raise ValueError("⚠️ يرجى التأكد من إضافة OPENAI_API_KEY في ملف .env")
+# التأكد من وجود مفتاح Google
+if not os.getenv("GOOGLE_API_KEY"):
+    raise ValueError("⚠️ يرجى التأكد من إضافة GOOGLE_API_KEY في ملف .env")
 
 # 2. إعداد المتغيرات الوهمية للاختبار
 # ضع أي ملف PDF تجريبي في نفس المجلد وقم بتسميته هكذا:
-TEST_FILE_PATH = "E:\Iti6month\Graduation Project\Graduation_project\sample-form-of-tender.pdf" 
+TEST_FILE_PATH = "E:\Iti6month\Graduation Project\Graduation_project\Tender Bid Proposal.pdf" 
 TEST_TENDER_ID = "test_tender_001"
 
 # رابط قاعدة البيانات المحلي
@@ -25,12 +25,12 @@ def main():
     print("🚀 Starting local AI Pipeline testing...")
     print("==================================================")
 
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("GOOGLE_API_KEY")
     if api_key:
         print(f"🔑 API Key Loaded Successfully (Length: {len(api_key)})")
         print(f"Starts with: {api_key[:12]}... Ends with: {api_key[-4:]}")
     else:
-        print("❌ OPENAI_API_KEY is not set in the environment variables.")
+        print("❌ GOOGLE_API_KEY is not set in the environment variables.")
         return
     # التأكد من وجود الملف التجريبي قبل البدء
     if not os.path.exists(TEST_FILE_PATH):

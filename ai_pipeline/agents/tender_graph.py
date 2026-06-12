@@ -36,8 +36,9 @@ class TenderWorkflow:
             "router",
             self.route_user_intent,
             {
-                "analyze": ("legal_agent", "financial_agent"), # تشغيل متوازي للتحليل الشامل
-                "chat": "chat_agent"                          # ذهاب مباشر لشات الـ RAG
+                "legal": "legal_agent",       # مفتاح مستقل يوجه للعقدة القانونية
+                "financial": "financial_agent", # مفتاح مستقل يوجه للعقدة المالية
+                "chat": "chat_agent"          # يوجه لشات الـ RAG
             }
         )
         
@@ -60,12 +61,14 @@ class TenderWorkflow:
     def route_user_intent(self, state: TenderState):
         # إذا كان هناك مخرجات مستخرجة مسبقاً والسؤال محدد، إذن المستخدم في الشات
         if state.get("user_query") and "حلل" not in state.get("user_query"):
-            return "chat"
-        return "analyze"
+            return ["chat"]
+        return ["legal", "financial"]
 
     # --- عقدة الـ RAG Chat (شغل الأسبوع الأول) ---
     def chat_agent_node(self, state: TenderState):
-        print("💬 عقدة الشات (RAG): جاري البحث والإجابة الفورية...")
+        # print("💬 عقدة الشات (RAG): جاري البحث والإجابة الفورية...")
+        print("💬 searching the answer (RAG Node):")
+
         
         query = state.get("user_query")
         tender_id = state.get("tender_id")
@@ -107,10 +110,13 @@ class TenderWorkflow:
 
     # --- تعريف وظائف الوكلاء (Nodes Logic) ---
     def legal_agent_node(self, state: TenderState):
-        print("🕵️ الوكيل القانوني: جاري فحص الشروط التعاقدية...")
+        # print("🕵️ الوكيل القانوني: جاري فحص الشروط التعاقدية...")
+        print("🕵️ Legal Agent: Reviewing the contractual terms...")      
+
         extracted_text = state.get("extracted_text", "")
         if not extracted_text:
-            return {"legal_flags": ["لا توجد نصوص قانونية كافية للفحص."]}
+            # return {"legal_flags": ["لا توجد نصوص قانونية كافية للفحص."]}
+            return {"legal_flags": ["There are not enough legal provisions available for review."]}
             
         parser = PydanticOutputParser(pydantic_object=LegalFlagsOutput)
 
@@ -136,10 +142,12 @@ class TenderWorkflow:
             return {"legal_flags": result.flags}
         except Exception as e:
             print(f"Error occurred while processing legal analysis: {e}")
-            return {"legal_flags": ["حدث خطأ أثناء تحليل القانون."]}
+            # return {"legal_flags": ["حدث خطأ أثناء تحليل القانون."]}
+            return {"legal_flags": ["An error occurred while performing the legal analysis."]}
         
     def financial_agent_node(self, state: TenderState):
-        print("💰 الوكيل المالي: جاري تحليل الأسعار وحساب الانحرافات...")
+        # print("💰 الوكيل المالي: جاري تحليل الأسعار وحساب الانحرافات...")
+        print("💰 Financial Agent: Analyzing prices and calculating deviations...")
     
         extracted_boq = state.get("extracted_boq", [])
         deviations = []
@@ -153,21 +161,27 @@ class TenderWorkflow:
         return {"financial_deviations": deviations}
 
     def response_generator_node(self, state: TenderState):
-        print("📝 مولد الردود: جاري صياغة التقرير النهائي...")
+        # print("📝 مولد الردود: جاري صياغة التقرير النهائي...")
+        print("📝 Response Generator: Drafting the final report...")
     
         legal_flags = state.get("legal_flags", [])
         financial_deviations = state.get("financial_deviations", [])
-        user_query = state.get("user_query", "يرجى تقديم تقرير شامل عن المخاطر القانونية والمالية.")
+        # user_query = state.get("user_query", "يرجى تقديم تقرير شامل عن المخاطر القانونية والمالية.")
+        user_query = state.get("user_query","Please provide a comprehensive report on the legal and financial risks.")
     
         # تنسيق البيانات لتمريرها للـ Prompt
-        legal_summary = "\n".join([f"- {flag}" for flag in legal_flags]) if legal_flags else "لا توجد مخاطر قانونية واضحة."
+        # legal_summary = "\n".join([f"- {flag}" for flag in legal_flags]) if legal_flags else "لا توجد مخاطر قانونية واضحة."
+        legal_summary = "\n".join([f"- {flag}" for flag in legal_flags]) if legal_flags else "No clear legal risks identified."
+
     
         financial_summary = ""
         if financial_deviations:
             for dev in financial_deviations:
-                financial_summary += f"- البند: {dev['description']} | الانحراف: {dev['deviation_percentage']}% ({dev['status']})\n"
+                # financial_summary += f"- البند: {dev['description']} | الانحراف: {dev['deviation_percentage']}% ({dev['status']})\n"
+                financial_summary += f"- Item: {dev['description']} | Deviation: {dev['deviation_percentage']}% ({dev['status']})\n"
         else:
-            financial_summary = "الأسعار متوافقة مع المعدلات التاريخية ولا توجد انحرافات مقلقة."
+            # financial_summary = "الأسعار متوافقة مع المعدلات التاريخية ولا توجد انحرافات مقلقة."
+            financial_summary = "Prices are consistent with historical averages and no concerning deviations were found."
 
         # بناء الـ Prompt
         prompt = ChatPromptTemplate.from_template("""
