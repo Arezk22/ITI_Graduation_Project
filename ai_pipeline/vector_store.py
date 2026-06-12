@@ -1,28 +1,46 @@
-from langchain_community.vectorstores import PGVector
-from langchain_openai import OpenAIEmbeddings
 import os
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import PGVector
 
-def get_vector_store(connection_string: str, collection_name: str):
+def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     """
-    تقوم هذه الدالة بتهيئة الاتصال بـ pgvector وإرجاع كائن VectorStore.
-    يتم استدعاؤها من الـ Extractors (لإدخال البيانات) أو من الـ Agents (للبحث).
+    تهيئة الاتصال بـ pgvector وإرجاع كائن VectorStore.
+    يتم استدعاء هذه الدالة عند الحفظ (Ingestion) أو عند البحث (Retrieval).
     """
-    # تهيئة نموذج الـ Embeddings (مثلاً text-embedding-3-small لتقليل التكلفة)
+    # استخدام نموذج text-embedding-3-small لأنه أسرع وأرخص بـ 5 مرات من الإصدار القديم
+    # مع الحفاظ على كفاءة ممتازة في البحث الدلالي
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small", 
         api_key=os.getenv("OPENAI_API_KEY")
     )
     
-    # تهيئة الاتصال بـ PGVector
+    # تهيئة الاتصال بقاعدة بيانات PostgreSQL بملحق pgvector
     vector_store = PGVector(
         connection_string=connection_string,
         embedding_function=embeddings,
         collection_name=collection_name,
-        use_jsonb=True, # مفيد جداً لحفظ الـ Metadata مثل الأسعار وأرقام الصفحات
+        use_jsonb=True, # 🌟 تفعيل هذا الخيار ضروري جداً لتخزين الـ Metadata كـ JSON 
     )
     
     return vector_store
 
-# مثال لكيفية استخدام الوكيل المالي لهذه الدالة:
-# store = get_vector_store(db_url, "historical_prices")
-# results = store.similarity_search_with_score("خرسانة مسلحة", k=3)
+def save_documents_to_db(documents: list, connection_string: str, tender_id: str) -> bool:
+    """
+    دالة مساعدة لاستلام الـ Documents من الـ Extractor وحفظها في قاعدة البيانات.
+    سيتم استدعاؤها في الـ Pipeline الرئيسي.
+    """
+    if not documents:
+        print("⚠️ لا توجد مستندات مستخرجة لحفظها.")
+        return False
+        
+    collection_name = f"tender_{tender_id}"
+    print(f"⏳ جاري حفظ {len(documents)} مستند في قاعدة البيانات (Collection: {collection_name})...")
+    
+    try:
+        vector_store = get_vector_store(connection_string, collection_name)
+        vector_store.add_documents(documents)
+        print("✅ تم تخزين البيانات بنجاح في pgvector.")
+        return True
+    except Exception as e:
+        print(f"❌ حدث خطأ أثناء الحفظ في قاعدة البيانات: {e}")
+        return False
