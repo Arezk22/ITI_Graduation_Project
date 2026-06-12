@@ -36,7 +36,7 @@ class TenderWorkflow:
             "router",
             self.route_user_intent,
             {
-                "analyze": ["legal_agent", "financial_agent"], # تشغيل متوازي للتحليل الشامل
+                "analyze": ("legal_agent", "financial_agent"), # تشغيل متوازي للتحليل الشامل
                 "chat": "chat_agent"                          # ذهاب مباشر لشات الـ RAG
             }
         )

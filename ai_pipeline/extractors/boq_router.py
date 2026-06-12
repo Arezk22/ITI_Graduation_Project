@@ -22,12 +22,14 @@ class BOQExtractionRouter:
                 
                 # 2. التقييم (Validation)
                 if self._is_table_valid(extracted_table):
-                    print("✅ نجاح الاستخراج المجاني.")
+                    # print("✅ نجاح الاستخراج المجاني.")
+                    print("✅ Free extraction successful.")
                     structured_data = self._format_to_json(extracted_table)
                 else:
-                    print("⚠️ جدول معقد أو ممسوح ضوئياً! جاري التحويل للـ Vision API...")
+                    # print("⚠️ جدول معقد أو ممسوح ضوئياً! جاري التحويل للـ Vision API...")
+                    print("⚠️ Complex or scanned table detected! Converting to Vision API...")
                     # تحويل الصفحة المعينة فقط إلى صورة
-                    images = convert_from_path(pdf_path, first_page=page_num+1, last_page=page_num+1)
+                    images = convert_from_path(pdf_path, first_page=page_num+1, last_page=page_num+1,poppler_path=r"C:\poppler\Library\bin")
                     page_image = images[0]
                     # استخراج البيانات باستخدام الذكاء الاصطناعي
                     structured_data = self._extract_with_vision(page_image)
@@ -111,7 +113,8 @@ class BOQExtractionRouter:
             return data
             
         except Exception as e:
-            print(f"❌ خطأ أثناء الـ Vision Extraction: {e}")
+            # print(f"❌ خطأ أثناء الـ Vision Extraction: {e}")
+            print(f"❌ Error during Vision Extraction: {e}")
             return []
 
     def _create_document(self, data, page_num):

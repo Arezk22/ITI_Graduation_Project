@@ -1,6 +1,7 @@
 import os
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import PGVector
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     """
@@ -9,11 +10,15 @@ def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     """
     # استخدام نموذج text-embedding-3-small لأنه أسرع وأرخص بـ 5 مرات من الإصدار القديم
     # مع الحفاظ على كفاءة ممتازة في البحث الدلالي
-    embeddings = OpenAIEmbeddings(
-        model="text-embedding-3-small", 
-        api_key=os.getenv("OPENAI_API_KEY")
+    # embeddings = OpenAIEmbeddings(
+    #     model="text-embedding-3-small", 
+    #     api_key=os.getenv("OPENAI_API_KEY")
+    # )
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/text-embedding-004", 
+        api_key=os.getenv("GOOGLE_API_KEY"),        
     )
-    
+
     # تهيئة الاتصال بقاعدة بيانات PostgreSQL بملحق pgvector
     vector_store = PGVector(
         connection_string=connection_string,
@@ -30,17 +35,21 @@ def save_documents_to_db(documents: list, connection_string: str, tender_id: str
     سيتم استدعاؤها في الـ Pipeline الرئيسي.
     """
     if not documents:
-        print("⚠️ لا توجد مستندات مستخرجة لحفظها.")
+        # print("⚠️ لا توجد مستندات مستخرجة لحفظها.")
+        print("⚠️ No documents extracted to save.")
         return False
         
     collection_name = f"tender_{tender_id}"
-    print(f"⏳ جاري حفظ {len(documents)} مستند في قاعدة البيانات (Collection: {collection_name})...")
+    # print(f"⏳ جاري حفظ {len(documents)} مستند في قاعدة البيانات (Collection: {collection_name})...")
+    print(f"saving {len(documents)} documents to the database (Collection: {collection_name})...")
     
     try:
         vector_store = get_vector_store(connection_string, collection_name)
         vector_store.add_documents(documents)
-        print("✅ تم تخزين البيانات بنجاح في pgvector.")
+        # print("✅ تم تخزين البيانات بنجاح في pgvector.")
+        print("Data successfully stored in pgvector ✅.")
         return True
     except Exception as e:
-        print(f"❌ حدث خطأ أثناء الحفظ في قاعدة البيانات: {e}")
+        # print(f"❌ حدث خطأ أثناء الحفظ في قاعدة البيانات: {e}")
+        print(f"❌ Error occurred while saving to the database: {e}")
         return False
