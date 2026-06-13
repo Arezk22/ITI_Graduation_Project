@@ -10,7 +10,7 @@ class TenderState(TypedDict):
     # هذه البيانات ستأتي لاحقاً من الـ Extractors
     extracted_boq: List[Dict[str, Any]]  # بيانات المقايسة
     extracted_text: str           # النصوص القانونية والشروط
-    
+    analysis_mode: bool
     # مخرجات الوكلاء (Agents Outputs)
     legal_flags: Annotated[List[str], operator.add] # الثغرات والمخاطر القانونية
     financial_deviations: List[Dict[str, Any]]      # حسابات الانحراف المالي للأسعار

@@ -6,6 +6,7 @@ from pdf2image import convert_from_path
 from langchain_core.messages import HumanMessage
 from langchain_core.documents import Document
 import time
+import re
 
 class BOQExtractionRouter:
     def __init__(self, vision_llm):
@@ -111,6 +112,11 @@ class BOQExtractionRouter:
             
             # تنظيف النتيجة تحسباً لو قام النموذج بإضافة أي نصوص إضافية
             clean_json = response.content.strip().strip('```json').strip('```')
+            clean_json = response.content.strip()
+            clean_json = clean_json.replace("```json", "")
+            clean_json = clean_json.replace("```", "")
+            clean_json = re.sub(r'[\x00-\x1F]+',' ',clean_json)
+            
             data = json.loads(clean_json)
             return data
             

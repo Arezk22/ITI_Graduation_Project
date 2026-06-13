@@ -90,9 +90,12 @@ def run_tender_analysis_job(tender_id: str, file_path: str, db_connection_string
             "tender_id": tender_id,
             "user_query": "Please provide a comprehensive report on the legal and financial risks.", # طلب صريح للـ Router لتشغيل التحليل
             "extracted_text": extracted_text,
+            "analysis_mode": True,
             "extracted_boq": extracted_boq,
             "chat_history": []
         }
+
+        # initial_state["analysis_mode"] = True
         
         # تشغيل شبكة الوكلاء
         final_state = workflow.run(initial_state)

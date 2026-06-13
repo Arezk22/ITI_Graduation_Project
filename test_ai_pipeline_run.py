@@ -12,7 +12,7 @@ if not os.getenv("GOOGLE_API_KEY"):
 
 # 2. إعداد المتغيرات الوهمية للاختبار
 # ضع أي ملف PDF تجريبي في نفس المجلد وقم بتسميته هكذا:
-TEST_FILE_PATH = "E:\Iti6month\Graduation Project\Graduation_project\Tender Bid Proposal.pdf" 
+TEST_FILE_PATH = "كراسة_الشروط_والمواصفات_النهائية_1.pdf" 
 TEST_TENDER_ID = "test_tender_001"
 
 # رابط قاعدة البيانات المحلي

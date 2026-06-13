@@ -7,7 +7,7 @@ import json
 
 from .state import TenderState
 from ..vector_store import get_vector_store
-from .prompts import TENDER_CHAT_PROMPT
+from .prompts import TENDER_CHAT_PROMPT , LEGAL_AGENT_PROMPT , FINANCIAL_AGENT_PROMPT , RESPONSE_GENERATOR_PROMPT
 
 class LegalFlagsOutput(BaseModel):
     flags: list[str] = Field(description="List of legal risks, penalties, or hidden liabilities found in the text.")
@@ -60,9 +60,16 @@ class TenderWorkflow:
     
     def route_user_intent(self, state: TenderState):
         # إذا كان هناك مخرجات مستخرجة مسبقاً والسؤال محدد، إذن المستخدم في الشات
-        if state.get("user_query") and "حلل" not in state.get("user_query"):
-            return ["chat"]
-        return ["legal", "financial"]
+        # query = state.get("user_query", "").lower()
+        # analysis_keywords = ["حلل","تحليل","تقرير","analyze","analysis","report","risk"]
+        # if any(word in query for word in analysis_keywords):
+        #     return ["legal", "financial"]
+        # return ["chat"]
+
+        if state.get("analysis_mode", False):
+            return ["legal","financial"]
+
+        return ["chat"]
 
     # --- عقدة الـ RAG Chat (شغل الأسبوع الأول) ---
     def chat_agent_node(self, state: TenderState):
@@ -121,14 +128,7 @@ class TenderWorkflow:
         parser = PydanticOutputParser(pydantic_object=LegalFlagsOutput)
 
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are an expert Construction Legal Advisor. 
-            Your job is to review the following tender clauses and extract ONLY high-risk legal flags.
-            Focus on:
-            - Penalties for delays (Liquidated Damages).
-            - Unfair payment terms or retention percentages.
-            - Unclear scopes of liability.
-            
-            {format_instructions}"""),
+            ("system", LEGAL_AGENT_PROMPT),
             ("user", "Tender Text:\n{text}")
         ])
         
@@ -148,9 +148,14 @@ class TenderWorkflow:
     def financial_agent_node(self, state: TenderState):
         # print("💰 الوكيل المالي: جاري تحليل الأسعار وحساب الانحرافات...")
         print("💰 Financial Agent: Analyzing prices and calculating deviations...")
-    
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", FINANCIAL_AGENT_PROMPT),
+            ("user", "{boq}")
+        ])            
+        chain = prompt | self.llm | StrOutputParser()
+        response = chain.invoke({"boq": json.dumps(extracted_boq, ensure_ascii=False)})
         extracted_boq = state.get("extracted_boq", [])
-        deviations = []
+        # deviations = []
     
         # سيتم تفعيل هذا الجزء عند ربط قاعدة البيانات
         # for item in extracted_boq:
@@ -158,7 +163,7 @@ class TenderWorkflow:
         #     current_price = float(item.get("unit_price", 0.0))
         #     ... (باقي كود حساب الانحراف كما هو)
                     
-        return {"financial_deviations": deviations}
+        return {"financial_deviations": [response]}
 
     def response_generator_node(self, state: TenderState):
         # print("📝 مولد الردود: جاري صياغة التقرير النهائي...")
@@ -184,21 +189,7 @@ class TenderWorkflow:
             financial_summary = "Prices are consistent with historical averages and no concerning deviations were found."
 
         # بناء الـ Prompt
-        prompt = ChatPromptTemplate.from_template("""
-        You are the Lead AI Estimator for a construction company. 
-        Based on the analysis from your team, generate a professional, structured executive summary in Arabic.
-    
-        User Query: {query}
-    
-        Legal & Compliance Flags:
-        {legal}
-    
-        Financial BOQ Deviations:
-        {financial}
-    
-        Format the output nicely using Markdown headers, bullet points, and bold text for emphasis.
-        Keep it concise and actionable.
-        """)
+        prompt = ChatPromptTemplate.from_template(RESPONSE_GENERATOR_PROMPT)
     
         # ربط وتنفيذ الـ Chain
         response_chain = prompt | self.llm | StrOutputParser()

@@ -12,7 +12,8 @@ def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     # مع الحفاظ على كفاءة ممتازة في البحث الدلالي
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small", 
-        api_key=os.getenv("OPENAI_API_KEY")
+        api_key=os.getenv("OPENAI_API_KEY"),
+        openai_api_base=os.getenv("OPENAI_API_BASE")
     )
     # embeddings = GoogleGenerativeAIEmbeddings(
     #     model="models/text-embedding-004", 
