@@ -45,24 +45,31 @@ class TenderSubmissionsSerializer(serializers.ModelSerializer):
 class SubmissionFilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubmissionFiles
-        fields = ['id', 'submission', 'file_url', 'file_type']
+        fields = ['id', 'submission', 'file_url', 'file_category']
+        read_only_fields = ['file_type', 'file_category']
 
 class RiskItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiskItem
-        fields = ['id', 'submission', 'title', 'risk_level', 'description']
+        fields = ['id', 'title', 'risk_level', 'description']
+        read_only_fields = ['submission']
 
 class BoqItemsSerializer(serializers.ModelSerializer):
     class Meta:
         model = BoqItems
-        fields = ['id', 'tender', 'item_name', 'quantity', 'unit']
+        fields = ['id', 'item_name', 'quantity', 'unit']
+        read_only_fields = ['tender', 'submission']
 
 class BoqPriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = BoqPrice
-        fields = ['id', 'submission', 'boq_item', 'unit_price']
+        fields = ['id', 'boq_item', 'unit_price']
+        read_only_fields = ['submission']
+
 
 class HumanReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = HumanReview
-        fields = ['id', 'submission', 'reason', 'dicision']
+        fields = ['id', 'reason', 'dicision']
+        read_only_fields = ['submission']
+
