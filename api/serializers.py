@@ -79,7 +79,6 @@ class HumanReviewSerializer(serializers.ModelSerializer):
 
 
 class CreateTenderSerializer(serializers.ModelSerializer):
-    """Creates a tender together with its files and evaluation rules in one request."""
 
     files = TenderFilesSerializer(many=True, required=False)
     evaluation_rules = EvaluationRulesSerializer(many=True, required=False)

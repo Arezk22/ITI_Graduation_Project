@@ -11,6 +11,8 @@ from api.models import TenderFiles, SubmissionFiles
 
 def _index_file(instance):
     # importing it lazy so that app doesn't need to stack it in the first of the app
+    # Please remove return true when implementing the func. :) 
+    return True
     from ai_agent.pipeline import index_file_for_rag
 
     index_file_for_rag(instance)
