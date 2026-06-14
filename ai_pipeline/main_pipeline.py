@@ -176,3 +176,18 @@ def run_tender_evaluation_job(
             "tender_id": tender_id,
             "error_message": str(e)
         }
+
+
+def index_file_for_rag(file_instance):
+  """
+  Hook called (via a post_save signal) whenever a tender/submission file is uploaded.
+
+  Intended to extract the file, chunk it, embed it, and store the vectors so the file
+  can be used for RAG / multi-agent workflows.
+
+  NOTE: the AI implementation is intentionally left as a stub for now. Wire it up to the
+  extraction -> chunking -> pgvector pipeline (see process_and_store_tender) when ready,
+  ideally off the request thread (e.g. a Celery task).
+  """
+  # TODO: implement embedding + vector storage for file_instance.file_url
+  return None
