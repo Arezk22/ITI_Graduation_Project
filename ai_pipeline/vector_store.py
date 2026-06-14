@@ -6,19 +6,12 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     """
     تهيئة الاتصال بـ pgvector وإرجاع كائن VectorStore.
-    يتم استدعاء هذه الدالة عند الحفظ (Ingestion) أو عند البحث (Retrieval).
     """
-    # استخدام نموذج text-embedding-3-small لأنه أسرع وأرخص بـ 5 مرات من الإصدار القديم
-    # مع الحفاظ على كفاءة ممتازة في البحث الدلالي
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small", 
         api_key=os.getenv("OPENAI_API_KEY"),
         openai_api_base=os.getenv("OPENAI_API_BASE")
     )
-    # embeddings = GoogleGenerativeAIEmbeddings(
-    #     model="models/text-embedding-004", 
-    #     api_key=os.getenv("GOOGLE_API_KEY"),        
-    # )
 
     # تهيئة الاتصال بقاعدة بيانات PostgreSQL بملحق pgvector
     vector_store = PGVector(
@@ -30,27 +23,28 @@ def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     
     return vector_store
 
-def save_documents_to_db(documents: list, connection_string: str, tender_id: str) -> bool:
+def save_documents_to_db(documents: list, connection_string: str, tender_id: str, source_id: str = "employer_tender") -> bool:
     """
-    دالة مساعدة لاستلام الـ Documents من الـ Extractor وحفظها في قاعدة البيانات.
-    سيتم استدعاؤها في الـ Pipeline الرئيسي.
+    دالة مساعدة لحفظ الـ Documents في قاعدة البيانات مع تمييز مصدرها (مالك أو مقاول).
     """
     if not documents:
-        # print("⚠️ لا توجد مستندات مستخرجة لحفظها.")
-        print("⚠️ No documents extracted to save.")
+        print(f"⚠️ No documents extracted to save for source: {source_id}.")
         return False
         
+    # حقن الـ source_id والـ tender_id في الـ Metadata لكل مستند عشان نقدر نفلتر بيهم وقت الشات
+    for doc in documents:
+        if isinstance(doc.metadata, dict):
+            doc.metadata["source_id"] = source_id
+            doc.metadata["tender_id"] = tender_id
+            
     collection_name = f"tender_{tender_id}"
-    # print(f"⏳ جاري حفظ {len(documents)} مستند في قاعدة البيانات (Collection: {collection_name})...")
-    print(f"saving {len(documents)} documents to the database (Collection: {collection_name})...")
+    print(f"saving {len(documents)} documents to the database (Collection: {collection_name} | Source: {source_id})...")
     
     try:
         vector_store = get_vector_store(connection_string, collection_name)
         vector_store.add_documents(documents)
-        # print("✅ تم تخزين البيانات بنجاح في pgvector.")
-        print("Data successfully stored in pgvector ✅.")
+        print(f"Data successfully stored in pgvector for {source_id} ✅.")
         return True
     except Exception as e:
-        # print(f"❌ حدث خطأ أثناء الحفظ في قاعدة البيانات: {e}")
-        print(f"❌ Error occurred while saving to the database: {e}")
+        print(f"❌ Error occurred while saving {source_id} to the database: {e}")
         return False

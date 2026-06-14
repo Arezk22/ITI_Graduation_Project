@@ -1,206 +1,161 @@
+# tender_graph.py
+import json
 from langgraph.graph import StateGraph, END
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
-from langchain_core.runnables import RunnablePassthrough # تم إضافة هذا الاستدعاء الهام
-from pydantic import BaseModel, Field
-import json
+from langchain_core.output_parsers import JsonOutputParser
 
 from .state import TenderState
-from ..vector_store import get_vector_store
-from .prompts import TENDER_CHAT_PROMPT , LEGAL_AGENT_PROMPT , FINANCIAL_AGENT_PROMPT , RESPONSE_GENERATOR_PROMPT
+from .prompts import (
+    VALIDATION_AGENT_PROMPT, SCORING_AGENT_PROMPT, 
+    RISK_AGENT_PROMPT, LEGAL_AGENT_PROMPT, RECOMMENDATION_AGENT_PROMPT
+)
 
-class LegalFlagsOutput(BaseModel):
-    flags: list[str] = Field(description="List of legal risks, penalties, or hidden liabilities found in the text.")
-
-class TenderWorkflow:
-    def __init__(self, llm, db_connection_string=None):
+class EvaluationWorkflow:
+    def __init__(self, llm):
         self.llm = llm
-        self.db_string = db_connection_string
-        # تهيئة الـ Graph باستخدام الـ State التي أنشأناها
         self.workflow = StateGraph(TenderState)
         self._build_graph()
 
     def _build_graph(self):
-        # 1. تعريف العقد (Nodes) - كل عقدة تمثل وكيل أو وظيفة
-        self.workflow.add_node("router", self.intent_router_node)
-        self.workflow.add_node("legal_agent", self.legal_agent_node)
-        self.workflow.add_node("financial_agent", self.financial_agent_node)
-        self.workflow.add_node("chat_agent", self.chat_agent_node)
-        self.workflow.add_node("response_generator", self.response_generator_node)
+        # 1. تعريف العقد (Nodes)
+        self.workflow.add_node("validation_agent", self.validation_node)
+        self.workflow.add_node("scoring_agent", self.scoring_node)
+        self.workflow.add_node("risk_agent", self.risk_node)
+        self.workflow.add_node("legal_agent", self.legal_node)
+        self.workflow.add_node("recommendation_agent", self.recommendation_node)
+        self.workflow.add_node("comparison_agent", self.comparison_node)
 
-        # 2. بناء المسار (Edges)
-        self.workflow.set_entry_point("router")
+        # 2. بناء مسار التقييم
+        self.workflow.set_entry_point("validation_agent")
+        self.workflow.add_edge("validation_agent", "scoring_agent")
+        self.workflow.add_edge("scoring_agent", "risk_agent")
+        self.workflow.add_edge("risk_agent", "legal_agent")
+        self.workflow.add_edge("legal_agent", "recommendation_agent")
         
-        # الـ Router يقرر المسار بناءً على رغبة المستخدم
-        self.workflow.add_conditional_edges(
-            "router",
-            self.route_user_intent,
-            {
-                "legal": "legal_agent",       # مفتاح مستقل يوجه للعقدة القانونية
-                "financial": "financial_agent", # مفتاح مستقل يوجه للعقدة المالية
-                "chat": "chat_agent"          # يوجه لشات الـ RAG
-            }
-        )
-        
-        # بعد انتهاء الوكلاء، نذهب لمولد الردود
-        self.workflow.add_edge("legal_agent", "response_generator")
-        self.workflow.add_edge("financial_agent", "response_generator")
-        
-        # نقطة النهاية
-        self.workflow.add_edge("response_generator", END)
-        self.workflow.add_edge("chat_agent", END)
-        
-        # تجميع الـ Graph
+        # بعد ما كل مقاول ياخد التوصية بتاعته، نقارنهم كلهم ببعض
+        self.workflow.add_edge("recommendation_agent", "comparison_agent")
+        self.workflow.add_edge("comparison_agent", END)
+
         self.app = self.workflow.compile()
 
-    # --- عقدة الـ Router لتحديد النية ---
-    def intent_router_node(self, state: TenderState):
-        # هذه العقدة مجرد جسر لتمرير الـ State وتحديد المسار
-        return state
-    
-    def route_user_intent(self, state: TenderState):
-        # إذا كان هناك مخرجات مستخرجة مسبقاً والسؤال محدد، إذن المستخدم في الشات
-        # query = state.get("user_query", "").lower()
-        # analysis_keywords = ["حلل","تحليل","تقرير","analyze","analysis","report","risk"]
-        # if any(word in query for word in analysis_keywords):
-        #     return ["legal", "financial"]
-        # return ["chat"]
+    # --- دوال مساعدة لاستدعاء الـ LLM ---
+    def _run_agent(self, prompt_template, input_data):
+        prompt = ChatPromptTemplate.from_template(prompt_template)
+        chain = prompt | self.llm | JsonOutputParser()
+        try:
+            return chain.invoke(input_data)
+        except Exception as e:
+            print(f"Agent Error: {e}")
+            return {}
 
-        if state.get("analysis_mode", False):
-            return ["legal","financial"]
-
-        return ["chat"]
-
-    # --- عقدة الـ RAG Chat (شغل الأسبوع الأول) ---
-    def chat_agent_node(self, state: TenderState):
-        # print("💬 عقدة الشات (RAG): جاري البحث والإجابة الفورية...")
-        print("💬 searching the answer (RAG Node):")
-
+    # --- عقدة الـ Validation ---
+    def validation_node(self, state: TenderState):
+        print("🔍 Validation Agent: Checking compliance...")
+        tender_reqs = state.get("tender_requirements", {})
+        updated_contractors = []
         
-        query = state.get("user_query")
-        tender_id = state.get("tender_id")
-        
-        # 1. الاتصال بالـ Vector Store الخاص بهذه المناقصة
-        vector_store = get_vector_store(self.db_string, collection_name=f"tender_{tender_id}")
-        retriever = vector_store.as_retriever(search_kwargs={"k": 4})
-        
-        # 2. صياغة الـ Prompt الخاص بالشات
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", TENDER_CHAT_PROMPT),
-            ("placeholder", "{chat_history}"),
-            ("user", "{question}")
-        ])
-
-        # دالة مساعدة لتنسيق النصوص (تم نقلها هنا لتكون داخل النطاق الصحيح)
-        def format_docs_with_metadata(docs):
-            formatted = []
-            for doc in docs:
-                page = doc.metadata.get("page", "N/A")
-                formatted.append(f"[المصدر: صفحة {page}]\nContext: {doc.page_content}")
-            return "\n\n".join(formatted)
+        for contractor in state.get("contractors", []):
+            result = self._run_agent(VALIDATION_AGENT_PROMPT, {
+                "tender_reqs": json.dumps(tender_reqs),
+                "contractor_data": json.dumps(contractor.get("structured_data", {}))
+            })
+            contractor["validation_status"] = result
+            updated_contractors.append(contractor)
             
-        # 3. بناء الـ Chain (تم نقله من دالة response_generator)
-        rag_chain = (
-            {
-                "context": retriever | format_docs_with_metadata, 
-                "question": RunnablePassthrough(),
-                "chat_history": lambda x: state.get("chat_history", [])
-            }
-            | prompt
-            | self.llm
-            | StrOutputParser()
+        return {"contractors": updated_contractors}
+
+    # --- عقدة الـ Scoring ---
+    def scoring_node(self, state: TenderState):
+        print("🎯 Scoring Agent: Calculating scores...")
+        rules = state.get("evaluation_rules", {})
+        updated_contractors = []
+        
+        for contractor in state.get("contractors", []):
+            result = self._run_agent(SCORING_AGENT_PROMPT, {
+                "evaluation_rules": json.dumps(rules),
+                "contractor_data": json.dumps(contractor.get("structured_data", {}))
+            })
+            contractor["scores"] = result
+            updated_contractors.append(contractor)
+            
+        return {"contractors": updated_contractors}
+
+    # --- عقدة الـ Risk ---
+    def risk_node(self, state: TenderState):
+        print("⚠️ Risk Agent: Analyzing financial anomalies...")
+        hist_prices = state.get("historical_prices", {})
+        updated_contractors = []
+        
+        for contractor in state.get("contractors", []):
+            boq_data = contractor.get("structured_data", {}).get("boq_items", [])
+            result = self._run_agent(RISK_AGENT_PROMPT, {
+                "historical_prices": json.dumps(hist_prices),
+                "contractor_boq": json.dumps(boq_data)
+            })
+            # قد يرجع المصفوفة مباشرة أو داخل مفتاح
+            contractor["risk_items"] = result if isinstance(result, list) else result.get("risk_items", [])
+            updated_contractors.append(contractor)
+            
+        return {"contractors": updated_contractors}
+
+    # --- عقدة الـ Legal ---
+    def legal_node(self, state: TenderState):
+        print("⚖️ Legal Agent: Flagging contractual deviations...")
+        tender_clauses = state.get("tender_requirements", {})
+        updated_contractors = []
+        
+        for contractor in state.get("contractors", []):
+            result = self._run_agent(LEGAL_AGENT_PROMPT, {
+                "tender_clauses": json.dumps(tender_clauses),
+                "contractor_data": json.dumps(contractor.get("structured_data", {}))
+            })
+            contractor["legal_flags"] = result.get("legal_flags", [])
+            updated_contractors.append(contractor)
+            
+        return {"contractors": updated_contractors}
+
+    # --- عقدة التوصية الفردية ---
+    def recommendation_node(self, state: TenderState):
+        print("📝 Recommendation Agent: Finalizing contractor status...")
+        updated_contractors = []
+        
+        for contractor in state.get("contractors", []):
+            result = self._run_agent(RECOMMENDATION_AGENT_PROMPT, {
+                "contractor_name": contractor.get("contractor_id", "Unknown"),
+                "validation": json.dumps(contractor.get("validation_status", {})),
+                "scores": json.dumps(contractor.get("scores", {})),
+                "risks": json.dumps(contractor.get("risk_items", [])),
+                "legal_flags": json.dumps(contractor.get("legal_flags", []))
+            })
+            contractor["recommendation"] = result.get("recommendation", "Needs Review")
+            contractor["justification"] = result.get("justification", "")
+            updated_contractors.append(contractor)
+            
+        return {"contractors": updated_contractors}
+
+    # --- عقدة المقارنة والترتيب (Comparison) ---
+    def comparison_node(self, state: TenderState):
+        print("🏆 Comparison Agent: Ranking all contractors...")
+        contractors = state.get("contractors", [])
+        
+        # ترتيب برمجي (بدون LLM لتوفير التكلفة وضمان الدقة الرياضية)
+        # سيتم الترتيب بناءً على Total Score اللي رجع من وكيل التسجيل
+        ranked_contractors = sorted(
+            contractors, 
+            key=lambda x: x.get("scores", {}).get("total_score", 0), 
+            reverse=True
         )
         
-        # تنفيذ الاستعلام
-        response = rag_chain.invoke(query)
-        return {"final_response": response}
-
-    # --- تعريف وظائف الوكلاء (Nodes Logic) ---
-    def legal_agent_node(self, state: TenderState):
-        # print("🕵️ الوكيل القانوني: جاري فحص الشروط التعاقدية...")
-        print("🕵️ Legal Agent: Reviewing the contractual terms...")      
-
-        extracted_text = state.get("extracted_text", "")
-        if not extracted_text:
-            # return {"legal_flags": ["لا توجد نصوص قانونية كافية للفحص."]}
-            return {"legal_flags": ["There are not enough legal provisions available for review."]}
-            
-        parser = PydanticOutputParser(pydantic_object=LegalFlagsOutput)
-
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", LEGAL_AGENT_PROMPT),
-            ("user", "Tender Text:\n{text}")
-        ])
-        
-        legal_chain = prompt | self.llm | parser
-        
-        try:
-            result = legal_chain.invoke({
-                "text": extracted_text,
-                "format_instructions": parser.get_format_instructions()
+        final_ranking = []
+        for index, c in enumerate(ranked_contractors):
+            final_ranking.append({
+                "rank": index + 1,
+                "contractor_id": c.get("contractor_id"),
+                "total_score": c.get("scores", {}).get("total_score", 0),
+                "recommendation": c.get("recommendation")
             })
-            return {"legal_flags": result.flags}
-        except Exception as e:
-            print(f"Error occurred while processing legal analysis: {e}")
-            # return {"legal_flags": ["حدث خطأ أثناء تحليل القانون."]}
-            return {"legal_flags": ["An error occurred while performing the legal analysis."]}
-        
-    def financial_agent_node(self, state: TenderState):
-        # print("💰 الوكيل المالي: جاري تحليل الأسعار وحساب الانحرافات...")
-        print("💰 Financial Agent: Analyzing prices and calculating deviations...")
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", FINANCIAL_AGENT_PROMPT),
-            ("user", "{boq}")
-        ])            
-        chain = prompt | self.llm | StrOutputParser()
-        response = chain.invoke({"boq": json.dumps(extracted_boq, ensure_ascii=False)})
-        extracted_boq = state.get("extracted_boq", [])
-        # deviations = []
-    
-        # سيتم تفعيل هذا الجزء عند ربط قاعدة البيانات
-        # for item in extracted_boq:
-        #     item_desc = item.get("description", "")
-        #     current_price = float(item.get("unit_price", 0.0))
-        #     ... (باقي كود حساب الانحراف كما هو)
-                    
-        return {"financial_deviations": [response]}
-
-    def response_generator_node(self, state: TenderState):
-        # print("📝 مولد الردود: جاري صياغة التقرير النهائي...")
-        print("📝 Response Generator: Drafting the final report...")
-    
-        legal_flags = state.get("legal_flags", [])
-        financial_deviations = state.get("financial_deviations", [])
-        # user_query = state.get("user_query", "يرجى تقديم تقرير شامل عن المخاطر القانونية والمالية.")
-        user_query = state.get("user_query","Please provide a comprehensive report on the legal and financial risks.")
-    
-        # تنسيق البيانات لتمريرها للـ Prompt
-        # legal_summary = "\n".join([f"- {flag}" for flag in legal_flags]) if legal_flags else "لا توجد مخاطر قانونية واضحة."
-        legal_summary = "\n".join([f"- {flag}" for flag in legal_flags]) if legal_flags else "No clear legal risks identified."
-
-    
-        financial_summary = ""
-        if financial_deviations:
-            for dev in financial_deviations:
-                # financial_summary += f"- البند: {dev['description']} | الانحراف: {dev['deviation_percentage']}% ({dev['status']})\n"
-                financial_summary += f"- Item: {dev['description']} | Deviation: {dev['deviation_percentage']}% ({dev['status']})\n"
-        else:
-            # financial_summary = "الأسعار متوافقة مع المعدلات التاريخية ولا توجد انحرافات مقلقة."
-            financial_summary = "Prices are consistent with historical averages and no concerning deviations were found."
-
-        # بناء الـ Prompt
-        prompt = ChatPromptTemplate.from_template(RESPONSE_GENERATOR_PROMPT)
-    
-        # ربط وتنفيذ الـ Chain
-        response_chain = prompt | self.llm | StrOutputParser()
-    
-        final_answer = response_chain.invoke({
-            "query": user_query,
-            "legal": legal_summary,
-            "financial": financial_summary
-        })
-    
-        return {"final_response": final_answer}
+            
+        return {"final_ranking": final_ranking}
 
     def run(self, initial_state: dict):
         return self.app.invoke(initial_state)
