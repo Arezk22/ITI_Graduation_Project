@@ -29,7 +29,6 @@ class Tenders(models.Model):
     def __str__(self):
         return self.title
 
-
 class TenderFiles(models.Model):
     FILE_TYPE_CHOICES = (
         ("pdf", "PDF"),
@@ -45,13 +44,11 @@ class TenderFiles(models.Model):
 
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
-
 class EvaluationRules(models.Model):
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE, related_name="evaluation_rules")
 
     rule_name = models.CharField(max_length=255)
     rule_value = models.CharField(max_length=255)
-
 
 class TenderSubmissions(models.Model):
     STATUS_CHOICES = (
@@ -88,17 +85,28 @@ class TenderSubmissions(models.Model):
 
     submitted_at = models.DateTimeField(auto_now_add=True)
 
-
 class SubmissionFiles(models.Model):
-    
+    FILE_TYPE_CHOICES = (
+        ("pdf", "PDF"),
+        ("docx", "DOCX"),
+        ("img", "Image"),
+    )
+
+    FILE_CATEGORY_CHOICES = (
+        ("drawing", "Drawing")
+        # ("specification", "Specification"),
+        # ("financial", "Financial"),
+        # ("other", "Other"),
+    )
+
     submission = models.ForeignKey(
         TenderSubmissions, on_delete=models.CASCADE, related_name="files"
     )
 
     file_url = models.URLField()
 
-    file_type = models.CharField(max_length=100,null=True,blank=True)
-
+    file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
+    # file_category = models.CharField(max_length=10, choices=FILE_CATEGORY_CHOICES)
 
 class RiskItem(models.Model):
     submission = models.ForeignKey(
@@ -108,7 +116,6 @@ class RiskItem(models.Model):
     risk_level = models.CharField(max_length=50)
 
     description = models.TextField()
-    
     
 class BoqItems(models.Model):
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE,related_name="boq_items")

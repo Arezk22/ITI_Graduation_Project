@@ -3,12 +3,14 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.exceptions import NotFound
+from django.db import transaction
 from api.models import Tenders
 from api.serializers import (
     TendersSerializer,
     TenderFilesSerializer,
     EvaluationRulesSerializer,
     TenderSubmissionsSerializer,
+    CreateTenderSerializer,
 )
 from .permissions import IsOwner, IsContractor, IsTenderOwner, IsSubmissionOwnerOrTenderOwner
 
@@ -29,10 +31,11 @@ class TendersListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = TendersSerializer(data=request.data)
+        serializer = CreateTenderSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(owner=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            with transaction.atomic():
+                tender = serializer.save(owner=request.user)
+            return Response({'id': tender.id}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
