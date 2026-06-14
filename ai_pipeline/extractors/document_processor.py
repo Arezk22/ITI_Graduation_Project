@@ -1,6 +1,7 @@
 # boq_router.py
 import os
 import re
+import fitz  # PyMuPDF
 import json
 from typing import Any
 import base64
@@ -14,7 +15,8 @@ from langchain_core.messages import HumanMessage
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
-
+import arabic_reshaper
+from bidi.algorithm import get_display
 # تعريف الهيكل الموحد المرجو من الـ Structuring Agent باستخدام Pydantic
 class UnifiedStructuredProposal(BaseModel):
     contractor_name: str = Field(description="Name of the contractor or construction company")
@@ -48,20 +50,28 @@ class DocumentIntakeProcessor:
                         return "native_pdf"
                     else:
                         return "scanned_pdf"
+                # doc = fitz.open(file_path)
+                # text = ""
+                # for page in doc[:3]:
+                #     text += page.get_text()
+                # doc.close()
+                # if len(text.strip()) > 100:
+                #     return "native_pdf"
+                # else:
+                #     return "scanned_pdf"
             except:
                 return "scanned_pdf"
         return "unknown"
 
     # 2. Extraction Agent: استخراج المحتوى الخام بناءً على النوع المستهدف
+
     def extract_content(self, file_path: str, file_type: str) -> Any:
         print(f"⏳ Extraction Agent active. Extracting content from [{file_type}] file...")
         
         if file_type == "excel":
-            # استخراج كافة الشيتات وتحويلها لجداول نصية أو JSON خام
             excel_data = pd.read_excel(file_path, sheet_name=None)
             combined_tables = {}
             for sheet_name, df in excel_data.items():
-                # ملء القيم الفارغة لتجنب مشاكل الـ JSON
                 df = df.fillna("")
                 combined_tables[sheet_name] = df.to_dict(orient="records")
             return combined_tables
@@ -72,7 +82,6 @@ class DocumentIntakeProcessor:
             for para in doc.paragraphs:
                 if para.text.strip():
                     full_text.append(para.text)
-            # استخراج الجداول أيضاً داخل ملف الورد إن وجدت
             for table in doc.tables:
                 for row in table.rows:
                     text_row = [cell.text.strip() for cell in row.cells]
@@ -81,15 +90,32 @@ class DocumentIntakeProcessor:
             
         elif file_type == "native_pdf":
             with pdfplumber.open(file_path) as pdf:
-                return "\n".join([page.extract_text() or "" for page in pdf.pages])
+                full_text = []
+                for page in pdf.pages:
+                    text = page.extract_text() or ""
+                    # 🌟 التعديل هنا: إصلاح مشكلة اللغة العربية المعكوسة
+                    reshaped_text = arabic_reshaper.reshape(text)
+                    bidi_text = get_display(reshaped_text)
+                    full_text.append(bidi_text)
+                return "\n".join(full_text)
                 
+                # 🌟 استخدام PyMuPDF لاستخراج النصوص العربية بدقة وبدون تشويه
+            # try:
+            #     doc = fitz.open(file_path)
+            #     full_text = []
+            #     for page in doc:
+            #         full_text.append(page.get_text())
+            #     doc.close()
+            #     return "\n".join(full_text)
+            # except Exception as e:
+            #     print(f"❌ Error reading PDF: {e}")
+            #     return ""
+            
         elif file_type == "scanned_pdf":
-            # استخدام الـ Vision Extraction الصفحات الممسوحة ضوئياً
             return self._extract_scanned_pdf_via_vision(file_path)
             
         else:
             return "Unsupported file content format."
-
     # 3. Structuring Agent: تحويل البيانات الخام العشوائية لـ JSON موحد ومتوافق
     def structure_to_unified_json(self, raw_content: Any) -> dict:
         print("⏳ Structuring Agent active. Formatting data to unified JSON structure...")
