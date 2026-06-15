@@ -38,7 +38,12 @@ class TenderFiles(models.Model):
 
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE, related_name="files")
 
-    file_url = models.URLField()
+    # Stores the uploaded file. The path is exposed through `file_url`.
+    file = models.FileField(upload_to="tender_files/", null=True, blank=True)
+
+    # Server path/URL of the file (populated from `file` on upload, or set
+    # directly to an external link).
+    file_url = models.CharField(max_length=500, blank=True)
 
     file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
 
