@@ -48,3 +48,31 @@ def save_documents_to_db(documents: list, connection_string: str, tender_id: str
     except Exception as e:
         print(f"❌ Error occurred while saving {source_id} to the database: {e}")
         return False
+
+
+def search_documents(connection_string: str, tender_id: str, query: str, top_k: int = 5) -> list[dict]:
+    """Search the vector store for a tender and return the top matching documents."""
+    collection_name = f"tender_{tender_id}"
+    vector_store = get_vector_store(connection_string, collection_name)
+
+    try:
+        results = vector_store.similarity_search(query, k=top_k)
+    except Exception:
+        try:
+            results = vector_store.similarity_search_with_score(query, k=top_k)
+        except Exception as exc:
+            raise RuntimeError(f"Vector search failed: {exc}")
+
+    output = []
+    for item in results:
+        if isinstance(item, tuple) and len(item) == 2:
+            doc, score = item
+        else:
+            doc, score = item, None
+
+        output.append({
+            "content": getattr(doc, "page_content", ""),
+            "metadata": getattr(doc, "metadata", {}),
+            "score": score,
+        })
+    return output
