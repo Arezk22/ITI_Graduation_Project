@@ -5,21 +5,18 @@ BASE_URL = 'api/v1/'
 
 urlpatterns = [
     # POST tenders/  -> create a tender with its files and evaluation rules (owner only)
-    # Request body:
-    # {
-    #   "title": "Road Construction",
-    #   "description": "Build new road",
-    #   "budget": 1000000,
-    #   "deadline_at": "2026-07-01T00:00:00Z",
-    #   "status": "open",                              # optional, defaults to "open"
-    #   "files": [                                     # optional
-    #     {"file_url": "https://example.com/spec.pdf", "file_type": "pdf"}
-    #   ],
-    #   "evaluation_rules": [                          # optional
-    #     {"rule_name": "Experience", "rule_value": "30"},
-    #     {"rule_name": "Price", "rule_value": "70"}
-    #   ]
-    # }
+    #
+    # To upload files, send the request as multipart/form-data:
+    #   title=Road Construction
+    #   description=Build new road
+    #   budget=1000000
+    #   deadline_at=2026-07-01T00:00:00Z
+    #   status=open                                    # optional, defaults to "open"
+    #   files=<file>                                   # optional, repeat for multiple files
+    #   files=<file>                                   #   file_type is detected automatically
+    #   evaluation_rules=[{"rule_name":"Price","rule_value":"70"}]   # optional, JSON string
+    #
+    # Without files, a plain JSON body also works (omit the `files` field).
     # Response (201):
     # { "id": 1 }
     path(BASE_URL + 'tenders', views.TendersListView.as_view(), name='tenders_list'),

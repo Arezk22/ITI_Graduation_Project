@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.exceptions import NotFound
@@ -7,6 +8,7 @@ from django.db import transaction
 from api.models import Tenders
 from api.serializers import (
     TendersSerializer,
+    TenderDetailSerializer,
     TenderFilesSerializer,
     EvaluationRulesSerializer,
     TenderSubmissionsSerializer,
@@ -16,6 +18,7 @@ from .permissions import IsOwner, IsContractor, IsTenderOwner, IsSubmissionOwner
 
 
 class TendersListView(APIView):
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_permissions(self):
         if self.request.method == 'POST':
@@ -31,7 +34,7 @@ class TendersListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = CreateTenderSerializer(data=request.data)
+        serializer = CreateTenderSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             with transaction.atomic():
                 tender = serializer.save(owner=request.user)
@@ -54,7 +57,7 @@ class TenderDetailView(APIView):
 
     def get(self, request, pk):
         tender = self.get_object(pk)
-        serializer = TendersSerializer(tender)
+        serializer = TenderDetailSerializer(tender, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request, pk):
@@ -74,6 +77,8 @@ class TenderDetailView(APIView):
 
 
 class TenderFilesView(APIView):
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
     def get_permissions(self):
         if self.request.method in ['POST', 'DELETE']:
             return [IsAuthenticated(), IsOwner(), IsTenderOwner()]
@@ -90,7 +95,7 @@ class TenderFilesView(APIView):
         if not tender:
             return Response(status=404, data={'message': 'Tender not found'})
         files = tender.files.all()
-        serializer = TenderFilesSerializer(files, many=True)
+        serializer = TenderFilesSerializer(files, many=True, context={'request': request})
         return Response(serializer.data)
 
     def post(self, request, tender_id):
@@ -98,7 +103,7 @@ class TenderFilesView(APIView):
         if not tender:
             return Response(status=404, data={'message': 'Tender not found'})
         self.check_object_permissions(request, tender)
-        serializer = TenderFilesSerializer(data=request.data)
+        serializer = TenderFilesSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(tender=tender)
             return Response(serializer.data, status=201)
