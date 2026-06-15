@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 
 from ai_pipeline.main_pipeline import run_tender_evaluation_job
 from ai_pipeline.vector_store import search_documents
+from langchain_openai import ChatOpenAI
 
 
 def _save_uploaded_file(uploaded_file):
@@ -75,7 +76,7 @@ def evaluate_tender(request):
         if not tender_id:
             tender_id = os.path.splitext(os.path.basename(tender_file.name))[0]
 
-        db_connection_string = os.getenv('DATABASE_URL', None)
+        db_connection_string = os.getenv('VECTOR_DB_CONNECTION_STRING', None)
 
         result = run_tender_evaluation_job(
             tender_id=tender_id,
@@ -97,6 +98,58 @@ def evaluate_tender(request):
                     os.remove(path)
             except OSError:
                 pass
+
+
+def _build_rag_prompt(query, documents):
+    """Build a prompt that includes retrieved documents and the user query."""
+    docs_text = []
+    for index, doc in enumerate(documents, start=1):
+        metadata = doc.get('metadata', {}) or {}
+        source_id = metadata.get('source_id', 'unknown')
+        score = doc.get('score', None)
+        doc_content = doc.get('content', '')
+        docs_text.append(
+            f"Document {index} (source: {source_id}, score: {score})\n{doc_content}"
+        )
+
+    return f"""You are a construction tender AI assistant.
+Use ONLY the following documents to answer the question. Do NOT invent any information.
+If the answer cannot be determined from the documents, say: 'لا توجد معلومات كافية في المستندات المقدمة.'
+
+Context documents:
+{''.join(['\n\n---\n\n' + d for d in docs_text])}
+
+User question:
+{query}
+
+Answer in Arabic:"""
+
+
+def _run_rag_query(tender_id, query, top_k=5):
+    db_connection_string = os.getenv('DATABASE_URL') or os.getenv('VECTOR_DB_CONNECTION_STRING')
+    if not db_connection_string:
+        raise RuntimeError('Vector DB connection string not configured.')
+
+    documents = search_documents(db_connection_string, tender_id, query, top_k=top_k)
+    if not documents:
+        raise RuntimeError('No reference documents found for this tender.')
+
+    llm = ChatOpenAI(
+        model='gpt-4o-mini',
+        temperature=0,
+        api_key=os.getenv('OPENAI_API_KEY'),
+        openai_api_base=os.getenv('OPENAI_API_BASE')
+    )
+
+    prompt = _build_rag_prompt(query, documents)
+    response = llm.invoke(prompt)
+    answer = getattr(response, 'content', str(response))
+
+    return {
+        'query': query,
+        'answer': answer,
+        'references': documents,
+    }
 
 
 @csrf_exempt
@@ -124,5 +177,30 @@ def search_rag(request):
     try:
         documents = search_documents(db_connection_string, tender_id, query, top_k=top_k)
         return JsonResponse({'status': 'success', 'tender_id': tender_id, 'query': query, 'results': documents})
+    except Exception as exc:
+        return JsonResponse({'status': 'error', 'message': str(exc)}, status=500)
+
+
+@csrf_exempt
+@require_POST
+def rag_answer(request):
+    """API endpoint for an end-to-end RAG answer using retrieved reference documents."""
+    tender_id = request.POST.get('tender_id')
+    query = request.POST.get('query')
+    top_k_raw = request.POST.get('top_k')
+
+    if not tender_id:
+        return JsonResponse({'status': 'error', 'message': 'Missing tender_id.'}, status=400)
+    if not query:
+        return JsonResponse({'status': 'error', 'message': 'Missing query.'}, status=400)
+
+    try:
+        top_k = int(top_k_raw) if top_k_raw else 5
+    except ValueError:
+        return JsonResponse({'status': 'error', 'message': 'top_k must be an integer.'}, status=400)
+
+    try:
+        response = _run_rag_query(tender_id, query, top_k=top_k)
+        return JsonResponse({'status': 'success', 'data': response})
     except Exception as exc:
         return JsonResponse({'status': 'error', 'message': str(exc)}, status=500)
