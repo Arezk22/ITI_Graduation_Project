@@ -1,6 +1,78 @@
-import { Link } from "react-router-dom";
+
+
+
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 function OwnerSignUp() {
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    companyName: "",
+    email: "",
+    password: "",
+  });
+
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Full name is required";
+    } else if (formData.fullName.trim().length < 3) {
+      newErrors.fullName = "Full name must be at least 3 characters";
+    }
+
+    if (!formData.companyName.trim()) {
+      newErrors.companyName = "Company name is required";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password =
+        "Password must contain uppercase, lowercase, and number";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+
+    setErrors({
+      ...errors,
+      [name]: "",
+    });
+  };
+
+  const handleCreateAccount = (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    console.log("Owner signup:", formData);
+
+    navigate("/owner/dashboard");
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-left">
@@ -59,28 +131,102 @@ function OwnerSignUp() {
 
           <div className="mb-3">
             <label className="form-label">Full Name</label>
-            <input type="text" className="form-control auth-input" placeholder="James Whitfield" />
+            <input
+              type="text"
+              name="fullName"
+              className={`form-control auth-input ${
+                errors.fullName ? "is-invalid" : ""
+              }`}
+              placeholder="James Whitfield"
+              value={formData.fullName}
+              onChange={handleChange}
+            />
+
+            {errors.fullName && (
+              <div className="invalid-feedback d-block">
+                {errors.fullName}
+              </div>
+            )}
           </div>
 
           <div className="mb-3">
             <label className="form-label">Company Name</label>
-            <input type="text" className="form-control auth-input" placeholder="Whitfield Properties LLC" />
+            <input
+              type="text"
+              name="companyName"
+              className={`form-control auth-input ${
+                errors.companyName ? "is-invalid" : ""
+              }`}
+              placeholder="Whitfield Properties LLC"
+              value={formData.companyName}
+              onChange={handleChange}
+            />
+
+            {errors.companyName && (
+              <div className="invalid-feedback d-block">
+                {errors.companyName}
+              </div>
+            )}
           </div>
 
           <div className="mb-3">
             <label className="form-label">Email Address</label>
-            <input type="email" className="form-control auth-input" placeholder="james@whitfieldprop.com" />
+            <input
+              type="email"
+              name="email"
+              className={`form-control auth-input ${
+                errors.email ? "is-invalid" : ""
+              }`}
+              placeholder="james@whitfieldprop.com"
+              value={formData.email}
+              onChange={handleChange}
+            />
+
+            {errors.email && (
+              <div className="invalid-feedback d-block">
+                {errors.email}
+              </div>
+            )}
           </div>
 
           <div className="mb-4">
             <label className="form-label">Password</label>
+
             <div className="password-wrapper">
-              <input type="password" className="form-control auth-input" placeholder="••••••••" />
-              <i className="bi bi-eye"></i>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                className={`form-control auth-input ${
+                  errors.password ? "is-invalid" : ""
+                }`}
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+              />
+
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                <i
+                  className={`bi ${
+                    showPassword ? "bi-eye-slash" : "bi-eye"
+                  }`}
+                ></i>
+              </button>
             </div>
+
+            {errors.password && (
+              <div className="invalid-feedback d-block">
+                {errors.password}
+              </div>
+            )}
           </div>
 
-          <button className="btn auth-submit w-100">Create Account</button>
+          <button onClick={handleCreateAccount} className="btn auth-submit w-100">
+            Create Account
+          </button>
 
           <div className="divider">
             <span>or continue with</span>

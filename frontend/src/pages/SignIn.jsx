@@ -1,6 +1,62 @@
+
+
+
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 function SignIn() {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+
+    setErrors({
+      ...errors,
+      [name]: "",
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    console.log("Login data:", formData);
+
+    // هنا بعدين هنربطه بالباك
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-left">
@@ -55,39 +111,69 @@ function SignIn() {
 
           <div className="mb-3">
             <label className="form-label">Email Address</label>
+
             <input
               type="email"
-              className="form-control auth-input"
+              name="email"
+              className={`form-control auth-input ${
+                errors.email ? "is-invalid" : ""
+              }`}
               placeholder="james@whitfieldprop.com"
+              value={formData.email}
+              onChange={handleChange}
             />
+
+            {errors.email && (
+              <div className="invalid-feedback d-block">
+                {errors.email}
+              </div>
+            )}
           </div>
 
           <div className="mb-3">
-            <div className="d-flex justify-content-between">
-              <label className="form-label">Password</label>
-            </div>
+            <label className="form-label">Password</label>
+
             <div className="password-wrapper">
               <input
-                type="password"
-                className="form-control auth-input"
-                placeholder="••••••••"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                className={`form-control auth-input ${
+                  errors.password ? "is-invalid" : ""
+                }`}
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
               />
-              <i className="bi bi-eye"></i>
+
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                <i
+                  className={`bi ${
+                    showPassword ? "bi-eye-slash" : "bi-eye"
+                  }`}
+                ></i>
+              </button>
             </div>
+
+            {errors.password && (
+              <div className="invalid-feedback d-block">
+                {errors.password}
+              </div>
+            )}
           </div>
 
           <div className="text-end mb-4">
-            <a href="#" className="forgot-link">Forgot password?</a>
+            <a href="#" className="forgot-link">
+              Forgot password?
+            </a>
           </div>
 
-          {/* <label className="form-label">Sign in as</label>
-          <div className="role-buttons">
-            <button>Owner</button>
-            <button>Contractor</button>
-            <button>Admin</button>
-          </div> */}
-
-          <button className="btn auth-submit w-100 mt-4">Sign In</button>
+          <button onClick={handleSubmit} className="btn auth-submit w-100">
+            Sign In
+          </button>
 
           <div className="divider">
             <span>or continue with</span>
