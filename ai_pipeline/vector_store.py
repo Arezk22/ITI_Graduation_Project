@@ -2,6 +2,101 @@ import os
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import PGVector
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
+from .extractors.document_processor import DocumentIntakeProcessor 
+
+
+def prepare_documents_for_vector_db(files_data : list,base_metadata: dict | None = None) -> list[Document]:
+    """
+    دالة مساعدة لتحويل النصوص الخام أو الجداول إلى قائمة من كائنات Document 
+    جاهزة للحفظ في قاعدة البيانات وتقسيم النصوص الطويلة لتجنب مشاكل الـ Tokens.
+    """
+    if base_metadata is None:
+        base_metadata = {}
+        
+    docs = []
+    text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000, 
+            chunk_overlap=150
+        )
+    
+    for file in files_data:
+        file_metadata={
+            **base_metadata,
+            "file_id": file.get("file_id"),
+            "file_category": file.get("file_category")
+        }
+        
+        
+        for page in file.get("content", []):
+
+            page_metadata = {
+                **file_metadata,
+                "page": page.get("page")
+            }
+            
+            
+            page_text = page.get("content", "")
+
+            if page_text:
+
+                chunks = text_splitter.split_text(page_text)
+
+                for chunk in chunks:
+                    docs.append(
+                        Document(
+                            page_content=chunk,
+                            metadata={
+                                **page_metadata,
+                                "content_type": "text"
+                            }
+                        )
+                    )
+                    
+            tables = page.get("tables", [])
+            
+            for table_index, table in enumerate(tables):
+
+                table_text = DocumentIntakeProcessor.table_to_text(table)
+
+                docs.append(
+                    Document(
+                        page_content=table_text,
+                        metadata={
+                            **page_metadata,
+                            "content_type": "table",
+                            "table_index": table_index
+                        }
+                    )
+                )  
+    return docs
+    
+    # 1. إذا كان المحتوى عبارة عن نصوص (Word, PDF)
+    # if isinstance(raw_content, str):
+    #     text_splitter = RecursiveCharacterTextSplitter(
+    #         chunk_size=1000, 
+    #         chunk_overlap=150
+    #     )
+    #     chunks = text_splitter.split_text(raw_content)
+    #     for chunk in chunks:
+    #         docs.append(Document(page_content=chunk, metadata=base_metadata.copy()))
+            
+    # # 2. إذا كان المحتوى عبارة عن قواميس/جداول (Excel)
+    # elif isinstance(raw_content, dict):
+    #     for sheet_name, rows in raw_content.items():
+    #         for row in rows:
+    #             # دمج بيانات الصف في نص واحد مقروء
+    #             content_parts = [f"{k}: {v}" for k, v in row.items() if str(v).strip()]
+    #             if not content_parts:
+    #                 continue
+    #             content = " | ".join(content_parts)
+    #             row_meta = base_metadata.copy()
+    #             row_meta["sheet_name"] = sheet_name
+    #             docs.append(Document(page_content=content, metadata=row_meta))
+    
+
+
 
 def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     """

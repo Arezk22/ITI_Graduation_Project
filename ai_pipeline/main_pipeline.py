@@ -5,46 +5,13 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
 # استدعاء المكونات اللي برمجناها
-from .extractors.document_processor import DocumentIntakeProcessor
+from .extractors.document_processor import DocumentIntakeProcessor 
 from .agents.tender_graph import EvaluationWorkflow
 
 # 🌟 التعديل الجديد: استدعاء دالة حفظ البيانات في الـ Vector Store
-from .vector_store import save_documents_to_db 
+from .vector_store import save_documents_to_db ,prepare_documents_for_vector_db
 
-def prepare_documents_for_vector_db(raw_content, base_metadata: dict = None) -> list[Document]:
-    """
-    دالة مساعدة لتحويل النصوص الخام أو الجداول إلى قائمة من كائنات Document 
-    جاهزة للحفظ في قاعدة البيانات وتقسيم النصوص الطويلة لتجنب مشاكل الـ Tokens.
-    """
-    if base_metadata is None:
-        base_metadata = {}
-        
-    docs = []
-    
-    # 1. إذا كان المحتوى عبارة عن نصوص (Word, PDF)
-    if isinstance(raw_content, str):
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000, 
-            chunk_overlap=150
-        )
-        chunks = text_splitter.split_text(raw_content)
-        for chunk in chunks:
-            docs.append(Document(page_content=chunk, metadata=base_metadata.copy()))
-            
-    # 2. إذا كان المحتوى عبارة عن قواميس/جداول (Excel)
-    elif isinstance(raw_content, dict):
-        for sheet_name, rows in raw_content.items():
-            for row in rows:
-                # دمج بيانات الصف في نص واحد مقروء
-                content_parts = [f"{k}: {v}" for k, v in row.items() if str(v).strip()]
-                if not content_parts:
-                    continue
-                content = " | ".join(content_parts)
-                row_meta = base_metadata.copy()
-                row_meta["sheet_name"] = sheet_name
-                docs.append(Document(page_content=content, metadata=row_meta))
-                
-    return docs
+               
 
 
 def run_tender_evaluation_job(
@@ -87,7 +54,7 @@ def run_tender_evaluation_job(
         print(f"📂 Processing Employer Tender File...")
         tender_type = doc_processor.intake_and_route(tender_file_path)
         tender_raw_content = doc_processor.extract_content(tender_file_path, tender_type)
-        tender_requirements = doc_processor.structure_to_unified_json(tender_raw_content)
+        tender_requirements = doc_processor.structure_to_unified_json("tender",tender_raw_content)
 
         # 🌟 التعديل الجديد: حفظ ملف المالك في قاعدة البيانات
         if db_connection_string:
@@ -111,7 +78,7 @@ def run_tender_evaluation_job(
             print(f"📂 Processing Proposal for Contractor: {c_id}...")
             c_type = doc_processor.intake_and_route(c_path)
             c_raw = doc_processor.extract_content(c_path, c_type)
-            c_structured = doc_processor.structure_to_unified_json(c_raw)
+            c_structured = doc_processor.structure_to_unified_json("submission",c_raw)
             
             # 🌟 التعديل الجديد: حفظ ملف المقاول في قاعدة البيانات
             if db_connection_string:
@@ -191,3 +158,5 @@ def index_file_for_rag(file_instance):
   """
   # TODO: implement embedding + vector storage for file_instance.file_url
   return None
+
+
