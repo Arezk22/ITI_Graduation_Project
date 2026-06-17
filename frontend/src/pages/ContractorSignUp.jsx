@@ -79,7 +79,7 @@ function ContractorSignUp() {
         password: formData.password,
         role: "contractor",
       });
-
+      // change the url to the contractor dashboard after created
       navigate("/signin");
     } catch (error) {
       setErrors(mapRegisterErrors(error));
