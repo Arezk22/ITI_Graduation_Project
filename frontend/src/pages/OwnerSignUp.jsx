@@ -80,7 +80,7 @@ function OwnerSignUp() {
         role: "owner",
       });
 
-      navigate("/signin");
+      navigate("/owner/dashboard");
     } catch (error) {
       setErrors(mapRegisterErrors(error));
     } finally {

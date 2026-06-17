@@ -80,7 +80,7 @@ function ContractorSignUp() {
         role: "contractor",
       });
 
-      navigate("/signin");
+      navigate("/contractor/dashboard");
     } catch (error) {
       setErrors(mapRegisterErrors(error));
     } finally {
