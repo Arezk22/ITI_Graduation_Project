@@ -77,7 +77,14 @@ function SignIn() {
       }
     } catch (error) {
       if (error.detail) {
-        setErrors({ password: "Invalid email or password" });
+        const message = Array.isArray(error.detail)
+          ? error.detail[0]
+          : error.detail;
+        setErrors({
+          password: message.includes("connect")
+            ? message
+            : "Invalid email or password",
+        });
       } else if (error.email) {
         setErrors({
           email: Array.isArray(error.email) ? error.email[0] : error.email,
