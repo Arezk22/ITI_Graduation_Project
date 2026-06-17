@@ -1,6 +1,6 @@
 import os
-from tenders.ai_engine.extractor import extract_pdf_content
-from tenders.ai_engine.partitioner import chunk_documents
+from ai_agent.extractor import extract_pdf_content
+from ai_agent.partitioner import chunk_documents
 
 # اسم ملف الـ PDF اللي هنجرب عليه
 PDF_PATH = "E:/Iti6month/Graduation Project/BuildTender_AI_Features.pdf"
