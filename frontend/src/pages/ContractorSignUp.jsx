@@ -80,7 +80,7 @@ function ContractorSignUp() {
         role: "contractor",
       });
 
-      navigate("/contractor/dashboard");
+      navigate("/signin");
     } catch (error) {
       setErrors(mapRegisterErrors(error));
     } finally {
@@ -236,6 +236,10 @@ function ContractorSignUp() {
               </div>
             )}
           </div>
+
+          {errors.form && (
+            <div className="alert alert-danger py-2 mb-3">{errors.form}</div>
+          )}
 
           <button
             onClick={handleCreateAccount}
