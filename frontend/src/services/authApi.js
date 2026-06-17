@@ -1,5 +1,10 @@
 const API_BASE = "http://localhost:8000";
 
+const CONNECTION_ERROR = {
+  detail:
+    "Cannot connect to the server. Make sure the backend is running on port 8000.",
+};
+
 async function parseResponse(response) {
   const data = await response.json().catch(() => ({}));
 
@@ -10,28 +15,40 @@ async function parseResponse(response) {
   return data;
 }
 
+async function apiRequest(url, options) {
+  let response;
+
+  try {
+    response = await fetch(url, options);
+  } catch {
+    throw CONNECTION_ERROR;
+  }
+
+  return parseResponse(response);
+}
+
 export async function login(email, password) {
-  const response = await fetch(`${API_BASE}/api/v1/login/`, {
+  return apiRequest(`${API_BASE}/api/v1/login/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-
-  return parseResponse(response);
 }
 
 export async function register(userData) {
-  const response = await fetch(`${API_BASE}/api/v1/register/`, {
+  return apiRequest(`${API_BASE}/api/v1/register/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData),
   });
-
-  return parseResponse(response);
 }
 
 export function mapRegisterErrors(error) {
   const backendErrors = {};
+
+  if (error.detail) {
+    backendErrors.form = Array.isArray(error.detail) ? error.detail[0] : error.detail;
+  }
 
   if (error.email) {
     backendErrors.email = Array.isArray(error.email) ? error.email[0] : error.email;
