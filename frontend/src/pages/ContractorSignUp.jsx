@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { mapRegisterErrors, register } from "../services/authApi";
 
 function ContractorSignUp() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -62,14 +64,28 @@ function ContractorSignUp() {
     });
   };
 
-  const handleCreateAccount = (e) => {
+  const handleCreateAccount = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    console.log("Contractor signup:", formData);
+    setIsLoading(true);
 
-    navigate("/owner/dashboard");
+    try {
+      await register({
+        first_name: formData.fullName.trim(),
+        company_name: formData.companyName.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        role: "contractor",
+      });
+
+      navigate("/signin");
+    } catch (error) {
+      setErrors(mapRegisterErrors(error));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -221,8 +237,12 @@ function ContractorSignUp() {
             )}
           </div>
 
-          <button onClick={handleCreateAccount} className="btn auth-submit w-100">
-            Create Account
+          <button
+            onClick={handleCreateAccount}
+            className="btn auth-submit w-100"
+            disabled={isLoading}
+          >
+            {isLoading ? "Creating account..." : "Create Account"}
           </button>
 
           <div className="divider">
@@ -230,8 +250,8 @@ function ContractorSignUp() {
           </div>
 
           <div className="social-buttons">
-            <button>Google</button>
-            <button>Microsoft</button>
+            <button type="button">Google</button>
+            <button type="button">Microsoft</button>
           </div>
 
           <p className="signup-text">
