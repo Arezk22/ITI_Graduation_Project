@@ -239,6 +239,10 @@ function OwnerSignUp() {
             )}
           </div>
 
+          {errors.form && (
+            <div className="alert alert-danger py-2 mb-3">{errors.form}</div>
+          )}
+
           <button
             onClick={handleCreateAccount}
             className="btn auth-submit w-100"
