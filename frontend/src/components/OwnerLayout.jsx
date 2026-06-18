@@ -16,7 +16,10 @@ function OwnerLayout({ activePage, children }) {
   return (
     <div className={`owner-layout ${sidebarOpen ? "" : "sidebar-collapsed"}`}>
       <aside className="owner-sidebar">
-        <div className="sidebar-brand" onClick={() => navigate("/owner/dashboard")}>
+        <div
+          className="sidebar-brand"
+          onClick={() => navigate("/owner/dashboard")}
+        >
           <span className="brand-icon">
             <i className="bi bi-building"></i>
           </span>
@@ -45,7 +48,10 @@ function OwnerLayout({ activePage, children }) {
             Create Tender
           </button>
 
-          <button>
+          <button
+            className={activePage === "tenders" ? "active" : ""}
+            onClick={() => navigate("/owner/tenders")}
+          >
             <i className="bi bi-file-earmark-text"></i>
             Tender Details
           </button>
