@@ -37,41 +37,60 @@ function OwnerLayout({ activePage, children }) {
             Dashboard
           </button>
 
-          <button
+          {/* <button
             className={activePage === "create" ? "active" : ""}
             onClick={() => navigate("/owner/create-tender")}
           >
             <i className="bi bi-plus-circle"></i>
             Create Tender
-          </button>
+          </button> */}
 
-          <button>
-            <i className="bi bi-file-earmark-text"></i>
-            Tender Details
-          </button>
+<button
+  className={activePage === "tender-details" ? "active" : ""}
+  onClick={() => navigate("/owner/tender-details")}
+>
+  <i className="bi bi-file-earmark-text"></i>
+  Tender Details
+</button>
 
-          <button>
-            <i className="bi bi-bar-chart"></i>
-            Evaluation
-          </button>
+<button
+  className={activePage === "evaluation" ? "active" : ""}
+  onClick={() => navigate("/owner/evaluation")}
+>
+  <i className="bi bi-bar-chart"></i>
+  Evaluation
+</button>
 
-          <button>
-            <i className="bi bi-cpu"></i>
-            AI Analysis
-          </button>
+<button
+  className={activePage === "ai-analysis" ? "active" : ""}
+  onClick={() => navigate("/owner/ai-analysis")}
+>
+  <i className="bi bi-cpu"></i>
+  AI Analysis
+</button>
 
-          <button>
-            <i className="bi bi-chat-left"></i>
-            Document Chat
-          </button>
+<button
+  className={activePage === "document-chat" ? "active" : ""}
+  onClick={() => navigate("/owner/document-chat")}
+>
+  <i className="bi bi-chat-left"></i>
+  Document Chat
+</button>
 
-          <button>
-            <i className="bi bi-download"></i>
-            Reports
-          </button>
+
+<button
+  className={activePage === "reports" ? "active" : ""}
+  onClick={() => navigate("/owner/reports")}
+>
+  <i className="bi bi-download"></i>
+  Reports
+</button>
+
         </nav>
 
         <div className="sidebar-bottom">
+
+
           <button
             className={activePage === "notifications" ? "active" : ""}
             onClick={() => navigate("/owner/notifications")}
@@ -141,7 +160,12 @@ function OwnerLayout({ activePage, children }) {
           </div>
         </header>
 
-        {children}
+<div
+  className={`owner-page-wrapper ${
+    activePage === "document-chat" ? "no-page-padding" : ""
+  }`}
+>  {children}
+</div>
       </main>
     </div>
   );
