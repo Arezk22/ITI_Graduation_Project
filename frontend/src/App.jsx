@@ -10,7 +10,7 @@ import SignUp from "./pages/SignUp";
 import OwnerSignUp from "./pages/OwnerSignUp";
 import ContractorSignUp from "./pages/ContractorSignUp";
 import OwnerDashboard from "./pages/OwnerDashboard";
-// import CreateTender from "./pages/CreateTender";
+import CreateTender from "./pages/CreateTender";
 import Notifications from "./pages/Notifications";
 import Evaluation from "./pages/Evaluation";
 import AIAnalysis from "./pages/AIAnalysis";
@@ -33,7 +33,7 @@ function App() {
         <Route path="/signup/owner" element={<OwnerSignUp />} />
         <Route path="/signup/contractor" element={<ContractorSignUp />} />
         <Route path="/owner/dashboard" element={<OwnerDashboard />} />
-        {/* <Route path="/owner/create-tender" element={<CreateTender />} /> */}
+        <Route path="/owner/create-tender" element={<CreateTender />} />
         <Route path="/owner/notifications" element={<Notifications />} />
         <Route path="/owner/evaluation" element={<Evaluation />} />
         <Route path="/owner/ai-analysis" element={<AIAnalysis />} />

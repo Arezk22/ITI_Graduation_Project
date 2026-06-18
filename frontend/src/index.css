@@ -1,7 +1,7 @@
 
 
 html {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 body {
@@ -1357,7 +1357,7 @@ body {
 
 /* -------------------------------------------- create tender -------------------------------------- */
 
-/* .create-tender-content {
+.create-tender-content {
   padding: 38px 28px 60px;
   max-width: 1180px;
   margin: 0 auto;
@@ -1555,7 +1555,7 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 }
- */
+
 
 /* -------------------------------------------------------- Notifications ---------------------------------------------- */
 

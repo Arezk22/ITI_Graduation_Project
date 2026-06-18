@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// import React, { useState } from "react";
+import{ useState } from "react";
 import OwnerLayout from "../components/OwnerLayout";
 
 function CreateTender() {
@@ -383,7 +384,7 @@ function CreateTender() {
             </span>
           </div>
 
-          {/* Contractor Invitation Selection */}
+          {/* Contractor Invitation Selection
           <div
             className="p-4"
             style={{ border: "1px solid #e2e8f0", borderRadius: "12px" }}
@@ -412,7 +413,7 @@ function CreateTender() {
               <span className="fw-semibold">47</span> pre-qualified contractors
               in your category.
             </small>
-          </div>
+          </div> */}
         </div>
       );
     }

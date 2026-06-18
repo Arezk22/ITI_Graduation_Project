@@ -37,13 +37,13 @@ function OwnerLayout({ activePage, children }) {
             Dashboard
           </button>
 
-          {/* <button
+          <button
             className={activePage === "create" ? "active" : ""}
             onClick={() => navigate("/owner/create-tender")}
           >
             <i className="bi bi-plus-circle"></i>
             Create Tender
-          </button> */}
+          </button>
 
 <button
   className={activePage === "tender-details" ? "active" : ""}
