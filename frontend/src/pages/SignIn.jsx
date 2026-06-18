@@ -1,11 +1,13 @@
 
 
-
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { login } from "../services/authApi";
 
 function SignIn() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -47,14 +49,58 @@ function SignIn() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    console.log("Login data:", formData);
+    setIsLoading(true);
 
-    // هنا بعدين هنربطه بالباك
+    try {
+      const { access, refresh, role } = await login(
+        formData.email,
+        formData.password
+      );
+
+      localStorage.setItem("accessToken", access);
+      localStorage.setItem("refreshToken", refresh);
+      localStorage.setItem("userRole", role);
+
+      if (role === "owner") {
+        navigate("/owner/dashboard");
+      } else if (role === "contractor") {
+        // change the url to the contractor dashboard after created
+        navigate("/");
+      } else {
+        // change the url to the admin dashboard after created
+        navigate("/");
+      }
+    } catch (error) {
+      if (error.detail) {
+        const message = Array.isArray(error.detail)
+          ? error.detail[0]
+          : error.detail;
+        setErrors({
+          password: message.includes("connect")
+            ? message
+            : "Invalid email or password",
+        });
+      } else if (error.email) {
+        setErrors({
+          email: Array.isArray(error.email) ? error.email[0] : error.email,
+        });
+      } else if (error.password) {
+        setErrors({
+          password: Array.isArray(error.password)
+            ? error.password[0]
+            : error.password,
+        });
+      } else {
+        setErrors({ password: "Unable to sign in. Please try again." });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -171,8 +217,12 @@ function SignIn() {
             </a>
           </div>
 
-          <button onClick={handleSubmit} className="btn auth-submit w-100">
-            Sign In
+          <button
+            onClick={handleSubmit}
+            className="btn auth-submit w-100"
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing in..." : "Sign In"}
           </button>
 
           <div className="divider">
@@ -180,8 +230,8 @@ function SignIn() {
           </div>
 
           <div className="social-buttons">
-            <button>Google</button>
-            <button>Microsoft</button>
+            <button type="button">Google</button>
+            <button type="button">Microsoft</button>
           </div>
 
           <p className="signup-text">
