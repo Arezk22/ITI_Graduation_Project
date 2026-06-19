@@ -11,6 +11,20 @@ class Tenders(models.Model):
         ("closed", "Closed"),
     )
 
+    CATEGORY_CHOICES = (
+        ("construction", "Construction"),
+        ("roads", "Roads & Infrastructure"),
+        ("buildings", "Buildings"),
+        ("electrical", "Electrical"),
+        ("mechanical", "Mechanical"),
+        ("water", "Water & Sewage"),
+        ("it", "IT & Telecom"),
+        ("consulting", "Consulting"),
+        ("supplies", "Supplies & Procurement"),
+        ("maintenance", "Maintenance"),
+        ("other", "Other"),
+    )
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tenders"
     )
@@ -18,7 +32,13 @@ class Tenders(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
 
+    project_category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    location = models.CharField(max_length=255)
+
     budget = models.DecimalField(max_digits=14, decimal_places=2)
+
+    start_date = models.DateField()
+    duration_months = models.PositiveIntegerField()
 
     deadline_at = models.DateTimeField()
 
@@ -36,6 +56,13 @@ class TenderFiles(models.Model):
         ("img", "Image"),
     )
 
+    FILE_CATEGORY_CHOICES = (
+        ("technical", "Technical Proposal"),
+        ("financial", "Financial Proposal"),
+        ("boq", "BOQ"),
+        ("certificates", "Certificates & License"),
+    )
+
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE, related_name="files")
 
     # Stores the uploaded file. The path is exposed through `file_url`.
@@ -46,6 +73,8 @@ class TenderFiles(models.Model):
     file_url = models.CharField(max_length=500, blank=True)
 
     file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
+
+    file_category = models.CharField(max_length=20, choices=FILE_CATEGORY_CHOICES, blank=True)
 
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
