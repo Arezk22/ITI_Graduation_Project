@@ -36,17 +36,21 @@ def detect_file_type(filename):
 class TendersSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenders
-        fields = ['id', 'owner', 'title', 'description', 'budget', 'deadline_at', 'status', 'created_at']
+        fields = [
+            'id', 'owner', 'title', 'description', 'project_category', 'location',
+            'budget', 'start_date', 'duration_months', 'deadline_at', 'status', 'created_at',
+        ]
         read_only_fields = ['owner', 'created_at']
 
 class TenderFilesSerializer(serializers.ModelSerializer):
     # Binary upload (multipart). Stored on the server; its path is saved to
     # `file_url`. `file_type` is detected from the file extension.
     file = serializers.FileField(write_only=True, required=False)
+    file_category = serializers.ChoiceField(choices=TenderFiles.FILE_CATEGORY_CHOICES)
 
     class Meta:
         model = TenderFiles
-        fields = ['id', 'file', 'file_url', 'file_type', 'uploaded_at']
+        fields = ['id', 'file', 'file_url', 'file_type', 'file_category', 'uploaded_at']
         read_only_fields = ['file_url', 'file_type', 'uploaded_at']
 
     def validate(self, attrs):
@@ -84,7 +88,8 @@ class TenderDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenders
         fields = [
-            'id', 'owner', 'title', 'description', 'budget', 'deadline_at',
+            'id', 'owner', 'title', 'description', 'project_category', 'location',
+            'budget', 'start_date', 'duration_months', 'deadline_at',
             'status', 'created_at', 'files', 'evaluation_rules',
         ]
         read_only_fields = fields
@@ -142,25 +147,37 @@ class CreateTenderSerializer(serializers.ModelSerializer):
     files = serializers.ListField(
         child=serializers.FileField(), write_only=True, required=False
     )
+    # Category per file, aligned by index with `files` (same count, same order).
+    file_categories = serializers.ListField(
+        child=serializers.ChoiceField(choices=TenderFiles.FILE_CATEGORY_CHOICES),
+        write_only=True, required=False,
+    )
     evaluation_rules = EvaluationRulesSerializer(many=True, required=False)
 
     class Meta:
         model = Tenders
         fields = [
-            'id', 'title', 'description', 'budget', 'deadline_at', 'status',
-            'files', 'evaluation_rules',
+            'id', 'title', 'description', 'project_category', 'location',
+            'budget', 'start_date', 'duration_months', 'deadline_at', 'status',
+            'files', 'file_categories', 'evaluation_rules',
         ]
         read_only_fields = ['id']
 
     def to_internal_value(self, data):
-        # Normalise multipart payloads: 
-        # collect repeated `files` fields
+        # Normalise multipart payloads:
+        # collect repeated `files`/`file_categories` fields
         # accept `evaluation_rules` as a JSON-encoded string.
         if isinstance(data, QueryDict):
             files = data.getlist('files')
-            data = {key: data.get(key) for key in data if key != 'files'}
+            categories = data.getlist('file_categories')
+            data = {
+                key: data.get(key) for key in data
+                if key not in ('files', 'file_categories')
+            }
             if files:
                 data['files'] = files
+            if categories:
+                data['file_categories'] = categories
         rules = data.get('evaluation_rules')
         if isinstance(rules, str):
             try:
@@ -171,19 +188,31 @@ class CreateTenderSerializer(serializers.ModelSerializer):
                 )
         return super().to_internal_value(data)
 
+    def validate(self, attrs):
+        files = attrs.get('files', [])
+        categories = attrs.get('file_categories', [])
+        if categories and len(categories) != len(files):
+            raise serializers.ValidationError(
+                {'file_categories': 'Must have one category per uploaded file '
+                                    '(same count and order as `files`).'}
+            )
+        return attrs
+
     def validate_status(self, value):
         return value.lower()
 
     def create(self, validated_data):
         files = validated_data.pop('files', [])
+        categories = validated_data.pop('file_categories', [])
         rules_data = validated_data.pop('evaluation_rules', [])
         tender = Tenders.objects.create(**validated_data)
         # Create children one-by-one (not bulk_create) so post_save signals fire per file.
-        for upload in files:
+        for index, upload in enumerate(files):
             tender_file = TenderFiles.objects.create(
                 tender=tender,
                 file=upload,
                 file_type=detect_file_type(upload.name),
+                file_category=categories[index] if categories else "",
             )
             tender_file.file_url = tender_file.file.url
             tender_file.save(update_fields=['file_url'])
