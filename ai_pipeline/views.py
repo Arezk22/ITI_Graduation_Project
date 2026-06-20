@@ -122,7 +122,7 @@ Context documents:
 User question:
 {query}
 
-Answer in English:"""
+"""
 
 
 def _run_rag_query(tender_id, query, top_k=5):

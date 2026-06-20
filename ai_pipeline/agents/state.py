@@ -1,7 +1,7 @@
 # state.py
 from typing import TypedDict, List, Dict, Any
 import operator
-
+from .tender_graph import RiskAssessment ,TechnicalEvaluation,FinancialEvaluation,ValidationResult,ComparisonResult,RecommendationResult
 # هيكل البيانات الخاص بكل مقاول متقدم للمناقصة
 class ContractorData(TypedDict):
     contractor_id: str              # معرف فريد للمقاول (مثل اسم الشركة)
@@ -17,14 +17,28 @@ class ContractorData(TypedDict):
 
 # الحالة العامة للنظام (Global Tender State)
 class TenderState(TypedDict):
-    tender_id: str                      # معرف المناقصة الكلية التابعة للمالك
-    tender_requirements: Dict[str, Any]     # الشروط والمواصفات القانونية المستخرجة من كراسة المالك
-    evaluation_rules: Dict[str, float]      # أوزان التقييم (خبرة، مالي، فني) المدخلة من المالك
-    historical_prices: Dict[str, float]     # الأسعار التاريخية لبنود المقايسة (BOQ) للتحليل المالي
+    tender_id: int
+
+    submission_ids: list[int]
+
+    validation_results: ValidationResult
     
-    contractors: List[ContractorData]       # قائمة المقاولين المتقدمين للمناقصة وتحليلاتهم
-    final_ranking: List[Dict[str, Any]]     # الترتيب النهائي للمقاولين بعد المقارنة
+    risk_result: RiskAssessment
+
+    technical_evaluation:TechnicalEvaluation
     
-    user_query: str                         # الاستفسارات الإضافية (إن وجدت)
-    chat_history: List[Any]                 # تاريخ المحادثة
-    final_response: str                     # التقرير التنفيذي الشامل والنهائي للنظام
+    financial_evaluation:FinancialEvaluation
+    
+    evaluation_results: dict
+    
+    final_score:list
+
+    final_ranking: list
+    
+    comparison_result:ComparisonResult
+
+    recommendatin_result:RecommendationResult
+    
+    user_query: str
+
+    final_response: str                     

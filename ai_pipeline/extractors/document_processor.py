@@ -103,9 +103,38 @@ class UnifiedStructuredProposal(BaseModel):
         description="Documents submitted as part of the proposal"
     )
 
-    technical_capabilities: List[str] = Field(
+    technical_offer: List[str] = Field(
         default_factory=list,
-        description="Technical skills, methodologies, technologies and capabilities"
+        description="""Summary of the contractor's proposed technical solution, including offered products, 
+        technologies, specifications, system features, compliance statements, and any technical 
+        commitments provided in the proposal."""
+    )
+    
+    implementation_methodology: str = Field(
+        default="",
+        description="""Description of the contractor's proposed implementation methodology, including execution 
+        approach, project phases, work plan, deployment strategy, quality assurance process, 
+        testing procedures, and project management methodology."""
+    )
+
+    warranty_period: str = Field(
+        default="",
+        description="The warranty period provided by the contractor for the completed works, materials, or equipment"
+    )
+
+    support_services: List[str] = Field(
+        default_factory=list,
+        description="Maintenance, support, training, or after-sales services provided by the contractor"
+    )
+
+    deviations: List[str] = Field(
+        default_factory=list,
+        description="Any technical or commercial deviations, modifications, or variations from the original tender specifications requested by the contractor"
+    )
+
+    exclusions: List[str] = Field(
+        default_factory=list,
+        description="Items, works, or responsibilities explicitly excluded from the contractor's scope of work or price proposal"
     )
 
     staff_count: Optional[int] = Field(
