@@ -3660,3 +3660,532 @@ body {
 .owner-page-wrapper.no-page-padding {
   padding: 0;
 }
+
+/* ==============================================================================Contractor Styles ======================================================================= */
+/* ==============================================================================Contractor Dashboard  ======================================================================= */
+.contractor-dashboard-content {
+  padding: 0;
+}
+
+.contractor-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.contractor-dashboard-header h2 {
+  font-weight: 800;
+}
+
+.contractor-dashboard-header p {
+  color: #64748b;
+}
+
+.my-profile-btn {
+  border: 1px solid #dbe0e8;
+  background: white;
+  color: #334155;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contractor-stat-card,
+.contractor-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.contractor-stat-card {
+  padding: 24px;
+}
+
+.contractor-stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.contractor-stat-icon.orange { background: #fff7ed; color: #f59e0b; }
+.contractor-stat-icon.blue { background: #eff6ff; color: #2563eb; }
+.contractor-stat-icon.green { background: #ecfdf5; color: #059669; }
+.contractor-stat-icon.purple { background: #f3e8ff; color: #7c3aed; }
+
+.contractor-stat-card h3 {
+  font-weight: 900;
+  font-size: 30px;
+  margin-bottom: 2px;
+}
+
+.contractor-stat-card p {
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.contractor-stat-card small {
+  font-weight: 700;
+}
+
+.contractor-stat-card small.orange { color: #f97316; }
+.contractor-stat-card small.blue { color: #2563eb; }
+.contractor-stat-card small.green { color: #059669; }
+.contractor-stat-card small.purple { color: #7c3aed; }
+
+.contractor-card {
+  overflow: hidden;
+}
+
+.contractor-card .card-header-clean {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.proposal-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 18px;
+  align-items: center;
+  padding: 17px 24px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.proposal-row:last-child {
+  border-bottom: 0;
+}
+
+.proposal-row h6 {
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.proposal-row p,
+.proposal-score span {
+  color: #94a3b8;
+  margin: 0;
+}
+
+.proposal-score {
+  text-align: right;
+}
+
+.proposal-score strong {
+  display: block;
+}
+
+.proposal-status {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.proposal-status.under-review {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.proposal-status.awarded {
+  background: #dcfce7;
+  color: #059669;
+}
+
+.proposal-status.shortlisted {
+  background: #fff7ed;
+  color: #f97316;
+}
+
+.proposal-status.not-selected {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.proposal-rank {
+  color: #64748b;
+}
+
+.trophy-icon {
+  color: #f59e0b;
+}
+
+.performance-card {
+  padding: 22px;
+  height: 100%;
+}
+
+.performance-card h5 {
+  font-weight: 800;
+}
+
+.performance-card > p {
+  color: #64748b;
+}
+
+.contractor-radar {
+  transform: scale(0.8);
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+.profile-link-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-link-row a {
+  color: #2563eb;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.available-tenders-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.available-tenders-header h5 {
+  font-weight: 800;
+}
+
+.available-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.available-filters button {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.available-filters button.active {
+  background: #1f49c6;
+  color: white;
+  padding: 7px 12px;
+  border-radius: 999px;
+}
+
+.mini-search {
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-search input {
+  border: 0;
+  background: transparent;
+  outline: none;
+}
+
+.available-tender-row {
+  padding: 18px 24px;
+  border-bottom: 1px solid #eef2f7;
+  display: grid;
+  grid-template-columns: 1fr 70px 130px;
+  align-items: center;
+  gap: 18px;
+}
+
+.available-tender-row:last-child {
+  border-bottom: 0;
+}
+
+.available-tender-row h6 {
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.available-tender-row h6 span {
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+  font-size: 13px;
+}
+
+.available-tender-row p {
+  color: #64748b;
+  margin: 0;
+}
+
+.match-box {
+  text-align: center;
+}
+
+.match-box strong {
+  color: #059669;
+  font-size: 18px;
+}
+
+.match-box strong.warning {
+  color: #f97316;
+}
+
+.match-box strong.muted {
+  color: #94a3b8;
+}
+
+.match-box p {
+  color: #94a3b8;
+  margin: 0;
+}
+
+.submit-bid-btn {
+  border: 0;
+  background: #1f49c6;
+  color: white;
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submit-bid-btn {
+  min-width: 105px;
+  height: 38px;
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+  justify-content: center;
+}
+
+.full-profile-link {
+  border: 0;
+  background: transparent;
+  color: #2563eb;
+  font-weight: 800;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ================================================================== submit proposal ======================================================== */
+
+.submit-proposal-content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.submit-header {
+  margin-bottom: 22px;
+}
+
+.submit-header p {
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.submit-header h2 {
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.submit-header span {
+  color: #64748b;
+}
+
+.submission-progress-card,
+.proposal-upload-card,
+.proposal-notes-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  margin-bottom: 18px;
+}
+
+.submission-progress-card {
+  padding: 18px;
+}
+
+.submission-progress-card b {
+  color: #2563eb;
+}
+
+.submit-progress {
+  height: 8px;
+  margin: 12px 0;
+  background: #eff6ff;
+}
+
+.submit-progress .progress-bar {
+  background: #2563eb;
+}
+
+.progress-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.progress-dots span {
+  width: 8px;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 50%;
+}
+
+.progress-dots span.active {
+  background: #2563eb;
+}
+
+.upload-card-header {
+  padding: 18px;
+  border-bottom: 1px solid #eef2f7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.upload-title {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.upload-title > span {
+  width: 34px;
+  height: 34px;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-title h5 {
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.upload-title h5 b {
+  background: #fee2e2;
+  color: #ef4444;
+  font-size: 12px;
+  padding: 4px 7px;
+  border-radius: 6px;
+  margin-left: 8px;
+}
+
+.upload-title p {
+  color: #64748b;
+  margin: 0;
+}
+
+.uploaded-badge {
+  color: #059669;
+  background: #dcfce7;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+
+.upload-drop-zone {
+  margin: 18px;
+  min-height: 105px;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  background: #fbfdff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  text-align: center;
+}
+
+.upload-drop-zone.uploaded {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.upload-drop-zone i {
+  font-size: 22px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.upload-drop-zone p {
+  margin: 0;
+}
+
+.upload-drop-zone span {
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.proposal-notes-card {
+  padding: 18px;
+}
+
+.proposal-notes-card label {
+  font-weight: 700;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.proposal-notes-card textarea {
+  width: 100%;
+  height: 90px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  resize: none;
+  padding: 14px;
+  outline: none;
+}
+
+.proposal-warning {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #c2410c;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+
+.proposal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.cancel-proposal-btn {
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #334155;
+}
+
+.submit-proposal-btn {
+  background: #1f49c6;
+  color: white;
+  font-weight: 800;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.submit-proposal-btn:disabled {
+  background: #a8b8e8;
+  cursor: not-allowed;
+}

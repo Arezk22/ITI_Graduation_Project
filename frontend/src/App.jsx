@@ -19,6 +19,13 @@ import Reports from "./pages/Reports";
 import ContractorProfile from "./pages/ContractorProfile";
 import TenderDetails from "./pages/TenderDetails";
 
+
+// Contractor Pages
+import ContractorDashboard from "./pages/ContractorDashboard";
+import MyContractorProfile from "./pages/MyContractorProfile";
+import ContractorNotifications from "./pages/ContractorNotifications";
+import ContractorDocumentChat from "./pages/ContractorDocumentChat";
+import SubmitProposal from "./pages/SubmitProposal";
 function App() {
   return (
     <BrowserRouter>
@@ -41,6 +48,15 @@ function App() {
         <Route path="/owner/reports" element={<Reports />} />
         <Route path="/owner/contractor-profile" element={<ContractorProfile />} />
         <Route path="/owner/tender-details" element={<TenderDetails />} />
+
+
+{/* Contractor Routes */}
+        <Route path="/contractor/dashboard" element={<ContractorDashboard />} />
+        <Route path="/contractor/profile" element={<MyContractorProfile />} />
+        <Route path="/contractor/notifications" element={<ContractorNotifications />} />
+        <Route path="/contractor/document-chat" element={<ContractorDocumentChat />} />
+        <Route path="/contractor/submit-proposal" element={<SubmitProposal />} />
+
         
       </Routes>
     </BrowserRouter>
