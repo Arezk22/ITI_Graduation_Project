@@ -1,7 +1,9 @@
 import json
 
+from django.db import transaction
 from django.http import QueryDict
 from rest_framework import serializers
+from api.signals import tender_files_uploaded
 from api.models import (
     Tenders,
     TenderFiles,
@@ -71,6 +73,12 @@ class TenderFilesSerializer(serializers.ModelSerializer):
         if instance.file:
             instance.file_url = instance.file.url
             instance.save(update_fields=['file_url'])
+        # Single-file upload path (TenderFilesView): fire the same batch signal
+        # with a one-row QuerySet so indexing happens here too.
+        files_qs = TenderFiles.objects.filter(id=instance.id)
+        transaction.on_commit(
+            lambda: tender_files_uploaded.send(sender=Tenders, files=files_qs)
+        )
         return instance
 
     def to_representation(self, instance):
@@ -219,7 +227,7 @@ class CreateTenderSerializer(serializers.ModelSerializer):
         categories = validated_data.pop('file_categories', [])
         rules_data = validated_data.pop('evaluation_rules', [])
         tender = Tenders.objects.create(**validated_data)
-        # Create children one-by-one (not bulk_create) so post_save signals fire per file.
+        created_ids = []
         for index, upload in enumerate(files):
             tender_file = TenderFiles.objects.create(
                 tender=tender,
@@ -229,7 +237,15 @@ class CreateTenderSerializer(serializers.ModelSerializer):
             )
             tender_file.file_url = tender_file.file.url
             tender_file.save(update_fields=['file_url'])
+            created_ids.append(tender_file.id)
         for rule_data in rules_data:
             EvaluationRules.objects.create(tender=tender, **rule_data)
+        # Fire once, after all files are saved and the transaction commits,
+        # passing the whole batch as a QuerySet.
+        if created_ids:
+            files_qs = TenderFiles.objects.filter(id__in=created_ids)
+            transaction.on_commit(
+                lambda: tender_files_uploaded.send(sender=Tenders, files=files_qs)
+            )
         return tender
 
