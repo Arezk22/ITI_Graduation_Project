@@ -50,8 +50,13 @@ class TenderFilesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TenderFiles
-        fields = ['id', 'file', 'file_url', 'file_type', 'file_category', 'uploaded_at']
-        read_only_fields = ['file_url', 'file_type', 'uploaded_at']
+        fields = [
+            'id', 'file', 'file_url', 'file_type', 'file_category',
+            'extracted_data', 'extracted_meta_data', 'uploaded_at',
+        ]
+        read_only_fields = [
+            'file_url', 'file_type', 'extracted_data', 'extracted_meta_data', 'uploaded_at',
+        ]
 
     def validate(self, attrs):
         upload = attrs.get('file')
@@ -90,7 +95,8 @@ class TenderDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'owner', 'title', 'description', 'project_category', 'location',
             'budget', 'start_date', 'duration_months', 'deadline_at',
-            'status', 'created_at', 'files', 'evaluation_rules',
+            'status', 'structured_data', 'comparison_result', 'recommendation_result',
+            'created_at', 'files', 'evaluation_rules',
         ]
         read_only_fields = fields
 
@@ -100,19 +106,26 @@ class TenderSubmissionsSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'tender', 'contractor', 'status',
             'technical_score', 'financial_score', 'risk_score', 'final_score',
-            'rank', 'recommendation', 'submitted_at',
+            'rank', 'recommendation', 'structured_data', 'justification',
+            'validation_result', 'risk_result', 'technical_result', 'financial_result',
+            'submitted_at',
         ]
         read_only_fields = [
             'tender', 'contractor',
             'technical_score', 'financial_score', 'risk_score', 'final_score',
-            'rank', 'recommendation', 'submitted_at',
+            'rank', 'recommendation', 'structured_data', 'justification',
+            'validation_result', 'risk_result', 'technical_result', 'financial_result',
+            'submitted_at',
         ]
 
 class SubmissionFilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubmissionFiles
-        fields = ['id', 'submission', 'file_url', 'file_category']
-        read_only_fields = ['file_type', 'file_category']
+        fields = [
+            'id', 'submission', 'file_url', 'file_category',
+            'extracted_data', 'extracted_meta_data',
+        ]
+        read_only_fields = ['file_type', 'file_category', 'extracted_data', 'extracted_meta_data']
 
 class RiskItemSerializer(serializers.ModelSerializer):
     class Meta:
