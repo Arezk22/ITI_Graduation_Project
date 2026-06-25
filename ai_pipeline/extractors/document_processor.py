@@ -1,8 +1,6 @@
 # boq_router.py
 import os
-
-
-
+from django.db import transaction
 import fitz  # PyMuPDF
 import json
 from typing import List, Optional, Dict, Any
@@ -267,10 +265,7 @@ class DocumentIntakeProcessor:
             raise FileNotFoundError(f"File not found at: {file_path}")
         
         if category == 'drawing':
-            return {
-                "processable":False,
-                "reason":"drawing file"
-            }    
+            return "drawing file" 
             
         ext = os.path.splitext(file_path)[1].lower()
         if ext in ['.xlsx', '.xls']:
@@ -279,25 +274,6 @@ class DocumentIntakeProcessor:
             return "word"
         elif ext == '.pdf':
             return "pdf"
-            # فحص إضافي لمعرفة هل الـ PDF نصي أم ممسوح ضوئياً (Scanned)
-            # try:
-            #     with pdfplumber.open(file_path) as pdf:
-            #         text = "".join([page.extract_text() or "" for page in pdf.pages[:3]])
-            #         if len(text.strip()) > 100:
-            #             return "native_pdf"
-            #         else:
-            #             return "scanned_pdf"
-            #     # doc = fitz.open(file_path)
-            #     # text = ""
-            #     # for page in doc[:3]:
-            #     #     text += page.get_text()
-            #     # doc.close()
-            #     # if len(text.strip()) > 100:
-            #     #     return "native_pdf"
-            #     # else:
-            #     #     return "scanned_pdf"
-            # except:
-            #     return "scanned_pdf"
         return "unknown"
 
     # 2. Extraction Agent: استخراج المحتوى الخام بناءً على النوع المستهدف
@@ -352,83 +328,11 @@ class DocumentIntakeProcessor:
                                 "unclear_sections": ocr_data["unclear_sections"],
                             },
                             "content":ocr_data["extracted_text"],
-                            "tables":[]
+                            "tables":ocr_data["tables"]
                         })
                 return full_text
-                
-                # 🌟 استخدام PyMuPDF لاستخراج النصوص العربية بدقة وبدون تشويه
-            # try:
-            #     doc = fitz.open(file_path)
-            #     full_text = []
-            #     for page in doc:
-            #         full_text.append(page.get_text())
-            #     doc.close()
-            #     return "\n".join(full_text)
-            # except Exception as e:
-            #     print(f"❌ Error reading PDF: {e}")
-            #     return ""
-            
-        # elif file_type == "scanned_pdf":
-        #     return self._extract_scanned_pdf_via_vision(file_path)
-            
         else:
             return "Unsupported file content format."
-    # 3. Structuring Agent: تحويل البيانات الخام العشوائية لـ JSON موحد ومتوافق
-    def structure_to_unified_json(self, type: str,raw_content: Any) -> dict:
-        print("⏳ Structuring Agent active. Formatting data to unified JSON structure...")
-        
-        raw_content_text = json.dumps(
-            raw_content,
-            ensure_ascii=False,
-            indent=2
-        )
-        if type == "tender":
-            parser = JsonOutputParser(pydantic_object=UnifiedStructuredTender)
-            doc_context = """
-            - Focus on finding the client/owner requirements, project scope, technical specifications, and the empty/blank Bill of Quantities (BOQ) tables.
-            - Extract any rules, deadlines, or general compliance conditions set by the owner.
-            """
-        elif type == "Submission":
-            parser = JsonOutputParser(pydantic_object=UnifiedStructuredProposal)
-            doc_context = """
-            - Carefully find the contractor name, total experience years, financial bids, pricing parameters, delivery timeframe, and the priced Bill of Quantities (BOQ) tables.
-            - Normalize pricing and bidding figures strictly to numbers.
-            """
-            
-        prompt = f"""You are an expert construction data standardization specialist. Your job is to take the raw extracted content and convert it strictly into the required unified JSON schema.
-        
-        Extraction Strategy:
-        {doc_context}
-        - Maintain data integrity; ensure item numbers, quantities, and text metrics align perfectly.
-        - Ignore irrelevant conversational or layout filler text.
-        Raw Content Notes:
-        - Each object represents one uploaded file.
-        - file_category indicates the purpose of the file.
-        - Information may be distributed across multiple files.
-        - Merge all available information into one final unified schema.
-        - Do not create multiple outputs.
-        - Produce a single complete JSON object.
-        Format Instructions:
-        {parser.get_format_instructions()}
-        
-        Raw Content:
-        {raw_content_text[:40000]}
-        """
-        
-        try:
-            response = self.text_llm.invoke(prompt)
-            # استخراج الـ JSON النظيف من استجابة النموذج
-            clean_json = response.content.replace("```json", "").replace("```", "").strip()
-            return json.loads(clean_json)
-        except Exception as e:
-            print(f"❌ Error during data structuring: {e}")
-            return {
-                "contractor_name": "Unknown",
-                "experience_years": 0,
-                "financial_capacity": 0.0,
-                "delivery_duration_days": 0,
-                "boq_items": []
-            }
 
     def _extract_scanned_pdf_via_vision(self, img):
         """دالة مساعدة لتحويل صفحات الـ Scanned PDF لصور وتمريرها للـ Vision LLM"""
@@ -516,8 +420,6 @@ class DocumentIntakeProcessor:
             confidences.append(metadata["confidence_score"])
 
             if metadata["needs_human_review"]:
-                review_required = True
-
                 review_reasons.append({
                     "page": page["page"],
                     "reason": metadata["review_reason"]
@@ -527,6 +429,9 @@ class DocumentIntakeProcessor:
             sum(confidences) / len(confidences)
             if confidences else 0
         )
+        
+        if average_confidence < 80:
+            review_required=True
 
         return {
             "needs_human_review": review_required,
@@ -544,50 +449,115 @@ class DocumentIntakeProcessor:
     })
         return cleaned_raw_data
     
-    
+    # main function uses all the above 
     def process_files(self,files):
         all_files_cleaned_data=[]
         for file in files:
             try:
                 file_type = self.intake_and_route(file)
+                if not file_type=="drawing file":
+                    raw_data = self.extract_content(
+                        file.file_url,
+                        file_type
+                    )
 
-                raw_data = self.extract_content(
-                    file.file_url,
-                    file_type
-                )
+                    file_meta_data = self.analyze_extraction_quality(raw_data)
 
-                file_meta_data = self.analyze_extraction_quality(raw_data)
+                    cleaned_data = self.clean_raw_data(raw_data)
 
-                cleaned_data = self.clean_raw_data(raw_data)
+                    file.extracted_data = cleaned_data
+                    file.extracted_meta_data = file_meta_data
+                    file.save()
 
-                file.extracted_data = cleaned_data
-                file.extracted_meta_data = file_meta_data
-                file.save()
-
-                all_files_cleaned_data.append({
-                    "file_id": file.id,
-                    "file_category": file.file_category,
-                    "content": cleaned_data
-                })
+                    all_files_cleaned_data.append({
+                        "file_id": file.id,
+                        "file_category": file.file_category,
+                        "content": cleaned_data
+                    })
+                else:
+                    continue
 
             except Exception as e:
                 print(f"Error processing file {file.id}: {e}")
 
         return all_files_cleaned_data
+    
+     # 3. Structuring Agent: تحويل البيانات الخام العشوائية لـ JSON موحد ومتوافق
+    
+    
+    def structure_to_unified_json(self, type: str,raw_content: List) -> dict:
+        print("⏳ Structuring Agent active. Formatting data to unified JSON structure...")
+        
+        raw_content_text = json.dumps(
+            raw_content,
+            ensure_ascii=False,
+            indent=2
+        )
+        if type == "tender":
+            parser = JsonOutputParser(pydantic_object=UnifiedStructuredTender)
+            doc_context = """
+            - Focus on finding the client/owner requirements, project scope, technical specifications, and the empty/blank Bill of Quantities (BOQ) tables.
+            - Extract any rules, deadlines, or general compliance conditions set by the owner.
+            """
+        elif type == "Submission":
+            parser = JsonOutputParser(pydantic_object=UnifiedStructuredProposal)
+            doc_context = """
+            - Carefully find the contractor name, total experience years, financial bids, pricing parameters, delivery timeframe, and the priced Bill of Quantities (BOQ) tables.
+            - Normalize pricing and bidding figures strictly to numbers.
+            """
             
-    def to_db(self,type:str,id:int,files:list):
+        prompt = f"""You are an expert construction data standardization specialist. Your job is to take the raw extracted content and convert it strictly into the required unified JSON schema.
+        
+        Extraction Strategy:
+        {doc_context}
+        - Maintain data integrity; ensure item numbers, quantities, and text metrics align perfectly.
+        - Ignore irrelevant conversational or layout filler text.
+        Raw Content Notes:
+        - Each object represents one uploaded file.
+        - file_category indicates the purpose of the file.
+        - Information may be distributed across multiple files.
+        - Merge all available information into one final unified schema.
+        - Do not create multiple outputs.
+        - Produce a single complete JSON object.
+        Format Instructions:
+        {parser.get_format_instructions()}
+        
+        Raw Content:
+        {raw_content_text[:40000]}
+        """
+        
+        try:
+            response = self.text_llm.invoke(prompt)
+            # استخراج الـ JSON النظيف من استجابة النموذج
+            clean_json = response.content.replace("```json", "").replace("```", "").strip()
+            return json.loads(clean_json)
+        except Exception as e:
+            print(f"❌ Error during data structuring: {e}")
+            return {
+                "contractor_name": "Unknown",
+                "experience_years": 0,
+                "financial_capacity": 0.0,
+                "delivery_duration_days": 0,
+                "boq_items": []
+            }
+    
+    
+    @transaction.atomic        
+    def to_db(self,type:str,id:int,files:dict):
         if type == "tender":
             tender=get_object_or_404(Tenders,id=id)
             tender.structured_data=files
             tender.save()
-            tender.evaluation_rules.all().delete()
+            # tender.evaluation_rules.all().delete()
             for rule in files["evaluation_criteria"]:
                 EvaluationRules.objects.create(
                     tender=tender,
                     rule_name=rule["name"],
                     rule_value=rule["weight"]
                 )
-            tender.boq_items.all().delete()    
+                #  check if boq items exist
+            if tender.boq_items.all():
+                tender.boq_items.all().delete()    
             for item in files["boq_items"]:
                 BoqItems.objects.create(
                     tender=tender,
@@ -610,7 +580,8 @@ class DocumentIntakeProcessor:
                     boq_item=boq_item,
                     unit_price=item["unit_rate"],
                 )
-                
+    
+    # used in vector store            
     def table_to_text(self,table: list) -> str:
     
         if not table:

@@ -129,7 +129,7 @@ def save_documents_to_db(documents: list, connection_string: str, tender_id: str
     # حقن الـ source_id والـ tender_id في الـ Metadata لكل مستند عشان نقدر نفلتر بيهم وقت الشات
     for doc in documents:
         if isinstance(doc.metadata, dict):
-            doc.metadata["source_id"] = source_id
+            doc.metadata["source"] = source_id
             doc.metadata["tender_id"] = tender_id
             
     collection_name = f"tender_{tender_id}"

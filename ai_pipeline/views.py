@@ -1,16 +1,37 @@
 import json
 import os
 import tempfile
-
+from rest_framework import viewsets, status
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from ITI_Graduation_Project.api.models import Tenders
 from ai_pipeline.main_pipeline import run_tender_evaluation_job
 from ai_pipeline.vector_store import search_documents
 from langchain_openai import ChatOpenAI
+from .services.rag import RagAgent
+from rest_framework.decorators import action
+from .services.chat_memory import ChatMemoryService
 
+rag=RagAgent()
+memory=ChatMemoryService()
+
+
+def _serialize_chat(conv):
+    return {
+        "id": conv.id,
+        "title": conv.title,
+        "tender_id": conv.tender_id,
+        "created_at": conv.created_at.isoformat() if conv.created_at else None,
+        "updated_at": conv.updated_at.isoformat() if conv.updated_at else None,
+    }
+
+
+def _serialize_chats(convs):
+    return [_serialize_chat(c) for c in convs]
 
 def _save_uploaded_file(uploaded_file):
     """Save uploaded file to a temporary path and return the filesystem path."""
@@ -100,57 +121,6 @@ def evaluate_tender(request):
                 pass
 
 
-def _build_rag_prompt(query, documents):
-    """Build a prompt that includes retrieved documents and the user query."""
-    docs_text = []
-    for index, doc in enumerate(documents, start=1):
-        metadata = doc.get('metadata', {}) or {}
-        source_id = metadata.get('source_id', 'unknown')
-        score = doc.get('score', None)
-        doc_content = doc.get('content', '')
-        docs_text.append(
-            f"Document {index} (source: {source_id}, score: {score})\n{doc_content}"
-        )
-
-    return f"""You are a construction tender AI assistant.
-Use ONLY the following documents to answer the question. Do NOT invent any information.
-If the answer cannot be determined from the documents, say: 'There is no enough information to provide the answer.'
-
-Context documents:
-{''.join(['\n\n---\n\n' + d for d in docs_text])}
-
-User question:
-{query}
-
-"""
-
-
-def _run_rag_query(tender_id, query, top_k=5):
-    db_connection_string = os.getenv('DATABASE_URL') or os.getenv('VECTOR_DB_CONNECTION_STRING')
-    if not db_connection_string:
-        raise RuntimeError('Vector DB connection string not configured.')
-
-    documents = search_documents(db_connection_string, tender_id, query, top_k=top_k)
-    if not documents:
-        raise RuntimeError('No reference documents found for this tender.')
-
-    llm = ChatOpenAI(
-        model='gpt-4o-mini',
-        temperature=0,
-        api_key=os.getenv('OPENAI_API_KEY'),
-        openai_api_base=os.getenv('OPENAI_API_BASE')
-    )
-
-    prompt = _build_rag_prompt(query, documents)
-    response = llm.invoke(prompt)
-    answer = getattr(response, 'content', str(response))
-
-    return {
-        'query': query,
-        'answer': answer,
-        'references': documents,
-    }
-
 
 @csrf_exempt
 @require_POST
@@ -200,8 +170,125 @@ def rag_answer(request):
         return JsonResponse({'status': 'error', 'message': 'top_k must be an integer.'}, status=400)
 
     try:
-        response = _run_rag_query(tender_id, query, top_k=top_k)
+        response = rag.run_rag_query(tender_id, query, top_k=top_k)
         return JsonResponse({'status': 'success', 'data': response})
     except Exception as exc:
         return JsonResponse({'status': 'error', 'message': str(exc)}, status=500)
 
+
+
+class ChatViewSet(viewsets.ViewSet):
+    """
+    Endpoints:
+        GET    /api/v1/chats/                 — list user's chats
+        POST   /api/v1/chats/                 — create a new chat
+                                                       (optionally bound to a tender)
+        GET    /api/v1/chats/{id}/            — retrieve a chat
+                                                       with its full message history
+        DELETE /api/v1/chats/{id}/            — delete a chat
+    """
+    permission_classes=[IsAuthenticated]
+    
+    def list(self, request):
+        tender_id = request.data.get('tender_id')
+        chats = memory.list_chats(request.user, tender=tender_id)
+        return Response(_serialize_chats(chats))
+    
+    def create(self, request):
+        tender_id = request.data.get("tender_id")
+        tender = None
+        if tender_id:
+            try:
+                tender = Tenders.objects.get(id=tender_id)
+            except (Tenders.DoesNotExist, ValueError):
+                return Response(
+                    {"error": "Tender not found."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        title = (request.data.get("title") or "").strip()
+        chat = memory.create_chat(
+            user=request.user, tender=tender, title=title,
+        )
+        return Response(
+            _serialize_chat(chat),
+            status=status.HTTP_201_CREATED,
+        )
+        
+        
+        
+    def retrieve(self, request, pk=None):
+        chat = memory.get_chat(request.user, pk)
+        if chat is None:
+            return Response(
+                {"error": "chat not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        messages = [
+            {
+                "id": m.id,
+                "role": m.role,
+                "content": m.content,
+                "source_type": m.source_type,
+                "source_id": m.source_id,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in chat.messages.all().order_by("created_at")
+        ]
+        payload = _serialize_chat(chat)
+        payload["messages"] = messages
+        return Response(payload)
+
+    def destroy(self, request, pk=None):
+        ok = memory.delete_chat(request.user, pk)
+        if not ok:
+            return Response(
+                {"error": "chat not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=True, methods=["post"], url_path="messages")
+    def send_message(self, request, pk=None):
+        chat = memory.get_chat(request.user, pk)
+
+        if chat is None:
+            return Response(
+                {"error": "Chat not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        message = (request.data.get("message") or "").strip()
+
+        if not message:
+            return Response(
+                {"error": "Message is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Save user message
+        memory.append_message(
+            chat=chat,
+            role="user",
+            content=message,
+        )
+
+        # Run RAG
+        result = rag.run_rag_query(
+            tender_id=chat.tender.id,
+            query=message,
+        )
+
+        # Save assistant response
+        memory.append_message(
+            chat=chat,
+            role="assistant",
+            content=result["answer"],
+        )
+
+        return Response(
+            {
+                "answer": result["answer"],
+                "references": result["references"],
+            },
+            status=status.HTTP_200_OK,
+        )

@@ -135,131 +135,131 @@ class RecommendationResult(BaseModel):
 def get_tender_requirements(tender_id:int):
     tender_data=Tenders.objects.get(id=tender_id).structured_data
     return {
-        "required_certificates": tender_data.required_certificates,
-        "required_documents": tender_data.required_documents,
-        "required_licenses": tender_data.required_licenses,
-        "technical_requirements":tender_data.technical_requirements,
-        "custom_requirements": tender_data.custom_requirements,
+        "required_certificates": tender_data["required_certificates"],
+        "required_documents": tender_data["required_documents"],
+        "required_licenses": tender_data["required_licenses"],
+        "technical_requirements":tender_data["technical_requirements"],
+        "custom_requirements": tender_data["custom_requirements"],
     }
 
 def get_tender_technical(tender_id:int):
     tender_data=Tenders.objects.get(id=tender_id).structured_data
     return {
-        "title": tender_data.title,
+        "title": tender_data["title"],
 
-    "description": tender_data.description,
+    "description": tender_data['description'],
 
-    "project_duration_days": tender_data.project_duration_days,
+    "project_duration_days": tender_data['project_duration_days'],
 
-    "minimum_experience_years": tender_data.minimum_experience_years,
+    "minimum_experience_years": tender_data['minimum_experience_years'],
 
-    "required_certificates": tender_data.required_certificates,
+    "required_certificates": tender_data['required_certificates'],
 
-    "required_licenses": tender_data.required_licenses,
+    "required_licenses": tender_data['required_licenses'],
 
-    "technical_requirements": tender_data.technical_requirements,
+    "technical_requirements": tender_data['technical_requirements'],
 
-    "evaluation_criteria": tender_data.evaluation_criteria,
+    "evaluation_criteria": tender_data['evaluation_criteria'],
 
-    "custom_requirements": tender_data.custom_requirements
+    "custom_requirements": tender_data['custom_requirements']
     }
 
 def get_tender_financial(tender_id:int):
     tender_data=Tenders.objects.get(id=tender_id).structured_data
     return {
-        "estimated_budget": tender_data.estimated_budget,
-        "boq_items": tender_data.boq_items,
-        "evaluation_criteria": tender_data.evaluation_criteria
+        "estimated_budget": tender_data['estimated_budget'],
+        "boq_items": tender_data['boq_items'],
+        "evaluation_criteria": tender_data['evaluation_criteria']
         
     }
 
 def get_tender_summary(tender_id:int):
     tender_data=Tenders.objects.get(id=tender_id).structured_data
     return {
-        "project_name": tender_data.title,
-        "project_description": tender_data.description,
-        "minimum_experience": tender_data.minimum_experience_years
+        "project_name": tender_data['title'],
+        "project_description": tender_data['description'],
+        "minimum_experience": tender_data['minimum_experience_years']
     }
 
 def prepare_risk_data(sub):
     proposal=sub.structured_data
     return{
-        "experience_years": proposal.experience_years,
-    "previous_projects": proposal.previous_projects,
-    "financial_capacity": proposal.financial_capacity,
-    "delivery_duration_days": proposal.delivery_duration_days,
+        "experience_years": proposal['experience_years'],
+    "previous_projects": proposal['previous_projects'],
+    "financial_capacity": proposal['financial_capacity'],
+    "delivery_duration_days": proposal['delivery_duration_days'],
 
-    "certificates": proposal.certificates,
-    "licenses": proposal.licenses,
+    "certificates": proposal['certificates'],
+    "licenses": proposal['licenses'],
 
-    "technical_capabilities": proposal.technical_capabilities,
+    "technical_capabilities": proposal['technical_capabilities'],
 
-    "staff_count": proposal.staff_count,
-    "key_personnel": proposal.key_personnel,
-    "equipment": proposal.equipment,
+    "staff_count": proposal['staff_count'],
+    "key_personnel": proposal['key_personnel'],
+    "equipment": proposal['equipment'],
 
-    "implementation_methodology": proposal.implementation_methodology,
+    "implementation_methodology": proposal['implementation_methodology'],
 
-    "warranty_period": proposal.warranty_period,
-    "support_services": proposal.support_services,
+    "warranty_period": proposal['warranty_period'],
+    "support_services": proposal['support_services'],
 
-    "deviations": proposal.deviations,
-    "exclusions": proposal.exclusions,
+    "deviations": proposal['deviations'],
+    "exclusions": proposal['exclusions'],
 
-    "notes": proposal.notes,
+    "notes": proposal['notes'],
     }
 
 def prepare_technical_data(sub):
     proposal=sub.structured_data
     return {
-    "contractor_name": proposal.contractor_name,
+    "contractor_name": proposal['contractor_name'],
 
-    "experience_years": proposal.experience_years,
+    "experience_years": proposal['experience_years'],
 
-    "previous_projects": proposal.previous_projects,
+    "previous_projects": proposal['previous_projects'],
 
-    "delivery_duration_days": proposal.delivery_duration_days,
+    "delivery_duration_days": proposal['delivery_duration_days'],
 
-    "certificates": proposal.certificates,
+    "certificates": proposal['certificates'],
 
-    "licenses": proposal.licenses,
+    "licenses": proposal['licenses'],
 
-    "technical_offer": proposal.technical_offer,
+    "technical_offer": proposal['technical_offer'],
 
-    "implementation_methodology": proposal.implementation_methodology,
+    "implementation_methodology": proposal['implementation_methodology'],
 
-    "warranty_period": proposal.warranty_period,
+    "warranty_period": proposal['warranty_period'],
 
-    "support_services": proposal.support_services,
+    "support_services": proposal['support_services'],
 
-    "deviations": proposal.deviations,
+    "deviations": proposal['deviations'],
 
-    "exclusions": proposal.exclusions,
+    "exclusions": proposal['exclusions'],
 
-    "staff_count": proposal.staff_count,
+    "staff_count": proposal['staff_count'],
 
-    "key_personnel": proposal.key_personnel,
+    "key_personnel": proposal['key_personnel'],
 
-    "equipment": proposal.equipment,
+    "equipment": proposal['equipment'],
 
-    "custom_information": proposal.custom_information
+    "custom_information": proposal['custom_information']
 }
 
 
 def prepare_financial_data(sub):
     proposal=sub.structured_data
     return {
-    "contractor_name": proposal.contractor_name,
+    "contractor_name": proposal['contractor_name'],
 
-    "financial_capacity": proposal.financial_capacity,
+    "financial_capacity": proposal['financial_capacity'],
 
-    "boq_items": proposal.boq_items,
+    "boq_items": proposal['boq_items'],
 
-    "exclusions": proposal.exclusions,
+    "exclusions": proposal['exclusions'],
 
-    "deviations": proposal.deviations,
+    "deviations": proposal['deviations'],
 
-    "custom_information": proposal.custom_information
+    "custom_information": proposal['custom_information']
 }
     
     

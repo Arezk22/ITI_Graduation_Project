@@ -1,8 +1,9 @@
 # main_pipeline.py
 import os
 from langchain_openai import ChatOpenAI
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
+
+from ITI_Graduation_Project.api.models import TenderFiles
 
 # استدعاء المكونات اللي برمجناها
 from .extractors.document_processor import DocumentIntakeProcessor 
@@ -11,12 +12,11 @@ from .agents.tender_graph import EvaluationWorkflow
 # 🌟 التعديل الجديد: استدعاء دالة حفظ البيانات في الـ Vector Store
 from .vector_store import save_documents_to_db ,prepare_documents_for_vector_db
 
-               
+
 
 
 def run_tender_evaluation_job(
     tender_id: str, 
-    tender_file_path: str, 
     contractor_files: list[dict], # مسارات ملفات المقاولين بالشكل: [{"id": "Cont_A", "path": "file.pdf"}]
     evaluation_rules: dict,       # الأوزان مثلاً {"experience": 30, "financial": 20, "technical": 50}
     db_connection_string: str = None
@@ -28,9 +28,6 @@ def run_tender_evaluation_job(
     print(f"🚀 [AI Pipeline] Starting complete evaluation for tender: {tender_id}")
 
     try:
-        # ==========================================
-        # 1. تهيئة النماذج الذكية والأنظمة
-        # ==========================================
         vision_llm = ChatOpenAI(
             model="gpt-4o-mini", 
             temperature=0,
@@ -51,20 +48,20 @@ def run_tender_evaluation_job(
         # ==========================================
         # 2. معالجة مستند المناقصة (المالك) وحفظه في الـ Vector DB
         # ==========================================
-        print(f"📂 Processing Employer Tender File...")
-        tender_type = doc_processor.intake_and_route(tender_file_path)
-        tender_raw_content = doc_processor.extract_content(tender_file_path, tender_type)
-        tender_requirements = doc_processor.structure_to_unified_json("tender",tender_raw_content)
-
+        print(f"📂 Processing Employer Tender Files...")
+        tender_files=TenderFiles.objects.filter(id=tender_id)
+        tender_files_data=doc_processor.process_files(tender_files)
+        tender_structured_data = doc_processor.structure_to_unified_json("tender",tender_files_data)
+        doc_processor.to_db("tender",tender_id,tender_structured_data)
         # 🌟 التعديل الجديد: حفظ ملف المالك في قاعدة البيانات
         if db_connection_string:
             print(f"💾 Saving Employer Tender to Vector DB...")
-            employer_docs = prepare_documents_for_vector_db(tender_raw_content, {"doc_type": "employer_tender"})
+            employer_docs = prepare_documents_for_vector_db(tender_files_data, {"doc_type": "employer_tender"})
             save_documents_to_db(
                 documents=employer_docs, 
                 connection_string=db_connection_string, 
                 tender_id=tender_id, 
-                source_id="employer_tender" # تمييز الملف بأنه خاص بالمالك
+                source_id="tender" 
             )
 
         # ==========================================
