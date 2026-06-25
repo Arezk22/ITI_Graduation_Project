@@ -8,7 +8,7 @@ class Users(AbstractUser):
         ("contractor", "Contractor"),
         ("admin", "Admin"),
     )
-
+    email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
 
 

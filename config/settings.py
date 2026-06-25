@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file at project root
 load_dotenv(os.path.join(Path(__file__).resolve().parent.parent, '.env'))
 
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -36,6 +37,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,7 +48,40 @@ INSTALLED_APPS = [
     'api',
     'ai_agent',
     'corsheaders',
+    'drf_spectacular',
 ]
+REST_FRAMEWORK = {
+'DEFAULT_AUTHENTICATION_CLASSES': [
+'rest_framework.authentication.SessionAuthentication',
+'rest_framework_simplejwt.authentication.JWTAuthentication'],
+'DEFAULT_PERMISSION_CLASSES': [
+'rest_framework.permissions.IsAuthenticated',
+]
+
+# for implementing the Swagger API Docs
+# START
+,
+'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'BuildTender API',
+    'DESCRIPTION': 'Tender management API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
+# END
+
+
+SIMPLE_JWT = {
+
+    "ACCESS_TOKEN_LIFETIME":
+        timedelta(minutes=30),
+
+    "REFRESH_TOKEN_LIFETIME":
+        timedelta(days=7),
+}
+
 
 AUTH_USER_MODEL = 'account.Users'
 
@@ -132,5 +167,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+
+# Media files (user uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
