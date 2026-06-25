@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/authApi";
@@ -59,7 +57,7 @@ function SignIn() {
     try {
       const { access, refresh, role } = await login(
         formData.email,
-        formData.password
+        formData.password,
       );
 
       localStorage.setItem("accessToken", access);
@@ -70,7 +68,7 @@ function SignIn() {
         navigate("/owner/dashboard");
       } else if (role === "contractor") {
         // change the url to the contractor dashboard after created
-        navigate("/");
+        navigate("/contractor/dashboard");
       } else {
         // change the url to the admin dashboard after created
         navigate("/");
@@ -116,8 +114,8 @@ function SignIn() {
         <div className="auth-content">
           <h1>The intelligent platform for construction procurement</h1>
           <p>
-            AI-powered tender evaluation, contractor scoring, and risk analysis —
-            all in one place.
+            AI-powered tender evaluation, contractor scoring, and risk analysis
+            — all in one place.
           </p>
 
           <div className="auth-feature">
@@ -170,9 +168,7 @@ function SignIn() {
             />
 
             {errors.email && (
-              <div className="invalid-feedback d-block">
-                {errors.email}
-              </div>
+              <div className="invalid-feedback d-block">{errors.email}</div>
             )}
           </div>
 
@@ -197,17 +193,13 @@ function SignIn() {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 <i
-                  className={`bi ${
-                    showPassword ? "bi-eye-slash" : "bi-eye"
-                  }`}
+                  className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
                 ></i>
               </button>
             </div>
 
             {errors.password && (
-              <div className="invalid-feedback d-block">
-                {errors.password}
-              </div>
+              <div className="invalid-feedback d-block">{errors.password}</div>
             )}
           </div>
 

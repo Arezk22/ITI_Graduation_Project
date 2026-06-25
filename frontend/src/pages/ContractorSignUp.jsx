@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { mapRegisterErrors, register } from "../services/authApi";
@@ -80,7 +78,7 @@ function ContractorSignUp() {
         role: "contractor",
       });
       // change the url to the contractor dashboard after created
-      navigate("/signin");
+      navigate("/contractor/dashboard");
     } catch (error) {
       setErrors(mapRegisterErrors(error));
     } finally {
@@ -101,8 +99,8 @@ function ContractorSignUp() {
         <div className="auth-content">
           <h1>The intelligent platform for construction procurement</h1>
           <p>
-            AI-powered tender evaluation, contractor scoring, and risk analysis —
-            all in one place.
+            AI-powered tender evaluation, contractor scoring, and risk analysis
+            — all in one place.
           </p>
 
           <div className="auth-feature">
@@ -158,9 +156,7 @@ function ContractorSignUp() {
             />
 
             {errors.fullName && (
-              <div className="invalid-feedback d-block">
-                {errors.fullName}
-              </div>
+              <div className="invalid-feedback d-block">{errors.fullName}</div>
             )}
           </div>
 
@@ -223,17 +219,13 @@ function ContractorSignUp() {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 <i
-                  className={`bi ${
-                    showPassword ? "bi-eye-slash" : "bi-eye"
-                  }`}
+                  className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
                 ></i>
               </button>
             </div>
 
             {errors.password && (
-              <div className="invalid-feedback d-block">
-                {errors.password}
-              </div>
+              <div className="invalid-feedback d-block">{errors.password}</div>
             )}
           </div>
 
