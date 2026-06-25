@@ -30,20 +30,45 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+# INSTALLED_APPS = [
+#     'rest_framework',
+#     'django.contrib.admin',
+#     'django.contrib.auth',
+#     'django.contrib.contenttypes',
+#     'django.contrib.sessions',
+#     'django.contrib.messages',
+#     'django.contrib.staticfiles',
+#     'rest_framework',
+#     'rest_framework_simplejwt',
+#     'corsheaders',
+#     'account',
+#     'api',
+#     'ai_agent',
+# <<<<<<< HEAD
+# =======
+#     'corsheaders',
+#     'drf_spectacular',
+# >>>>>>> origin/features/api
+# ]
+
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'corsheaders',
-    'account',
-    'api',
-    'ai_agent',
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "corsheaders",
+    "drf_spectacular",
+
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+
+    "account",
+    "api",
+    "ai_agent",
 ]
+
 REST_FRAMEWORK = {
 'DEFAULT_AUTHENTICATION_CLASSES': [
 'rest_framework.authentication.SessionAuthentication',
@@ -51,7 +76,20 @@ REST_FRAMEWORK = {
 'DEFAULT_PERMISSION_CLASSES': [
 'rest_framework.permissions.IsAuthenticated',
 ]
+
+# for implementing the Swagger API Docs
+# START
+,
+'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'BuildTender API',
+    'DESCRIPTION': 'Tender management API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
+# END
 
 
 SIMPLE_JWT = {
@@ -76,10 +114,14 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
+# add CORS_ALLOWED_ORIGINS to allow requests from the frontend
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5175",
+    "http://127.0.0.1:5175",
 ]
+
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
@@ -146,5 +188,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Media files (user uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

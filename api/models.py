@@ -11,6 +11,20 @@ class Tenders(models.Model):
         ("closed", "Closed"),
     )
 
+    CATEGORY_CHOICES = (
+        ("construction", "Construction"),
+        ("roads", "Roads & Infrastructure"),
+        ("buildings", "Buildings"),
+        ("electrical", "Electrical"),
+        ("mechanical", "Mechanical"),
+        ("water", "Water & Sewage"),
+        ("it", "IT & Telecom"),
+        ("consulting", "Consulting"),
+        ("supplies", "Supplies & Procurement"),
+        ("maintenance", "Maintenance"),
+        ("other", "Other"),
+    )
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tenders"
     )
@@ -18,17 +32,27 @@ class Tenders(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
 
+    project_category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    location = models.CharField(max_length=255)
+
     budget = models.DecimalField(max_digits=14, decimal_places=2)
+
+    start_date = models.DateField()
+    duration_months = models.PositiveIntegerField()
 
     deadline_at = models.DateTimeField()
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
 
+    # AI-generated outputs for the tender.
+    structured_data = models.JSONField(null=True, blank=True)
+    comparison_result = models.JSONField(null=True, blank=True)
+    recommendation_result = models.JSONField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
-
 
 class TenderFiles(models.Model):
     FILE_TYPE_CHOICES = (
@@ -37,21 +61,37 @@ class TenderFiles(models.Model):
         ("img", "Image"),
     )
 
+    FILE_CATEGORY_CHOICES = (
+        ("technical", "Technical Proposal"),
+        ("financial", "Financial Proposal"),
+        ("boq", "BOQ"),
+        ("certificates", "Certificates & License"),
+    )
+
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE, related_name="files")
 
-    file_url = models.URLField()
+    # Stores the uploaded file. The path is exposed through `file_url`.
+    file = models.FileField(upload_to="tender_files/", null=True, blank=True)
+
+    # Server path/URL of the file (populated from `file` on upload, or set
+    # directly to an external link).
+    file_url = models.CharField(max_length=500, blank=True)
 
     file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
 
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    file_category = models.CharField(max_length=20, choices=FILE_CATEGORY_CHOICES, blank=True)
 
+    # AI-extracted content and metadata from the file.
+    extracted_data = models.JSONField(null=True, blank=True)
+    extracted_meta_data = models.JSONField(null=True, blank=True)
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
 class EvaluationRules(models.Model):
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE, related_name="evaluation_rules")
 
     rule_name = models.CharField(max_length=255)
     rule_value = models.CharField(max_length=255)
-
 
 class TenderSubmissions(models.Model):
     STATUS_CHOICES = (
@@ -62,9 +102,11 @@ class TenderSubmissions(models.Model):
     )
 
     RECOMMENDATION_CHOICES = (
-        ("qualified", "Qualified"),
-        ("disqualified", "Disqualified"),
-        ("under_review", "Under Review"),
+        ("Highly Recommended", "Highly Recommended"),
+        ("Recommended", "Recommended"),
+        ("Acceptable", "Acceptable"),
+        ("Not Recommended", "Not Recommended"),
+        ("Disqualified", "Disqualified"),
     )
 
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE, related_name="submissions")
@@ -86,14 +128,28 @@ class TenderSubmissions(models.Model):
         max_length=20, choices=RECOMMENDATION_CHOICES, null=True, blank=True
     )
 
-    submitted_at = models.DateTimeField(auto_now_add=True)
+    # AI-generated outputs for the submission.
+    structured_data = models.JSONField(null=True, blank=True)
+    justification = models.TextField(blank=True)
+    validation_result = models.JSONField(null=True, blank=True)
+    risk_result = models.JSONField(null=True, blank=True)
+    technical_result = models.JSONField(null=True, blank=True)
+    financial_result = models.JSONField(null=True, blank=True)
 
+    submitted_at = models.DateTimeField(auto_now_add=True)
 
 class SubmissionFiles(models.Model):
     FILE_TYPE_CHOICES = (
         ("pdf", "PDF"),
         ("docx", "DOCX"),
         ("img", "Image"),
+    )
+
+    FILE_CATEGORY_CHOICES = (
+        ("drawing", "Drawing")
+        # ("specification", "Specification"),
+        # ("financial", "Financial"),
+        # ("other", "Other"),
     )
 
     submission = models.ForeignKey(
@@ -103,15 +159,41 @@ class SubmissionFiles(models.Model):
     file_url = models.URLField()
 
     file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
+    # file_category = models.CharField(max_length=10, choices=FILE_CATEGORY_CHOICES)
 
+    # AI-extracted content and metadata from the file.
+    extracted_data = models.JSONField(null=True, blank=True)
+    extracted_meta_data = models.JSONField(null=True, blank=True)
 
-class RiskReports(models.Model):
-    submission = models.OneToOneField(
-        TenderSubmissions, on_delete=models.CASCADE, related_name="risk_report"
+class RiskItem(models.Model):
+    submission = models.ForeignKey(
+        TenderSubmissions, on_delete=models.CASCADE, related_name="risk_items"
     )
-
-    risk_score = models.FloatField()
-
+    title=models.CharField(max_length=150)
     risk_level = models.CharField(max_length=50)
 
-    summary = models.TextField()
+    description = models.TextField()
+    
+class BoqItems(models.Model):
+    tender = models.ForeignKey(Tenders, on_delete=models.CASCADE,related_name="boq_items")
+    item_name = models.CharField(max_length=255)
+    quantity = models.FloatField()
+    unit = models.CharField(max_length=50)
+    
+class BoqPrice(models.Model):
+    submission = models.ForeignKey(
+        TenderSubmissions, on_delete=models.CASCADE, related_name="boq_prices"
+    )
+    boq_item = models.ForeignKey(BoqItems, on_delete=models.CASCADE, related_name="prices")
+    unit_price = models.DecimalField(max_digits=14, decimal_places=2)
+    
+class HumanReview(models.Model):
+    DICISION_CHOICES = (
+        ("approved", "Approved"),
+        ("rejected", "Rejected")
+    )
+    
+    submission=models.ForeignKey(TenderSubmissions,on_delete=models.CASCADE,related_name="human_reviews")
+    reason=models.TextField()
+    dicision=models.CharField(max_length=10,choices=DICISION_CHOICES)
+    
