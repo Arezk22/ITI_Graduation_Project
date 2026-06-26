@@ -44,6 +44,11 @@ class Tenders(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
 
+    # AI-generated outputs for the tender.
+    structured_data = models.JSONField(null=True, blank=True)
+    comparison_result = models.JSONField(null=True, blank=True)
+    recommendation_result = models.JSONField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -76,6 +81,10 @@ class TenderFiles(models.Model):
 
     file_category = models.CharField(max_length=20, choices=FILE_CATEGORY_CHOICES, blank=True)
 
+    # AI-extracted content and metadata from the file.
+    extracted_data = models.JSONField(null=True, blank=True)
+    extracted_meta_data = models.JSONField(null=True, blank=True)
+
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 class EvaluationRules(models.Model):
@@ -93,9 +102,11 @@ class TenderSubmissions(models.Model):
     )
 
     RECOMMENDATION_CHOICES = (
-        ("qualified", "Qualified"),
-        ("disqualified", "Disqualified"),
-        ("under_review", "Under Review"),
+        ("Highly Recommended", "Highly Recommended"),
+        ("Recommended", "Recommended"),
+        ("Acceptable", "Acceptable"),
+        ("Not Recommended", "Not Recommended"),
+        ("Disqualified", "Disqualified"),
     )
 
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE, related_name="submissions")
@@ -116,6 +127,14 @@ class TenderSubmissions(models.Model):
     recommendation = models.CharField(
         max_length=20, choices=RECOMMENDATION_CHOICES, null=True, blank=True
     )
+
+    # AI-generated outputs for the submission.
+    structured_data = models.JSONField(null=True, blank=True)
+    justification = models.TextField(blank=True)
+    validation_result = models.JSONField(null=True, blank=True)
+    risk_result = models.JSONField(null=True, blank=True)
+    technical_result = models.JSONField(null=True, blank=True)
+    financial_result = models.JSONField(null=True, blank=True)
 
     submitted_at = models.DateTimeField(auto_now_add=True)
 
@@ -141,6 +160,10 @@ class SubmissionFiles(models.Model):
 
     file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
     # file_category = models.CharField(max_length=10, choices=FILE_CATEGORY_CHOICES)
+
+    # AI-extracted content and metadata from the file.
+    extracted_data = models.JSONField(null=True, blank=True)
+    extracted_meta_data = models.JSONField(null=True, blank=True)
 
 class RiskItem(models.Model):
     submission = models.ForeignKey(

@@ -1,7 +1,9 @@
 import json
 
+from django.db import transaction
 from django.http import QueryDict
 from rest_framework import serializers
+from api.signals import tender_files_uploaded
 from api.models import (
     Tenders,
     TenderFiles,
@@ -50,8 +52,13 @@ class TenderFilesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TenderFiles
-        fields = ['id', 'file', 'file_url', 'file_type', 'file_category', 'uploaded_at']
-        read_only_fields = ['file_url', 'file_type', 'uploaded_at']
+        fields = [
+            'id', 'file', 'file_url', 'file_type', 'file_category',
+            'extracted_data', 'extracted_meta_data', 'uploaded_at',
+        ]
+        read_only_fields = [
+            'file_url', 'file_type', 'extracted_data', 'extracted_meta_data', 'uploaded_at',
+        ]
 
     def validate(self, attrs):
         upload = attrs.get('file')
@@ -66,6 +73,12 @@ class TenderFilesSerializer(serializers.ModelSerializer):
         if instance.file:
             instance.file_url = instance.file.url
             instance.save(update_fields=['file_url'])
+        # Single-file upload path (TenderFilesView): fire the same batch signal
+        # with a one-row QuerySet so indexing happens here too.
+        files_qs = TenderFiles.objects.filter(id=instance.id)
+        transaction.on_commit(
+            lambda: tender_files_uploaded.send(sender=Tenders, files=files_qs)
+        )
         return instance
 
     def to_representation(self, instance):
@@ -90,7 +103,8 @@ class TenderDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'owner', 'title', 'description', 'project_category', 'location',
             'budget', 'start_date', 'duration_months', 'deadline_at',
-            'status', 'created_at', 'files', 'evaluation_rules',
+            'status', 'structured_data', 'comparison_result', 'recommendation_result',
+            'created_at', 'files', 'evaluation_rules',
         ]
         read_only_fields = fields
 
@@ -100,19 +114,26 @@ class TenderSubmissionsSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'tender', 'contractor', 'status',
             'technical_score', 'financial_score', 'risk_score', 'final_score',
-            'rank', 'recommendation', 'submitted_at',
+            'rank', 'recommendation', 'structured_data', 'justification',
+            'validation_result', 'risk_result', 'technical_result', 'financial_result',
+            'submitted_at',
         ]
         read_only_fields = [
             'tender', 'contractor',
             'technical_score', 'financial_score', 'risk_score', 'final_score',
-            'rank', 'recommendation', 'submitted_at',
+            'rank', 'recommendation', 'structured_data', 'justification',
+            'validation_result', 'risk_result', 'technical_result', 'financial_result',
+            'submitted_at',
         ]
 
 class SubmissionFilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubmissionFiles
-        fields = ['id', 'submission', 'file_url', 'file_category']
-        read_only_fields = ['file_type', 'file_category']
+        fields = [
+            'id', 'submission', 'file_url', 'file_category',
+            'extracted_data', 'extracted_meta_data',
+        ]
+        read_only_fields = ['file_type', 'file_category', 'extracted_data', 'extracted_meta_data']
 
 class RiskItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -206,7 +227,7 @@ class CreateTenderSerializer(serializers.ModelSerializer):
         categories = validated_data.pop('file_categories', [])
         rules_data = validated_data.pop('evaluation_rules', [])
         tender = Tenders.objects.create(**validated_data)
-        # Create children one-by-one (not bulk_create) so post_save signals fire per file.
+        created_ids = []
         for index, upload in enumerate(files):
             tender_file = TenderFiles.objects.create(
                 tender=tender,
@@ -216,7 +237,15 @@ class CreateTenderSerializer(serializers.ModelSerializer):
             )
             tender_file.file_url = tender_file.file.url
             tender_file.save(update_fields=['file_url'])
+            created_ids.append(tender_file.id)
         for rule_data in rules_data:
             EvaluationRules.objects.create(tender=tender, **rule_data)
+        # Fire once, after all files are saved and the transaction commits,
+        # passing the whole batch as a QuerySet.
+        if created_ids:
+            files_qs = TenderFiles.objects.filter(id__in=created_ids)
+            transaction.on_commit(
+                lambda: tender_files_uploaded.send(sender=Tenders, files=files_qs)
+            )
         return tender
 
