@@ -48,6 +48,7 @@ function App() {
         <Route path="/owner/reports" element={<Reports />} />
         <Route path="/owner/contractor-profile" element={<ContractorProfile />} />
         <Route path="/owner/tender-details" element={<TenderDetails />} />
+        <Route path="/owner/tender-details/:id" element={<TenderDetails />} />
 
 
 {/* Contractor Routes */}

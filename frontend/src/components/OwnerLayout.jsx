@@ -2,18 +2,26 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ownerDashboardData } from "../data/ownerDashboardData";
 
+
+
 function OwnerLayout({ activePage, children }) {
+
+
   const data = ownerDashboardData;
   const navigate = useNavigate();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
+
+
   const handleSignOut = () => {
     navigate("/");
   };
 
+  
   return (
+    
     <div className={`owner-layout ${sidebarOpen ? "" : "sidebar-collapsed"}`}>
       <aside className="owner-sidebar">
         <div
@@ -72,13 +80,13 @@ function OwnerLayout({ activePage, children }) {
             AI Analysis
           </button>
 
-          <button
+          {/* <button
             className={activePage === "document-chat" ? "active" : ""}
             onClick={() => navigate("/owner/document-chat")}
           >
             <i className="bi bi-chat-left"></i>
             Document Chat
-          </button>
+          </button> */}
 
           <button
             className={activePage === "reports" ? "active" : ""}
@@ -99,10 +107,10 @@ function OwnerLayout({ activePage, children }) {
             <span>4</span>
           </button>
 
-          <button>
+          {/* <button>
             <i className="bi bi-gear"></i>
             Settings
-          </button>
+          </button> */}
 
           <div className="profile-wrapper">
             {profileMenuOpen && (

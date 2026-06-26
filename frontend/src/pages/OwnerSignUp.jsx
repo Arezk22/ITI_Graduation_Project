@@ -72,15 +72,19 @@ function OwnerSignUp() {
     setIsLoading(true);
 
     try {
-      await register({
-        first_name: formData.fullName.trim(),
-        company_name: formData.companyName.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        role: "owner",
-      });
+await register({
+  first_name: formData.fullName.trim(),
+  username: formData.email.trim(),
+  company_name: formData.companyName.trim(),
+  email: formData.email.trim(),
+  password: formData.password,
+  role: "owner",
+});
 
-      navigate("/owner/dashboard");
+localStorage.setItem("pendingRole", "owner");
+localStorage.setItem("pendingEmail", formData.email.trim());
+
+navigate("/signin");
     } catch (error) {
       setErrors(mapRegisterErrors(error));
     } finally {

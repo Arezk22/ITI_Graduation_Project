@@ -70,10 +70,10 @@ function ContractorLayout({ activePage, children }) {
             <span>4</span>
           </button>
 
-          <button>
+          {/* <button>
             <i className="bi bi-gear"></i>
             Settings
-          </button>
+          </button> */}
 
           <div className="profile-wrapper">
             {profileMenuOpen && (

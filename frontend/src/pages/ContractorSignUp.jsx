@@ -70,15 +70,19 @@ function ContractorSignUp() {
     setIsLoading(true);
 
     try {
-      await register({
-        first_name: formData.fullName.trim(),
-        company_name: formData.companyName.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        role: "contractor",
-      });
-      // change the url to the contractor dashboard after created
-      navigate("/contractor/dashboard");
+await register({
+  first_name: formData.fullName.trim(),
+  username: formData.email.trim(),
+  company_name: formData.companyName.trim(),
+  email: formData.email.trim(),
+  password: formData.password,
+  role: "contractor",
+});
+
+localStorage.setItem("pendingRole", "contractor");
+localStorage.setItem("pendingEmail", formData.email.trim());
+
+navigate("/signin");
     } catch (error) {
       setErrors(mapRegisterErrors(error));
     } finally {

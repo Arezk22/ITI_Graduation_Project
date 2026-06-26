@@ -1,6 +1,8 @@
+
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../services/authApi";
+import { login, saveTokens } from "../services/authApi";
 
 function SignIn() {
   const navigate = useNavigate();
@@ -47,59 +49,44 @@ function SignIn() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
 
-    if (!validateForm()) return;
 
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!validateForm()) return;
+
+  try {
     setIsLoading(true);
 
-    try {
-      const { access, refresh, role } = await login(
-        formData.email,
-        formData.password,
-      );
+    const response = await login(formData.email, formData.password);
 
-      localStorage.setItem("accessToken", access);
-      localStorage.setItem("refreshToken", refresh);
-      localStorage.setItem("userRole", role);
+    const { access, refresh, role } = response.data;
 
-      if (role === "owner") {
-        navigate("/owner/dashboard");
-      } else if (role === "contractor") {
-        // change the url to the contractor dashboard after created
-        navigate("/contractor/dashboard");
-      } else {
-        // change the url to the admin dashboard after created
-        navigate("/");
-      }
-    } catch (error) {
-      if (error.detail) {
-        const message = Array.isArray(error.detail)
-          ? error.detail[0]
-          : error.detail;
-        setErrors({
-          password: message.includes("connect")
-            ? message
-            : "Invalid email or password",
-        });
-      } else if (error.email) {
-        setErrors({
-          email: Array.isArray(error.email) ? error.email[0] : error.email,
-        });
-      } else if (error.password) {
-        setErrors({
-          password: Array.isArray(error.password)
-            ? error.password[0]
-            : error.password,
-        });
-      } else {
-        setErrors({ password: "Unable to sign in. Please try again." });
-      }
-    } finally {
-      setIsLoading(false);
+    saveTokens(access, refresh);
+
+    localStorage.setItem("userEmail", formData.email);
+
+
+    if (role === "owner") {
+      localStorage.setItem("userRole", "owner");
+      navigate("/owner/dashboard");
+    } else if (role === "contractor") {
+      localStorage.setItem("userRole", "contractor");
+      navigate("/contractor/dashboard");
+    } else {
+      // مؤقتًا لحد ما الباك يرجع role
+      localStorage.setItem("userRole", "owner");
+      navigate("/owner/dashboard");
     }
-  };
+  } catch (error) {
+    setErrors({
+      form: error.response?.data?.detail || "Invalid email or password",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="auth-page">
@@ -114,8 +101,8 @@ function SignIn() {
         <div className="auth-content">
           <h1>The intelligent platform for construction procurement</h1>
           <p>
-            AI-powered tender evaluation, contractor scoring, and risk analysis
-            — all in one place.
+            AI-powered tender evaluation, contractor scoring, and risk analysis —
+            all in one place.
           </p>
 
           <div className="auth-feature">
@@ -152,6 +139,11 @@ function SignIn() {
         <div className="auth-form">
           <h2>Welcome back</h2>
           <p>Sign in to your BuildTender account</p>
+          {errors.form && (
+  <div className="alert alert-danger mb-3">
+    {errors.form}
+  </div>
+)}
 
           <div className="mb-3">
             <label className="form-label">Email Address</label>
@@ -168,7 +160,9 @@ function SignIn() {
             />
 
             {errors.email && (
-              <div className="invalid-feedback d-block">{errors.email}</div>
+              <div className="invalid-feedback d-block">
+                {errors.email}
+              </div>
             )}
           </div>
 
@@ -193,13 +187,17 @@ function SignIn() {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 <i
-                  className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
+                  className={`bi ${
+                    showPassword ? "bi-eye-slash" : "bi-eye"
+                  }`}
                 ></i>
               </button>
             </div>
 
             {errors.password && (
-              <div className="invalid-feedback d-block">{errors.password}</div>
+              <div className="invalid-feedback d-block">
+                {errors.password}
+              </div>
             )}
           </div>
 
