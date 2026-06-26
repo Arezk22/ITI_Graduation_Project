@@ -97,9 +97,14 @@ const closeToast = () => {
       if (!form.location.trim()) {
         newErrors.location = "Project location is required";
       }
-      if (form.evaluationTotal !== 100) {
-    newErrors.evaluationRules = "Evaluation criteria total must equal 100%";
-  }
+const currentEvaluationTotal = Object.values(form.evaluationRules || {}).reduce(
+  (sum, value) => sum + Number(value || 0),
+  0
+);
+
+if (currentEvaluationTotal !== 100) {
+  newErrors.evaluationRules = "Evaluation criteria total must equal 100%";
+}
     }
 
     if (step === 1) {
@@ -176,6 +181,40 @@ showToast("error", "Publish failed", "Please review the form and try again.");
       setIsPublishing(false);
     }
   }
+
+
+
+  const evaluationTotal = Object.values(form.evaluationRules).reduce(
+  (sum, value) => sum + Number(value || 0),
+  0
+);
+
+const handleEvaluationRuleChange = (ruleName, value) => {
+  const numericValue = Number(value);
+
+  const nextRules = {
+    ...form.evaluationRules,
+    [ruleName]: numericValue < 0 ? 0 : numericValue,
+  };
+
+  const nextTotal = Object.values(nextRules).reduce(
+    (sum, item) => sum + Number(item || 0),
+    0
+  );
+
+  setForm((prev) => ({
+    ...prev,
+    evaluationRules: nextRules,
+  }));
+
+  if (nextTotal === 100) {
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.evaluationRules;
+      return updated;
+    });
+  }
+};
 
   const FileUploadBox = ({ label, required, name, accept, hint }) => (
     <div className="mb-4">
@@ -254,6 +293,10 @@ showToast("error", "Publish failed", "Please review the form and try again.");
       )}
     </div>
   );
+
+
+
+
 
   function renderStepContent() {
     if (step === 0) {
@@ -389,9 +432,9 @@ showToast("error", "Publish failed", "Please review the form and try again.");
     ))}
   </div>
 
-  {errors.evaluationRules && (
-    <p className="evaluation-error">{errors.evaluationRules}</p>
-  )}
+{errors.evaluationRules && evaluationTotal !== 100 && (
+  <p className="evaluation-error">{errors.evaluationRules}</p>
+)}
 </div>
           </div>
         </>
@@ -677,24 +720,7 @@ showToast("error", "Publish failed", "Please review the form and try again.");
     );
   }
 
-  const evaluationTotal = Object.values(form.evaluationRules).reduce(
-  (sum, value) => sum + Number(value || 0),
-  0
-);
 
-// const isEvaluationTotalValid = evaluationTotal === 100;
-
-const handleEvaluationRuleChange = (ruleName, value) => {
-  const numericValue = Number(value);
-
-  setForm((prev) => ({
-    ...prev,
-    evaluationRules: {
-      ...prev.evaluationRules,
-      [ruleName]: numericValue < 0 ? 0 : numericValue,
-    },
-  }));
-};
 
   return (
     <OwnerLayout activePage="create">
@@ -781,3 +807,4 @@ const handleEvaluationRuleChange = (ruleName, value) => {
 }
 
 export default CreateTender;
+

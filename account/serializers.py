@@ -66,6 +66,9 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
         self.fields["email"] = serializers.EmailField()
         self.fields.pop("username", None)
 
+    
+
+
     def validate(self, attrs):
         email = attrs.pop("email")
         password = attrs.get("password")
@@ -79,5 +82,7 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         attrs["username"] = user.username
         data = super().validate(attrs)
+
+
         data["role"] = self.user.role
         return data
