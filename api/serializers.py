@@ -3,7 +3,7 @@ import json
 from django.db import transaction
 from django.http import QueryDict
 from rest_framework import serializers
-from api.signals import tender_files_uploaded
+from api.signals import tender_files_uploaded, submission_files_uploaded
 from api.models import (
     Tenders,
     TenderFiles,
@@ -130,10 +130,10 @@ class SubmissionFilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubmissionFiles
         fields = [
-            'id', 'submission', 'file_url', 'file_category',
+            'id', 'submission', 'file_url', 'file_type',
             'extracted_data', 'extracted_meta_data',
         ]
-        read_only_fields = ['file_type', 'file_category', 'extracted_data', 'extracted_meta_data']
+        read_only_fields = ['file_url', 'file_type', 'extracted_data', 'extracted_meta_data']
 
 class RiskItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -249,3 +249,49 @@ class CreateTenderSerializer(serializers.ModelSerializer):
             )
         return tender
 
+
+class CreateSubmissionSerializer(serializers.ModelSerializer):
+
+    # Uploaded files themselves (multipart). Send one or more `files` fields;
+    # each file's type is detected and its stored path saved to file_url.
+    files = serializers.ListField(
+        child=serializers.FileField(), write_only=True, required=False
+    )
+
+    class Meta:
+        model = TenderSubmissions
+        fields = ['id', 'status', 'files']
+        read_only_fields = ['id', 'status']
+
+    def to_internal_value(self, data):
+        # Normalise multipart payloads: collect the repeated `files` fields.
+        if isinstance(data, QueryDict):
+            files = data.getlist('files')
+            data = {key: data.get(key) for key in data if key != 'files'}
+            if files:
+                data['files'] = files
+        return super().to_internal_value(data)
+
+    def create(self, validated_data):
+        files = validated_data.pop('files', [])
+        submission = TenderSubmissions.objects.create(**validated_data)
+        created_ids = []
+        for upload in files:
+            submission_file = SubmissionFiles.objects.create(
+                submission=submission,
+                file=upload,
+                file_type=detect_file_type(upload.name),
+            )
+            submission_file.file_url = submission_file.file.url
+            submission_file.save(update_fields=['file_url'])
+            created_ids.append(submission_file.id)
+        # Fire once, after all files are saved and the transaction commits,
+        # passing the whole batch as a QuerySet.
+        if created_ids:
+            files_qs = SubmissionFiles.objects.filter(id__in=created_ids)
+            transaction.on_commit(
+                lambda: submission_files_uploaded.send(
+                    sender=TenderSubmissions, files=files_qs
+                )
+            )
+        return submission
