@@ -68,11 +68,11 @@ class TenderFiles(models.Model):
     #     ("certificates", "Certificates & License"),
     # )
     FILE_CATEGORY_CHOICES = (
-        ("boq", "BOQ"),
-        ("drawing", "Drawing"),
-        ("specification", "Specification"),
-        ("other", "Other"),
-    )
+            ("boq", "BOQ"),
+            ("drawing", "Drawing"),
+            ("specification", "Specification"),
+            ("other", "Other"),
+        )
 
 
 
