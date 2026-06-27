@@ -107,10 +107,18 @@ function ContractorLayout({ activePage, children }) {
             <i className="bi bi-list"></i>
           </button>
 
-          <div className="search-box">
+          {/* <div className="search-box">
             <i className="bi bi-search"></i>
             <input placeholder="Search tenders, contractors..." />
-          </div>
+          </div> */}
+          <input
+  placeholder="Search tenders..."
+  value={localStorage.getItem("contractorTenderSearch") || ""}
+  onChange={(e) => {
+    localStorage.setItem("contractorTenderSearch", e.target.value);
+    window.dispatchEvent(new Event("contractorTenderSearchChanged"));
+  }}
+/>
 
           <div className="topbar-actions">
             <button
