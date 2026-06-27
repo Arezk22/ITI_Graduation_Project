@@ -68,11 +68,11 @@ class TenderFiles(models.Model):
     #     ("certificates", "Certificates & License"),
     # )
     FILE_CATEGORY_CHOICES = (
-        ("boq", "BOQ"),
-        ("drawing", "Drawing"),
-        ("specification", "Specification"),
-        ("other", "Other"),
-    )
+            ("boq", "BOQ"),
+            ("drawing", "Drawing"),
+            ("specification", "Specification"),
+            ("other", "Other"),
+        )
 
 
 
@@ -154,10 +154,10 @@ class SubmissionFiles(models.Model):
     )
 
     FILE_CATEGORY_CHOICES = (
-        ("drawing", "Drawing")
-        # ("specification", "Specification"),
-        # ("financial", "Financial"),
-        # ("other", "Other"),
+        ("technical", "Technical Proposal"),
+        ("financial", "Financial Proposal"),
+        ("boq", "BOQ"),
+        ("certificates", "Certificates & License"),
     )
 
     submission = models.ForeignKey(
