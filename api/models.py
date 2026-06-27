@@ -154,10 +154,10 @@ class SubmissionFiles(models.Model):
     )
 
     FILE_CATEGORY_CHOICES = (
-        ("drawing", "Drawing")
-        # ("specification", "Specification"),
-        # ("financial", "Financial"),
-        # ("other", "Other"),
+        ("technical", "Technical Proposal"),
+        ("financial", "Financial Proposal"),
+        ("boq", "BOQ"),
+        ("certificates", "Certificates & License"),
     )
 
     submission = models.ForeignKey(
