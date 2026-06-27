@@ -251,10 +251,10 @@ class UnifiedStructuredTender(BaseModel):
     )
 
 class DocumentIntakeProcessor:
-    def __init__(self, vision_llm, text_llm):
+    def __init__(self, vision_llm =None, text_llm=None,gemini_client=None):
         self.vision_llm = vision_llm  # نموذج الرؤية (مثل Llama-Vision أو GPT-4o-mini)
         self.text_llm = text_llm      # نموذج النصوص القياسي للهيكلة
-        self.ai_client=genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        self.ai_client=gemini_client
     # 1. Intake Agent: تحديد نوع الملف وتوجيهه للمسار الصحيح
     def intake_and_route(self, file) -> str:
         """وظيفة الـ Routing ومعرفة نوع الملف بالضبط"""
@@ -455,7 +455,7 @@ class DocumentIntakeProcessor:
         for file in files:
             try:
                 file_type = self.intake_and_route(file)
-                if not file_type=="drawing file":
+                if not file_type=="drawing file": # edit to suit model
                     raw_data = self.extract_content(
                         file.file_url,
                         file_type
@@ -467,8 +467,10 @@ class DocumentIntakeProcessor:
 
                     file.extracted_data = cleaned_data
                     file.extracted_meta_data = file_meta_data
+                    file.need_review=file_meta_data["needs_human_review"]
                     file.save()
-
+                    if file_meta_data["needs_human_review"]:
+                        return None
                     all_files_cleaned_data.append({
                         "file_id": file.id,
                         "file_category": file.file_category,
