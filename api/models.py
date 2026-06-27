@@ -62,11 +62,11 @@ class TenderFiles(models.Model):
     )
 
     FILE_CATEGORY_CHOICES = (
-        ("technical", "Technical Proposal"),
-        ("financial", "Financial Proposal"),
-        ("boq", "BOQ"),
-        ("certificates", "Certificates & License"),
-    )
+            ("boq", "BOQ"),
+            ("drawing", "Drawing"),
+            ("specification", "Specification"),
+            ("other", "Other"),
+        )
 
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE, related_name="files")
 
@@ -146,10 +146,10 @@ class SubmissionFiles(models.Model):
     )
 
     FILE_CATEGORY_CHOICES = (
-        ("drawing", "Drawing")
-        # ("specification", "Specification"),
-        # ("financial", "Financial"),
-        # ("other", "Other"),
+        ("technical", "Technical Proposal"),
+        ("financial", "Financial Proposal"),
+        ("boq", "BOQ"),
+        ("certificates", "Certificates & License"),
     )
 
     submission = models.ForeignKey(
