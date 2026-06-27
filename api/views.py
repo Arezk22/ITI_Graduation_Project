@@ -13,6 +13,7 @@ from api.serializers import (
     EvaluationRulesSerializer,
     TenderSubmissionsSerializer,
     CreateTenderSerializer,
+    CreateSubmissionSerializer,
 )
 from .permissions import IsOwner, IsContractor, IsTenderOwner, IsSubmissionOwnerOrTenderOwner
 
@@ -167,6 +168,8 @@ class EvaluationRulesView(APIView):
 
 
 class TenderSubmissionsView(APIView):
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
     def get_permissions(self):
         if self.request.method == 'POST':
             return [IsAuthenticated(), IsContractor()]
@@ -191,10 +194,14 @@ class TenderSubmissionsView(APIView):
         tender = self.get_object(tender_id)
         if not tender:
             return Response(status=404, data={'message': 'Tender not found'})
-        serializer = TenderSubmissionsSerializer(data=request.data)
+        serializer = CreateSubmissionSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(tender=tender, contractor=request.user.contractor_profile)
-            return Response(serializer.data, status=201)
+            submission = serializer.save(
+                tender=tender, contractor=request.user.contractor_profile
+            )
+            return Response(
+                TenderSubmissionsSerializer(submission).data, status=201
+            )
         return Response(serializer.errors, status=400)
 
 
