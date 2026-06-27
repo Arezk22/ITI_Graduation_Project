@@ -26,6 +26,8 @@ import MyContractorProfile from "./pages/MyContractorProfile";
 import ContractorNotifications from "./pages/ContractorNotifications";
 import ContractorDocumentChat from "./pages/ContractorDocumentChat";
 import SubmitProposal from "./pages/SubmitProposal";
+import ContractorTenderDetails from "./pages/ContractorTenderDetails";
+
 function App() {
   return (
     <BrowserRouter>
@@ -57,7 +59,8 @@ function App() {
         <Route path="/contractor/notifications" element={<ContractorNotifications />} />
         <Route path="/contractor/document-chat" element={<ContractorDocumentChat />} />
         <Route path="/contractor/submit-proposal" element={<SubmitProposal />} />
-
+        <Route path="/contractor/submit-proposal/:id" element={<SubmitProposal />} />
+        <Route path="/contractor/tender-details/:id" element={<ContractorTenderDetails />} />
         
       </Routes>
     </BrowserRouter>
