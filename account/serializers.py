@@ -85,4 +85,11 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
         data["role"] = self.user.role
+        data["first_name"] = self.user.first_name
+        if self.user.role == "contractor" and hasattr(self.user, "contractor_profile"):
+            data["company_name"] = self.user.contractor_profile.company_name
+        elif self.user.role == "owner":
+            data["company_name"] = self.user.last_name
+        else:
+            data["company_name"] = ""
         return data
