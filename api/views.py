@@ -32,8 +32,6 @@ class TendersListView(APIView):
     def get(self, request):
         if request.user.role == 'owner':
             base = Tenders.objects.filter(owner=request.user)
-            # Counts run on the unjoined queryset so the submissions annotation
-            # below doesn't inflate the totals.
             counts = base.aggregate(
                 total=Count('id'),
                 open=Count('id', filter=Q(status='open')),
