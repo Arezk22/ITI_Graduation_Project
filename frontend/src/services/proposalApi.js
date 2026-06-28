@@ -51,3 +51,7 @@ export const getMySubmissions = () => {
 export const getSubmissionDetail = (tenderId, submissionId) => {
   return api.get(`/tenders/${tenderId}/submissions/${submissionId}`);
 };
+
+export const getTenderSubmissions = (tenderId) => {
+  return api.get(`/tenders/${tenderId}/submissions`);
+};

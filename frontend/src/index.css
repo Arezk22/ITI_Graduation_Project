@@ -1380,7 +1380,171 @@ body {
   background: #2b405f;
   color: #fb7185;
 }
+/* ===================added code================= */
 
+/* .real-chart {
+  position: relative;
+  height: 330px;
+  padding: 16px 20px 0;
+}
+
+.real-chart svg {
+  width: 100%;
+  height: 260px;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  background: #0f172a;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  z-index: 5;
+}
+
+.clickable-table-row {
+  cursor: pointer;
+}
+
+.clickable-table-row:hover {
+  background: #f8fafc;
+}
+
+.view-all-link {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.status-badge.closed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.status-badge.active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status-badge.awarded {
+  background: #ffedd5;
+  color: #f97316;
+} */
+
+.real-chart {
+  position: relative;
+  height: 350px;
+  padding: 12px 20px 0;
+}
+
+.real-chart svg {
+  width: 100%;
+  height: 300px;
+  overflow: visible;
+}
+
+.chart-axis-label {
+  font-size: 12px;
+  fill: #94a3b8;
+  font-weight: 600;
+}
+
+.chart-grid-line {
+  stroke: #e5e7eb;
+  stroke-width: 1;
+}
+
+.chart-smooth-line {
+  filter: drop-shadow(0 6px 8px rgba(37, 99, 235, 0.08));
+}
+
+.chart-hover-line {
+  stroke: #94a3b8;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+}
+
+.chart-hover-dot {
+  stroke: #ffffff;
+  stroke-width: 3;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 26px;
+  background: #0f172a;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  z-index: 5;
+  min-width: 110px;
+  pointer-events: none;
+}
+
+.real-chart-months {
+  padding-left: 48px;
+  padding-right: 12px;
+}
+/* -------------------------------------------- Owner all tenders -------------------------------------- */
+.all-tenders-header {
+  align-items: center;
+}
+
+.all-tenders-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.all-tenders-filter {
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #1e40af;
+  font-weight: 600;
+  outline: none;
+}
+
+.clickable-table-row {
+  cursor: pointer;
+}
+
+.clickable-table-row:hover {
+  background: #f8fafc;
+}
+
+@media (max-width: 768px) {
+  .all-tenders-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .all-tenders-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .all-tenders-filter {
+    width: 100%;
+  }
+}
 /* -------------------------------------------- create tender -------------------------------------- */
 
 .create-tender-content {
@@ -1668,7 +1832,7 @@ body {
 }
 /* -------------------------------------------------------- Notifications ---------------------------------------------- */
 
-.notification-icon-btn {
+/* .notification-icon-btn {
   position: relative;
   border: 0;
   background: transparent;
@@ -1917,7 +2081,7 @@ body {
 .empty-notifications h5 {
   font-weight: 800;
   color: #334155;
-}
+} */
 /* ---------===================================================-----------password---------------===============================================================---------- */
 
 .password-wrapper {
@@ -2313,6 +2477,215 @@ body {
     align-items: flex-start;
     gap: 16px;
   }
+}
+
+.tender-dropdown-wrapper {
+  position: relative;
+  margin-top: 10px;
+  width: 380px;
+  max-width: 100%;
+}
+
+.tender-dropdown-btn {
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.tender-dropdown-btn strong {
+  display: block;
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.tender-dropdown-btn span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.tender-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.14);
+  padding: 8px;
+  z-index: 50;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.tender-dropdown-menu button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 12px;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.tender-dropdown-menu button:hover,
+.tender-dropdown-menu button.active {
+  background: #eff6ff;
+}
+
+.tender-dropdown-menu button strong {
+  display: block;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.tender-dropdown-menu button span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.tender-dropdown-empty {
+  padding: 14px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.evaluation-table-wrap {
+  width: 100%;
+  overflow-x: visible;
+}
+
+.evaluation-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.evaluation-table th,
+.evaluation-table td {
+  white-space: normal;
+  font-size: 13px;
+}
+
+.evaluation-table th:nth-child(1),
+.evaluation-table td:nth-child(1) {
+  width: 58px;
+}
+
+.evaluation-table th:nth-child(2),
+.evaluation-table td:nth-child(2) {
+  width: 190px;
+}
+
+.evaluation-table th:nth-child(10),
+.evaluation-table td:nth-child(10) {
+  width: 160px;
+}
+
+.evaluation-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.proposal-btn {
+  border: none;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.muted-rank {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.contractor-score-chart {
+  height: 320px;
+  display: flex;
+  gap: 16px;
+  padding: 18px 8px 0;
+}
+
+.score-axis {
+  height: 240px;
+  width: 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.score-chart-bars {
+  flex: 1;
+  height: 260px;
+  border-left: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 0 18px;
+  position: relative;
+}
+
+.score-bar-group {
+  flex: 1;
+  min-width: 70px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.score-bar-area {
+  height: 220px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.score-bar {
+  width: 34px;
+  min-height: 4px;
+  background: #2563eb;
+  border-radius: 10px 10px 0 0;
+}
+
+.score-bar-group p {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  max-width: 90px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empty-chart-message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
 }
 
 /* ------------------------------------------------------------------------ Ai Analysis --------------------------------------------------------- */
@@ -4901,7 +5274,7 @@ body {
 }
 
 /* ================================================== Contractor Tender Details ============================================ */
-.tender-details-grid {
+/* .tender-details-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
@@ -4962,4 +5335,4 @@ body {
   .evaluation-rules-list {
     grid-template-columns: repeat(2, 1fr);
   }
-}
+} */

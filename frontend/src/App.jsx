@@ -18,6 +18,7 @@ import DocumentChat from "./pages/DocumentChat";
 import Reports from "./pages/Reports";
 import ContractorProfile from "./pages/ContractorProfile";
 import TenderDetails from "./pages/TenderDetails";
+import OwnerAllTenders from "./pages/OwnerAllTenders";
 
 // Contractor Pages
 import ContractorDashboard from "./pages/ContractorDashboard";
@@ -47,13 +48,11 @@ function App() {
         <Route path="/owner/ai-analysis" element={<AIAnalysis />} />
         <Route path="/owner/document-chat" element={<DocumentChat />} />
         <Route path="/owner/reports" element={<Reports />} />
-        <Route
-          path="/owner/contractor-profile"
-          element={<ContractorProfile />}
-        />
+        <Route path="/owner/contractor-profile" element={<ContractorProfile />} />
         <Route path="/owner/tender-details" element={<TenderDetails />} />
         <Route path="/owner/tender-details/:id" element={<TenderDetails />} />
-
+        <Route path="/owner/all-tenders" element={<OwnerAllTenders />} />
+        
         {/* Contractor Routes */}
         <Route path="/contractor/dashboard" element={<ContractorDashboard />} />
         <Route path="/contractor/profile" element={<MyContractorProfile />} />

@@ -902,3 +902,4 @@ function formatCategory(category) {
 }
 
 export default TenderDetails;
+
