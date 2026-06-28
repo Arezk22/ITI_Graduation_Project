@@ -138,7 +138,7 @@ function ContractorLayout({ activePage, children }) {
               <div className="avatar">RA</div>
             </button>
           </div>
-        </header>
+      </header>
 
         <div className="owner-page-wrapper">{children}</div>
       </main>
