@@ -5,6 +5,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.exceptions import NotFound
 from django.db import transaction
+from django.db.models import Count, F
+from django.utils import timezone
+from account.models import ContractorProfiles
 from api.models import Tenders
 from api.serializers import (
     TendersSerializer,
@@ -31,6 +34,7 @@ class TendersListView(APIView):
             tenders = Tenders.objects.filter(owner=request.user)
         else:
             tenders = Tenders.objects.all()
+        tenders = tenders.annotate(submissions_count=Count('submissions'))
         serializer = TendersSerializer(tenders, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -203,6 +207,55 @@ class TenderSubmissionsView(APIView):
                 TenderSubmissionsSerializer(submission).data, status=201
             )
         return Response(serializer.errors, status=400)
+
+
+class AwardTenderView(APIView):
+    """Award a tender to a contractor (tender owner only)."""
+
+    permission_classes = [IsAuthenticated, IsOwner, IsTenderOwner]
+
+    def post(self, request, pk, contractor_id):
+        try:
+            tender = Tenders.objects.get(pk=pk)
+        except Tenders.DoesNotExist:
+            raise NotFound("Tender not found.")
+        self.check_object_permissions(request, tender)
+
+        if tender.status == "awarded":
+            return Response(
+                {"detail": "This tender has already been awarded."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        submission = tender.submissions.filter(contractor_id=contractor_id).first()
+        if submission is None:
+            return Response(
+                {"detail": "This contractor has no submission on this tender."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            tender.status = "awarded"
+            tender.awarded_at = timezone.now()
+            tender.save(update_fields=["status", "awarded_at"])
+
+            submission.status = "accepted"
+            submission.save(update_fields=["status"])
+
+            ContractorProfiles.objects.filter(pk=contractor_id).update(
+                total_wins=F("total_wins") + 1
+            )
+
+        return Response(
+            {
+                "tender_id": tender.id,
+                "status": tender.status,
+                "awarded_at": tender.awarded_at,
+                "winning_submission_id": submission.id,
+                "contractor_id": contractor_id,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class TenderSubmissionDetailView(APIView):
