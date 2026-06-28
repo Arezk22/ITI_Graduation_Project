@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -58,6 +59,66 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
 
         return user
+
+
+class ActiveProposalSerializer(serializers.Serializer):
+    """A single active proposal (TenderSubmissions) for the contractor dashboard."""
+
+    id = serializers.IntegerField()
+    tender_id = serializers.IntegerField(source="tender.id")
+    tender_title = serializers.CharField(source="tender.title")
+    status = serializers.CharField()
+    deadline_at = serializers.DateTimeField(source="tender.deadline_at")
+    submitted_at = serializers.DateTimeField()
+    accepted_at = serializers.SerializerMethodField()
+
+    def get_accepted_at(self, obj):
+        if obj.status == "accepted":
+            return obj.tender.awarded_at
+        return None
+
+
+class ContractorProfileSerializer(serializers.ModelSerializer):
+    ai_avg_rate = serializers.FloatField(source="average_rating", read_only=True)
+    win_rate = serializers.SerializerMethodField()
+    active_proposals_count = serializers.SerializerMethodField()
+    active_proposals = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ContractorProfiles
+        fields = [
+            "id",
+            "company_name",
+            "experience_years",
+            "total_tenders",
+            "total_wins",
+            "ai_avg_rate",
+            "win_rate",
+            "active_proposals_count",
+            "active_proposals",
+        ]
+        read_only_fields = fields
+
+    def get_win_rate(self, obj):
+        if not obj.total_tenders:
+            return 0.0
+        return round((obj.total_wins / obj.total_tenders) * 100, 2)
+
+    def _active_proposals(self, obj):
+        return (
+            obj.contractor_submissions.select_related("tender")
+            .filter(
+                status__in=["under_review", "accepted"],
+                tender__deadline_at__gt=timezone.now(),
+            )
+            .order_by("-submitted_at")
+        )
+
+    def get_active_proposals_count(self, obj):
+        return self._active_proposals(obj).count()
+
+    def get_active_proposals(self, obj):
+        return ActiveProposalSerializer(self._active_proposals(obj), many=True).data
 
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
