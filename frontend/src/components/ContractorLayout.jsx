@@ -58,6 +58,11 @@ const handleSignOut = () => {
           </div>
         </div>
 
+
+
+
+
+
         <span className="owner-badge">Contractor</span>
 
         <nav className="sidebar-menu">
@@ -145,14 +150,29 @@ const handleSignOut = () => {
             <i className="bi bi-search"></i>
             <input placeholder="Search tenders, contractors..." />
           </div> */}
-<input
+{/* <input
   placeholder="Search tenders..."
   value={localStorage.getItem("contractorTenderSearch") || ""}
   onChange={(e) => {
     localStorage.setItem("contractorTenderSearch", e.target.value);
     window.dispatchEvent(new Event("contractorTenderSearchChanged"));
   }}
-/>
+
+/> */}
+
+
+{/* <div
+
+  className="topbar-brand-center"
+  onClick={() => navigate("/contractor/dashboard")}
+>
+  <span className="brand-icon">
+    <i className="bi bi-building"></i>
+  </span>
+
+  <strong>BuildTender</strong>
+  <small>AI Platform</small>
+</div> */}
 
           <div className="topbar-actions">
             {/* <button

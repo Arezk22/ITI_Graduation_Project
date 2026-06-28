@@ -14,9 +14,12 @@ function OwnerAllTenders() {
   useEffect(() => {
     getAllTenders()
       .then((response) => {
+        // const list = Array.isArray(response.data)
+        //   ? response.data
+        //   : response.data.results || [];
         const list = Array.isArray(response.data)
-          ? response.data
-          : response.data.results || [];
+  ? response.data
+  : response.data.tenders || response.data.results || [];
 
         setTenders(list);
       })

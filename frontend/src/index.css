@@ -1380,6 +1380,85 @@ body {
   background: #2b405f;
   color: #fb7185;
 }
+/* ========================================= */
+.owner-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.owner-badge {
+  margin-top: 28px;
+}
+
+.sidebar-menu {
+  flex: 1;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 18px;
+}
+
+.owner-profile {
+  width: 100%;
+}
+
+.owner-topbar {
+  position: relative;
+}
+
+.topbar-brand-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.topbar-brand-center .brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #2563eb;
+  color: #fff;
+}
+
+.topbar-brand-center strong {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.topbar-brand-center small {
+  font-size: 13px;
+  color: #64748b;
+  margin-left: -4px;
+}
+
+
+
+@media (max-width: 768px) {
+  .topbar-brand-center {
+    position: static;
+    transform: none;
+    margin-left: 12px;
+  }
+
+  .topbar-brand-center strong {
+    font-size: 15px;
+  }
+
+  .topbar-brand-center small {
+    font-size: 11px;
+  }
+}
 /* ===================added code================= */
 
 /* .real-chart {
@@ -3286,6 +3365,121 @@ body {
     display: none;
   }
 }
+.chat-tender-dropdown-wrap {
+  position: relative;
+  margin-top: 18px;
+}
+
+.chat-tender-dropdown-btn {
+  width: 100%;
+  min-height: 76px;
+  border: 1px solid #e5e7eb;
+  background: #eff6ff;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.chat-tender-dropdown-btn strong {
+  display: block;
+  color: #1d4ed8;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.chat-tender-dropdown-btn span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.chat-tender-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.14);
+  padding: 8px;
+  z-index: 30;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.chat-tender-dropdown-menu button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 12px;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.chat-tender-dropdown-menu button:hover,
+.chat-tender-dropdown-menu button.active {
+  background: #eff6ff;
+}
+
+.chat-tender-dropdown-menu button strong {
+  display: block;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.chat-tender-dropdown-menu button span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.chat-dropdown-empty {
+  padding: 14px;
+  color: #64748b;
+}
+
+.history-section {
+  padding-top: 28px;
+  margin-top: 28px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.history-section h6,
+.suggested-section h6 {
+  color: #64748b;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin-bottom: 14px;
+}
+
+.history-section button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #334155;
+  padding: 12px 14px;
+  border-radius: 12px;
+  text-align: left;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-section button:hover {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.chat-input-footer span {
+  padding-left: 0;
+}
 
 /* ---------------------------------------------------------------------- Reports --------------------------------------------------------------- */
 
@@ -4607,6 +4801,442 @@ body {
 }
 
 /* ================================================== */
+.trust-chart-full {
+  display: flex;
+  gap: 16px;
+  height: 290px;
+  padding-top: 16px;
+}
+
+.trust-y-axis {
+  width: 36px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trust-chart-area {
+  flex: 1;
+}
+
+.trust-chart-area svg {
+  width: 100%;
+  height: 220px;
+  overflow: visible;
+}
+
+.trust-grid-line {
+  stroke: #e5e7eb;
+  stroke-width: 1;
+}
+
+.submitted-badge {
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.annual-award-chart {
+  display: flex;
+  gap: 18px;
+  height: 270px;
+}
+
+.annual-y-axis {
+  height: 210px;
+  width: 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.annual-chart-area {
+  flex: 1;
+  height: 230px;
+  border-left: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  padding: 0 22px;
+}
+
+.annual-award-group {
+  height: 100%;
+  min-width: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.annual-award-bar-wrap {
+  height: 190px;
+  width: 46px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+}
+
+.annual-award-bar {
+  width: 38px;
+  background: #2563eb;
+  border-radius: 10px 10px 0 0;
+}
+
+.annual-award-group p {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.annual-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  background: #0f172a;
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  min-width: 95px;
+  text-align: center;
+  z-index: 5;
+}
+
+.annual-tooltip strong,
+.annual-tooltip span {
+  display: block;
+}
+/* ================================================== contractor all proposals ====================================== */
+/* .contractor-proposal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.proposal-project-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.proposal-status-badge {
+  margin-left: auto;
+  white-space: nowrap;
+  min-width: 105px;
+  text-align: center;
+}
+
+.all-proposals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+}
+
+.all-proposals-header h2 {
+  margin: 0;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.all-proposals-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+}
+
+.custom-filter-wrap {
+  width: 260px;
+}
+
+.custom-filter-wrap label {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.custom-filter-select {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 600;
+  outline: none;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.custom-filter-select:focus {
+  border-color: #2563eb;
+}
+
+.all-proposals-table-wrap {
+  width: 100%;
+  overflow-x: visible;
+}
+
+.all-proposals-table {
+  width: 100%;
+}
+
+.all-proposals-table th {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.all-proposals-table td {
+  padding: 16px 8px;
+  border-bottom: 1px solid #eef2f7;
+  font-size: 14px;
+}
+
+.all-proposals-table tr:last-child td {
+  border-bottom: none;
+} */
+
+.contractor-proposal-row {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+.proposal-project-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.proposal-status-badge {
+  margin-left: auto;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.trust-chart-full {
+  display: flex;
+  gap: 16px;
+  height: 290px;
+  padding-top: 16px;
+}
+
+.trust-y-axis {
+  width: 36px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trust-chart-area {
+  flex: 1;
+}
+
+.trust-chart-area svg {
+  width: 100%;
+  height: 220px;
+  overflow: visible;
+}
+
+.trust-grid-line {
+  stroke: #e5e7eb;
+  stroke-width: 1;
+}
+
+.submitted-badge {
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.annual-award-chart {
+  display: flex;
+  gap: 18px;
+  height: 270px;
+}
+
+.annual-y-axis {
+  height: 210px;
+  width: 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.annual-chart-area {
+  flex: 1;
+  height: 230px;
+  border-left: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  padding: 0 22px;
+}
+
+.annual-award-group {
+  height: 100%;
+  min-width: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.annual-award-bar-wrap {
+  height: 190px;
+  width: 46px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+}
+
+.annual-award-bar {
+  width: 38px;
+  background: #2563eb;
+  border-radius: 10px 10px 0 0;
+}
+
+.annual-award-group p {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.annual-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  background: #0f172a;
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  min-width: 95px;
+  text-align: center;
+  z-index: 5;
+}
+
+.annual-tooltip strong,
+.annual-tooltip span {
+  display: block;
+}
+@media (max-width: 768px) {
+  .all-proposals-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .proposal-filter-wrap {
+    width: 100%;
+  }
+}
+/* ======================== contractor all proposals added========================== */
+.proposal-filter-wrap {
+  width: 280px;
+  position: relative;
+}
+
+.proposal-filter-wrap label {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 7px;
+  font-weight: 700;
+}
+
+.proposal-filter-dropdown {
+  position: relative;
+}
+
+.proposal-filter-btn {
+  width: 100%;
+  height: 46px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.proposal-filter-btn i {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.proposal-filter-btn:hover {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+
+.proposal-filter-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.14);
+  padding: 8px;
+  z-index: 50;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.proposal-filter-menu button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 11px 12px;
+  border-radius: 12px;
+  text-align: left;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.proposal-filter-menu button:hover,
+.proposal-filter-menu button.active {
+  background: #eff6ff;
+  color: #2563eb;
+}
+/* ================================================== */
 .available-tenders-scroll {
   max-height: 390px;
   overflow-y: auto;
@@ -5336,3 +5966,48 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 } */
+/* ========================================== contractor profile view & proposal details  ========================================= */
+.evaluation-project-subtitle {
+  color: #64748b;
+  margin: 4px 0 12px;
+  font-size: 14px;
+}
+
+.small-dropdown {
+  width: 300px;
+}
+
+.proposal-files-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.proposal-file-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #0f172a;
+  text-decoration: none;
+  background: #fff;
+}
+
+.proposal-file-card strong {
+  display: block;
+  font-size: 14px;
+}
+
+.proposal-file-card span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.proposal-file-card:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}

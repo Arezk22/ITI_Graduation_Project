@@ -55,3 +55,7 @@ export const getSubmissionDetail = (tenderId, submissionId) => {
 export const getTenderSubmissions = (tenderId) => {
   return api.get(`/tenders/${tenderId}/submissions`);
 };
+
+export const awardTender = (tenderId, contractorId) => {
+  return api.post(`/tenders/${tenderId}/award/${contractorId}`);
+};

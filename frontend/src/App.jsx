@@ -14,18 +14,24 @@ import CreateTender from "./pages/CreateTender";
 // import Notifications from "./pages/Notifications";
 import Evaluation from "./pages/Evaluation";
 import AIAnalysis from "./pages/AIAnalysis";
-import DocumentChat from "./pages/DocumentChat";
+// import DocumentChat from "./pages/DocumentChat";
 import Reports from "./pages/Reports";
-import ContractorProfile from "./pages/ContractorProfile";
 import TenderDetails from "./pages/TenderDetails";
 import OwnerAllTenders from "./pages/OwnerAllTenders";
 
+import ProposalDetails from "./pages/ProposalDetails";
+import ContractorProfileView from "./pages/ContractorProfileView";
+
 // Contractor Pages
 import ContractorDashboard from "./pages/ContractorDashboard";
-import MyContractorProfile from "./pages/MyContractorProfile";
+// import MyContractorProfile from "./pages/MyContractorProfile";
 // import ContractorNotifications from "./pages/ContractorNotifications";
 import ContractorDocumentChat from "./pages/ContractorDocumentChat";
 import SubmitProposal from "./pages/SubmitProposal";
+import ContractorProfile from "./pages/ContractorProfile";
+import ContractorAllProposals from "./pages/ContractorAllProposals";
+
+
 // import ContractorTenderDetails from "./pages/ContractorTenderDetails";
 
 function App() {
@@ -46,16 +52,30 @@ function App() {
         {/* <Route path="/owner/notifications" element={<Notifications />} /> */}
         <Route path="/owner/evaluation" element={<Evaluation />} />
         <Route path="/owner/ai-analysis" element={<AIAnalysis />} />
-        <Route path="/owner/document-chat" element={<DocumentChat />} />
+        {/* <Route path="/owner/document-chat" element={<DocumentChat />} /> */}
         <Route path="/owner/reports" element={<Reports />} />
-        <Route path="/owner/contractor-profile" element={<ContractorProfile />} />
+        {/* <Route path="/owner/contractor/profile" element={<ContractorProfile />} /> */}
         <Route path="/owner/tender-details" element={<TenderDetails />} />
         <Route path="/owner/tender-details/:id" element={<TenderDetails />} />
         <Route path="/owner/all-tenders" element={<OwnerAllTenders />} />
 
+        <Route
+  path="/owner/proposal-details/:tenderId/:submissionId"
+  element={<ProposalDetails />}
+/>
+
+<Route
+  path="/owner/contractor-profile/:contractorId"
+  element={<ContractorProfileView />}
+/>
+
         {/* Contractor Routes */}
         <Route path="/contractor/dashboard" element={<ContractorDashboard />} />
-        <Route path="/contractor/profile" element={<MyContractorProfile />} />
+        <Route path="/contractor/profile" element={<ContractorProfile />} />
+        <Route path="/contractor/proposals" element={<ContractorAllProposals />} />
+
+        
+        {/* <Route path="/contractor/profile" element={<MyContractorProfile />} /> */}
         {/* <Route
           path="/contractor/notifications"
           element={<ContractorNotifications />}

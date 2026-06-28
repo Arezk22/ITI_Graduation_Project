@@ -1,120 +1,195 @@
-import OwnerLayout from "../components/OwnerLayout";
+
+
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import ContractorLayout from "../components/ContractorLayout";
+import { getMySubmissions } from "../services/proposalApi";
 
 function ContractorProfile() {
-  const projects = [
-    ["Riverside Commercial Park", "Commercial", "$5.5M", "Completed May 2026", "94/100"],
-    ["Al Noor Medical Extension", "Healthcare", "$3.2M", "Completed Feb 2026", "91/100"],
-    ["Westside Logistics Hub", "Industrial", "$4.1M", "Completed Nov 2025", "88/100"],
-    ["Harbor View Residences", "Residential", "$6.8M", "Completed Jun 2025", "92/100"],
-    ["Central Tower Phase 1", "Commercial", "$9.2M", "Completed Jan 2025", "86/100"],
-  ];
+  const navigate = useNavigate();
+
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [hoveredYear, setHoveredYear] = useState(null);
+
+  const companyName = localStorage.getItem("companyName") || "Company Name";
+  const userEmail = localStorage.getItem("userEmail") || "email@example.com";
+
+  useEffect(() => {
+    getMySubmissions()
+      .then((response) => {
+        const list = Array.isArray(response.data)
+          ? response.data
+          : response.data.results || [];
+
+        console.log("MY SUBMISSIONS:", list);
+        setSubmissions(list);
+      })
+      .catch((error) => {
+        console.error(
+          "Load contractor submissions error:",
+          error.response?.data || error
+        );
+        setSubmissions([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  const acceptedSubmissions = useMemo(() => {
+    return submissions.filter((submission) => isAwardedSubmission(submission));
+  }, [submissions]);
+
+  const visibleSubmissions = submissions.slice(0, 5);
+
+  const totalProjectValue = useMemo(() => {
+    return submissions.reduce((sum, submission) => {
+      return sum + Number(submission.tender?.budget || 0);
+    }, 0);
+  }, [submissions]);
+
+  const winRate = useMemo(() => {
+    if (!submissions.length) return 0;
+    return Math.round((acceptedSubmissions.length / submissions.length) * 100);
+  }, [submissions, acceptedSubmissions]);
+
+  const annualAwardData = useMemo(() => {
+    const years = [2022, 2023, 2024, 2025, 2026];
+
+    return years.map((year) => {
+      const count = acceptedSubmissions.filter((submission) => {
+        const dateValue =
+          submission.accepted_at ||
+          submission.tender?.awarded_at ||
+          submission.submitted_at;
+
+        if (!dateValue) return false;
+
+        const date = new Date(dateValue);
+
+        if (Number.isNaN(date.getTime())) return false;
+
+        return date.getFullYear() === year;
+      }).length;
+
+      return { year, count };
+    });
+  }, [acceptedSubmissions]);
 
   return (
-    <OwnerLayout activePage="evaluation">
+    <ContractorLayout activePage="profile">
       <section className="contractor-profile-content">
         <div className="contractor-hero-card">
           <div className="contractor-main-info">
-            <div className="contractor-avatar">A</div>
+            <div className="contractor-avatar">{getInitial(companyName)}</div>
 
             <div>
-              <h2>AlSalam Construction</h2>
+              <h2>{companyName}</h2>
 
-              <div className="contractor-meta">
-                <span><i className="bi bi-geo-alt"></i> Dubai, UAE</span>
-                <span><i className="bi bi-building"></i> Est. 2012</span>
-                <span><i className="bi bi-currency-dollar"></i> $4.2M avg project value</span>
-              </div>
+
 
               <div className="contractor-contact">
-                <span><i className="bi bi-envelope"></i> rania@alsalam-construction.ae</span>
-                <span><i className="bi bi-telephone"></i> +971 4 XXX XXXX</span>
-                <span><i className="bi bi-globe"></i> alsalam-construction.ae</span>
+                <span>
+                  <i className="bi bi-envelope"></i> {userEmail}
+                                  <span>
+                  <i className="bi bi-currency-dollar"></i> $4.2M avg project
+                  value
+                </span>
+                </span>
+
+                {/* <span>
+                  <i className="bi bi-telephone"></i> Phone not provided
+                </span>
+
+                <span>
+                  <i className="bi bi-globe"></i> Website not provided
+                </span> */}
               </div>
             </div>
           </div>
 
           <div className="trust-score-box">
-            <h3><i className="bi bi-star-fill"></i> 88 <span>/100</span></h3>
+            <h3>
+              <i className="bi bi-star-fill"></i> 88 <span>/100</span>
+            </h3>
             <p>Trust Score</p>
-            <small>↑ +2 this month</small>
           </div>
 
           <div className="contractor-stats">
             <div>
-              <h3>47</h3>
-              <p>Projects Completed</p>
+              <h3>{acceptedSubmissions.length}</h3>
+              <p>Projects Accepted</p>
             </div>
 
             <div>
-              <h3>$142M+</h3>
+              <h3>{formatShortMoney(totalProjectValue)}</h3>
               <p>Total Project Value</p>
             </div>
 
             <div>
-              <h3>64%</h3>
+              <h3>{winRate}%</h3>
               <p>Win Rate</p>
             </div>
 
             <div>
               <h3>91/100</h3>
-              <p>Avg Delivery Score</p>
+              <p>Avg Delivery Score
+</p>
             </div>
           </div>
         </div>
 
-        <div className="row g-4 mt-1">
-          <div className="col-lg-8">
-            <div className="dashboard-card profile-chart-card">
-              <div className="card-header-clean">
-                <h5>Trust Score History</h5>
-                <span className="trend-badge">Trending Up ↑</span>
-              </div>
-
-              <div className="trust-chart">
-                <svg viewBox="0 0 700 220" preserveAspectRatio="none">
-                  <polyline
-                    points="20,155 140,140 260,130 380,105 500,120 620,95 680,85"
-                    fill="none"
-                    stroke="#2563eb"
-                    strokeWidth="4"
-                  />
-                  <circle cx="20" cy="155" r="5" fill="#2563eb" />
-                  <circle cx="140" cy="140" r="5" fill="#2563eb" />
-                  <circle cx="260" cy="130" r="5" fill="#2563eb" />
-                </svg>
-
-                <div className="chart-months">
-                  <span>Dec</span>
-                  <span>Jan</span>
-                  <span>Feb</span>
-                  <span>Mar</span>
-                  <span>Apr</span>
-                  <span>May</span>
-                  <span>Jun</span>
-                </div>
-              </div>
-            </div>
+        <div className="dashboard-card profile-chart-card mt-4">
+          <div className="card-header-clean">
+            <h5>Trust Score History</h5>
           </div>
 
-          <div className="col-lg-4">
-            <div className="dashboard-card certification-card">
-              <h5><i className="bi bi-shield-check text-primary"></i> Certifications</h5>
-
-              {[
-                "ISO 9001:2015 Quality Management",
-                "ISO 45001:2018 Occupational Health",
-                "Green Building LEED Silver",
-                "UAE Trade License",
-                "CIDB Grade 7 Registration",
-              ].map((cert) => (
-                <div className="cert-row" key={cert}>
-                  <i className="bi bi-check-circle"></i>
-                  <div>
-                    <strong>{cert}</strong>
-                    <p>Expires Dec 2026</p>
-                  </div>
-                </div>
+          <div className="trust-chart-full">
+            <div className="trust-y-axis">
+              {[100, 90, 80, 70].map((value) => (
+                <span key={value}>{value}</span>
               ))}
+            </div>
+
+            <div className="trust-chart-area">
+              <svg viewBox="0 0 700 220" preserveAspectRatio="none">
+                {[100, 90, 80, 70].map((value) => (
+                  <line
+                    key={value}
+                    x1="0"
+                    x2="700"
+                    y1={getTrustY(value)}
+                    y2={getTrustY(value)}
+                    className="trust-grid-line"
+                  />
+                ))}
+
+                <path
+                  d={buildTrustPath()}
+                  fill="none"
+                  stroke="#2563eb"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {trustData.map((item, index) => (
+                  <circle
+                    key={item.month}
+                    cx={getTrustX(index)}
+                    cy={getTrustY(item.value)}
+                    r="5"
+                    fill="#2563eb"
+                  />
+                ))}
+              </svg>
+
+              <div className="chart-months">
+                {trustData.map((item) => (
+                  <span key={item.month}>{item.month}</span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -122,51 +197,222 @@ function ContractorProfile() {
         <div className="dashboard-card mt-4">
           <div className="card-header-clean">
             <h5>Previous Projects</h5>
-            <p className="mb-0 text-muted">Showing 5 of 47</p>
+
+            {submissions.length > 0 && (
+              <button
+                className="view-all-link"
+                onClick={() => navigate("/contractor/proposals")}
+              >
+                View all
+              </button>
+            )}
           </div>
 
           <div className="profile-projects-list">
-            {projects.map((p) => (
-              <div className="profile-project-row" key={p[0]}>
-                <div>
-                  <h5>
-                    {p[0]} <span>{p[1]}</span>
-                  </h5>
-                  <p>
-                    <i className="bi bi-currency-dollar"></i> {p[2]}{" "}
-                    <i className="bi bi-calendar ms-2"></i> {p[3]}
-                  </p>
-                </div>
+            {loading ? (
+              <div className="text-muted py-3">Loading proposals...</div>
+            ) : submissions.length === 0 ? (
+              <div className="text-muted py-3">No submitted proposals yet.</div>
+            ) : (
+              visibleSubmissions.map((submission) => (
+                <div
+                  className="profile-project-row contractor-proposal-row"
+                  key={submission.id}
+                >
+                  <div className="proposal-project-info">
+                    <h5>
+                      {submission.tender?.title ||
+                        `Tender ${submission.tender_id || ""}`}
+                      <span>
+                        {formatCategory(submission.tender?.project_category)}
+                      </span>
+                    </h5>
 
-                <div className="project-score">
-                  <strong>{p[4]}</strong>
-                  <p>Client Score</p>
-                </div>
+                    <p>
+                      <i className="bi bi-currency-dollar"></i>{" "}
+                      {formatMoney(submission.tender?.budget)}{" "}
+                      <i className="bi bi-calendar ms-2"></i> Submitted{" "}
+                      {formatDate(submission.submitted_at)}
+                    </p>
+                  </div>
 
-                <span className="completed-badge">Completed</span>
-              </div>
-            ))}
+                  <span
+                    className={
+                      isAwardedSubmission(submission)
+                        ? "completed-badge proposal-status-badge"
+                        : "submitted-badge proposal-status-badge"
+                    }
+                  >
+                    {isAwardedSubmission(submission) ? "Awarded" : "Submitted"}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
         <div className="dashboard-card mt-4">
-          <h5 className="mb-4 fw-bold">Annual Tender Win Rate</h5>
+          <h5 className="mb-4 fw-bold">Annual Awarded Projects</h5>
 
-          <div className="annual-chart">
-            {[2022, 2023, 2024, 2025, 2026].map((year, i) => (
-              <div className="annual-group" key={year}>
-                <div className="annual-bars">
-                  <span className="annual-bg" style={{ height: `${[70, 90, 100, 70, 35][i]}%` }}></span>
-                  <span className="annual-blue" style={{ height: `${[40, 55, 65, 50, 25][i]}%` }}></span>
+          <div className="annual-award-chart">
+            <div className="annual-y-axis">
+              {[12, 9, 6, 3, 0].map((value) => (
+                <span key={value}>{value}</span>
+              ))}
+            </div>
+
+            <div className="annual-chart-area">
+              {annualAwardData.map((item) => (
+                <div
+                  className="annual-award-group"
+                  key={item.year}
+                  onMouseEnter={() => setHoveredYear(item)}
+                  onMouseLeave={() => setHoveredYear(null)}
+                >
+                  <div className="annual-award-bar-wrap">
+                    <span
+                      className="annual-award-bar"
+                      style={{
+                        height: `${Math.max(
+                          (item.count / 12) * 100,
+                          item.count ? 6 : 2
+                        )}%`,
+                      }}
+                    ></span>
+
+                    {hoveredYear?.year === item.year && (
+                      <div className="annual-tooltip">
+                        <strong>{item.year}</strong>
+                        <span>{item.count} awarded</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <p>{item.year}</p>
                 </div>
-                <p>{year}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
-    </OwnerLayout>
+    </ContractorLayout>
   );
+}
+
+const trustData = [
+  { month: "Dec", value: 78 },
+  { month: "Jan", value: 80 },
+  { month: "Feb", value: 81 },
+  { month: "Mar", value: 84 },
+  { month: "Apr", value: 82 },
+  { month: "May", value: 86 },
+  { month: "Jun", value: 88 },
+];
+
+function buildTrustPath() {
+  const points = trustData.map((item, index) => ({
+    x: getTrustX(index),
+    y: getTrustY(item.value),
+  }));
+
+  if (!points.length) return "";
+
+  let path = `M ${points[0].x} ${points[0].y}`;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const current = points[i];
+    const next = points[i + 1];
+    const midX = (current.x + next.x) / 2;
+
+    path += ` C ${midX} ${current.y}, ${midX} ${next.y}, ${next.x} ${next.y}`;
+  }
+
+  return path;
+}
+
+function getTrustX(index) {
+  return 20 + index * 110;
+}
+
+function getTrustY(value) {
+  const min = 70;
+  const max = 100;
+  const chartHeight = 180;
+
+  return 190 - ((value - min) / (max - min)) * chartHeight;
+}
+
+function isAwardedSubmission(submission) {
+  return (
+    submission.status === "accepted" ||
+    submission.status === "awarded" ||
+    submission.tender?.status === "awarded"
+  );
+}
+
+function getInitial(name) {
+  return name?.trim()?.charAt(0)?.toUpperCase() || "C";
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatMoney(value) {
+  if (!value) return "—";
+
+  const number = Number(value);
+
+  if (Number.isNaN(number)) return value;
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(number);
+}
+
+function formatShortMoney(value) {
+  const number = Number(value || 0);
+
+  if (!number) return "$0";
+
+  if (number >= 1000000) {
+    return `$${Math.round(number / 1000000)}M+`;
+  }
+
+  if (number >= 1000) {
+    return `$${Math.round(number / 1000)}K+`;
+  }
+
+  return `$${number}`;
+}
+
+function formatCategory(category) {
+  const map = {
+    construction: "Construction",
+    roads: "Roads",
+    buildings: "Buildings",
+    electrical: "Electrical",
+    mechanical: "Mechanical",
+    water: "Water",
+    it: "IT",
+    consulting: "Consulting",
+    supplies: "Supplies",
+    maintenance: "Maintenance",
+    other: "Other",
+  };
+
+  return map[category] || category || "Other";
 }
 
 export default ContractorProfile;

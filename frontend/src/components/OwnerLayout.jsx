@@ -49,7 +49,9 @@ const userInitials = getInitials(userName);
     
     <div className={`owner-layout ${sidebarOpen ? "" : "sidebar-collapsed"}`}>
       <aside className="owner-sidebar">
-        <div
+
+
+                <div
           className="sidebar-brand"
           onClick={() => navigate("/owner/dashboard")}
         >
@@ -61,6 +63,8 @@ const userInitials = getInitials(userName);
             <p>AI Platform</p>
           </div>
         </div>
+
+
 
         <span className="owner-badge">Project Owner</span>
 
@@ -169,11 +173,16 @@ const userInitials = getInitials(userName);
             <i className="bi bi-list"></i>
           </button>
 
-          <div className="search-box">
-            <i className="bi bi-search"></i>
-            <input placeholder="Search tenders, contractors..." />
-          </div>
+{/* <div
+  className="topbar-brand-center"
+  onClick={() => navigate("/owner/dashboard")}
+>
+  <span className="brand-icon">
+    <i className="bi bi-building"></i>
+  </span>
 
+  <strong>BuildTender</strong>
+</div> */}
           <div className="topbar-actions">
             {/* <button
               className="notification-icon-btn"

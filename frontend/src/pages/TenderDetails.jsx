@@ -967,10 +967,13 @@ function TenderDetails() {
       .then((response) => {
         if (cancelled) return;
 
-        const list = Array.isArray(response.data)
-          ? response.data
-          : response.data.results || [];
-
+        // const list = Array.isArray(response.data)
+        //   ? response.data
+        //   : response.data.results || [];
+const list = Array.isArray(response.data)
+  ? response.data
+  : response.data.tenders || response.data.results || [];
+  
         setTenders(list);
 
         if (!id && list.length > 0) {

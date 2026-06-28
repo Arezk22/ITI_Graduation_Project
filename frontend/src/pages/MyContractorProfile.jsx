@@ -1,6 +1,6 @@
 import OwnerLayout from "../components/ContractorLayout";
 
-function ContractorProfile() {
+function MyContractorProfile() {
   const projects = [
     ["Riverside Commercial Park", "Commercial", "$5.5M", "Completed May 2026", "94/100"],
     ["Al Noor Medical Extension", "Healthcare", "$3.2M", "Completed Feb 2026", "91/100"],
@@ -169,4 +169,4 @@ function ContractorProfile() {
   );
 }
 
-export default ContractorProfile;
+export default MyContractorProfile;
