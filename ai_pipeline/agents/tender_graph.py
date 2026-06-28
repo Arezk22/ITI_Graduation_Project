@@ -9,6 +9,7 @@ from typing import List, Literal
 
 from ITI_Graduation_Project.ai_pipeline.tasks import notify
 from ITI_Graduation_Project.api.models import EvaluationRules, TenderSubmissions, Tenders
+from api.models import EvaluationRules, TenderSubmissions, Tenders
 
 from .state import TenderState
 from .prompts import (

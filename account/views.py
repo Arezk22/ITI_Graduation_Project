@@ -1,10 +1,16 @@
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import EmailTokenObtainPairSerializer, RegisterSerializer
+from account.models import ContractorProfiles
+from .serializers import (
+    ContractorProfileSerializer,
+    EmailTokenObtainPairSerializer,
+    RegisterSerializer,
+)
 
 
 class RegisterAPIView(APIView):
@@ -27,3 +33,20 @@ class RegisterAPIView(APIView):
 class EmailLoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
     serializer_class = EmailTokenObtainPairSerializer
+
+
+class ContractorProfileAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "contractor":
+            raise PermissionDenied("Only contractors can access this resource.")
+
+        profile = (
+            ContractorProfiles.objects.filter(user=request.user).first()
+        )
+        if profile is None:
+            raise NotFound("Contractor profile not found.")
+
+        serializer = ContractorProfileSerializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)

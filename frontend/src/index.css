@@ -1,5 +1,3 @@
-
-
 html {
   font-size: 14px;
 }
@@ -7,7 +5,6 @@ html {
 body {
   font-size: 1rem;
 }
-
 
 body {
   margin: 0;
@@ -91,9 +88,15 @@ body {
   border-radius: 50%;
 }
 
-.browser-dots span:nth-child(1) { background: #ef4444; }
-.browser-dots span:nth-child(2) { background: #f59e0b; }
-.browser-dots span:nth-child(3) { background: #22c55e; }
+.browser-dots span:nth-child(1) {
+  background: #ef4444;
+}
+.browser-dots span:nth-child(2) {
+  background: #f59e0b;
+}
+.browser-dots span:nth-child(3) {
+  background: #22c55e;
+}
 
 .preview-card {
   background: #0f1f33;
@@ -837,7 +840,6 @@ body {
   color: #1f49c6;
 }
 
-
 /* --------------------------------------------------------- owner dashboard -----------------------------------------------------------*/
 
 .owner-layout {
@@ -862,7 +864,7 @@ body {
   gap: 12px;
   align-items: center;
   padding-bottom: 28px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-brand h5 {
@@ -917,7 +919,7 @@ body {
 .sidebar-bottom {
   margin-top: 28px;
   padding-top: 18px;
-  border-top: 1px solid rgba(255,255,255,.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-bottom button {
@@ -1074,10 +1076,22 @@ body {
   font-size: 20px;
 }
 
-.stat-icon.blue { background: #eff6ff; color: #2563eb; }
-.stat-icon.green { background: #ecfdf5; color: #059669; }
-.stat-icon.purple { background: #f3e8ff; color: #7c3aed; }
-.stat-icon.red { background: #fef2f2; color: #ef4444; }
+.stat-icon.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.stat-icon.green {
+  background: #ecfdf5;
+  color: #059669;
+}
+.stat-icon.purple {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+.stat-icon.red {
+  background: #fef2f2;
+  color: #ef4444;
+}
 
 .stat-arrow {
   position: absolute;
@@ -1097,10 +1111,18 @@ body {
   color: #64748b;
 }
 
-.owner-stat-card small.blue { color: #2563eb; }
-.owner-stat-card small.green { color: #059669; }
-.owner-stat-card small.purple { color: #7c3aed; }
-.owner-stat-card small.red { color: #ef4444; }
+.owner-stat-card small.blue {
+  color: #2563eb;
+}
+.owner-stat-card small.green {
+  color: #059669;
+}
+.owner-stat-card small.purple {
+  color: #7c3aed;
+}
+.owner-stat-card small.red {
+  color: #ef4444;
+}
 
 .dashboard-card {
   height: 100%;
@@ -1139,8 +1161,12 @@ body {
   display: inline-block;
 }
 
-.blue-dot { background: #2563eb; }
-.orange-dot { background: #f97316; }
+.blue-dot {
+  background: #2563eb;
+}
+.orange-dot {
+  background: #f97316;
+}
 
 .fake-chart {
   height: 320px;
@@ -1559,8 +1585,6 @@ body {
   margin-top: 22px;
 }
 
-
-
 .evaluation-weights-header {
   display: flex;
   align-items: center;
@@ -1963,7 +1987,7 @@ body {
   background: white;
   color: #334155;
   font-weight: 700;
-/*  */
+  /*  */
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1973,7 +1997,7 @@ body {
   background: #1f49c6;
   color: white;
   font-weight: 700;
-/*  */
+  /*  */
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2031,12 +2055,11 @@ body {
   color: #92400e;
   font-weight: 800;
 
-/* */
+  /* */
 
   display: inline-flex;
   align-items: center;
   gap: 6px;
-
 }
 
 .evaluation-table th {
@@ -2095,9 +2118,15 @@ body {
   border-radius: 999px;
 }
 
-.score-line .blue { background: #2563eb; }
-.score-line .green { background: #10b981; }
-.score-line .orange { background: #f59e0b; }
+.score-line .blue {
+  background: #2563eb;
+}
+.score-line .green {
+  background: #10b981;
+}
+.score-line .orange {
+  background: #f59e0b;
+}
 
 .risk-pill {
   padding: 5px 10px;
@@ -2189,8 +2218,12 @@ body {
   border-radius: 6px 6px 0 0;
 }
 
-.bar.blue { background: #2563eb; }
-.bar.peach { background: #fdc49b; }
+.bar.blue {
+  background: #2563eb;
+}
+.bar.peach {
+  background: #fdc49b;
+}
 
 .bar-group p {
   margin-top: 10px;
@@ -2206,8 +2239,12 @@ body {
   display: inline-block;
 }
 
-.peach-dot { background: #fdc49b; }
-.red-dot { background: #ef4444; }
+.peach-dot {
+  background: #fdc49b;
+}
+.red-dot {
+  background: #ef4444;
+}
 
 .radar-placeholder {
   width: 260px;
@@ -2249,11 +2286,26 @@ body {
   font-size: 13px;
 }
 
-.radar-label.top { top: -10px; left: 95px; }
-.radar-label.right { right: -25px; top: 90px; }
-.radar-label.bottom-right { right: 18px; bottom: 8px; }
-.radar-label.bottom-left { left: 18px; bottom: 8px; }
-.radar-label.left { left: -15px; top: 90px; }
+.radar-label.top {
+  top: -10px;
+  left: 95px;
+}
+.radar-label.right {
+  right: -25px;
+  top: 90px;
+}
+.radar-label.bottom-right {
+  right: 18px;
+  bottom: 8px;
+}
+.radar-label.bottom-left {
+  left: 18px;
+  bottom: 8px;
+}
+.radar-label.left {
+  left: -15px;
+  top: 90px;
+}
 
 @media (max-width: 992px) {
   .evaluation-header {
@@ -2317,10 +2369,22 @@ body {
   margin-bottom: 18px;
 }
 
-.ai-metric-icon.green { background: #ecfdf5; color: #059669; }
-.ai-metric-icon.red { background: #fef2f2; color: #ef4444; }
-.ai-metric-icon.orange { background: #fff7ed; color: #f59e0b; }
-.ai-metric-icon.purple { background: #f3e8ff; color: #7c3aed; }
+.ai-metric-icon.green {
+  background: #ecfdf5;
+  color: #059669;
+}
+.ai-metric-icon.red {
+  background: #fef2f2;
+  color: #ef4444;
+}
+.ai-metric-icon.orange {
+  background: #fff7ed;
+  color: #f59e0b;
+}
+.ai-metric-icon.purple {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
 
 .ai-metric-card h3 {
   font-size: 30px;
@@ -2328,10 +2392,18 @@ body {
   margin-bottom: 4px;
 }
 
-.ai-metric-card h3.green { color: #059669; }
-.ai-metric-card h3.red { color: #ef4444; }
-.ai-metric-card h3.orange { color: #f59e0b; }
-.ai-metric-card h3.purple { color: #7c3aed; }
+.ai-metric-card h3.green {
+  color: #059669;
+}
+.ai-metric-card h3.red {
+  color: #ef4444;
+}
+.ai-metric-card h3.orange {
+  color: #f59e0b;
+}
+.ai-metric-card h3.purple {
+  color: #7c3aed;
+}
 
 .ai-metric-card h6 {
   font-weight: 800;
@@ -2959,11 +3031,26 @@ body {
   justify-content: center;
 }
 
-.report-file-icon.red { background: #fef2f2; color: #ef4444; }
-.report-file-icon.green { background: #ecfdf5; color: #059669; }
-.report-file-icon.purple { background: #f3e8ff; color: #7c3aed; }
-.report-file-icon.orange { background: #fff7ed; color: #f97316; }
-.report-file-icon.blue { background: #eff6ff; color: #2563eb; }
+.report-file-icon.red {
+  background: #fef2f2;
+  color: #ef4444;
+}
+.report-file-icon.green {
+  background: #ecfdf5;
+  color: #059669;
+}
+.report-file-icon.purple {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+.report-file-icon.orange {
+  background: #fff7ed;
+  color: #f97316;
+}
+.report-file-icon.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
 
 .report-info h5 {
   font-weight: 800;
@@ -3157,10 +3244,18 @@ body {
   margin-bottom: 4px;
 }
 
-.contractor-stats div:nth-child(1) h3 { color: #2563eb; }
-.contractor-stats div:nth-child(2) h3 { color: #059669; }
-.contractor-stats div:nth-child(3) h3 { color: #7c3aed; }
-.contractor-stats div:nth-child(4) h3 { color: #f97316; }
+.contractor-stats div:nth-child(1) h3 {
+  color: #2563eb;
+}
+.contractor-stats div:nth-child(2) h3 {
+  color: #059669;
+}
+.contractor-stats div:nth-child(3) h3 {
+  color: #7c3aed;
+}
+.contractor-stats div:nth-child(4) h3 {
+  color: #f97316;
+}
 
 .contractor-stats p {
   color: #64748b;
@@ -3852,10 +3947,22 @@ body {
   margin-bottom: 18px;
 }
 
-.contractor-stat-icon.orange { background: #fff7ed; color: #f59e0b; }
-.contractor-stat-icon.blue { background: #eff6ff; color: #2563eb; }
-.contractor-stat-icon.green { background: #ecfdf5; color: #059669; }
-.contractor-stat-icon.purple { background: #f3e8ff; color: #7c3aed; }
+.contractor-stat-icon.orange {
+  background: #fff7ed;
+  color: #f59e0b;
+}
+.contractor-stat-icon.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.contractor-stat-icon.green {
+  background: #ecfdf5;
+  color: #059669;
+}
+.contractor-stat-icon.purple {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
 
 .contractor-stat-card h3 {
   font-weight: 900;
@@ -3872,10 +3979,18 @@ body {
   font-weight: 700;
 }
 
-.contractor-stat-card small.orange { color: #f97316; }
-.contractor-stat-card small.blue { color: #2563eb; }
-.contractor-stat-card small.green { color: #059669; }
-.contractor-stat-card small.purple { color: #7c3aed; }
+.contractor-stat-card small.orange {
+  color: #f97316;
+}
+.contractor-stat-card small.blue {
+  color: #2563eb;
+}
+.contractor-stat-card small.green {
+  color: #059669;
+}
+.contractor-stat-card small.purple {
+  color: #7c3aed;
+}
 
 .contractor-card {
   overflow: hidden;
@@ -4378,7 +4493,6 @@ body {
   cursor: not-allowed;
 }
 
-
 /* ================================================================== App Toast =============================================================== */
 .app-toast {
   position: fixed;
@@ -4583,7 +4697,7 @@ body {
   z-index: 9998;
   padding: 24px;
 } */
- .custom-modal-overlay {
+.custom-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.45);
@@ -4603,7 +4717,7 @@ body {
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
   overflow: hidden;
 } */
- .custom-modal {
+.custom-modal {
   width: 100%;
   max-width: 520px;
   background: #fff;
@@ -4709,7 +4823,7 @@ body {
   justify-content: flex-end;
   gap: 12px;
 } */
- .custom-modal-footer {
+.custom-modal-footer {
   position: sticky;
   bottom: 0;
   background: #fff;
@@ -4786,7 +4900,8 @@ body {
   }
 }
 
-/* ================================================== Contractor Tender Details ============================================ */.tender-details-grid {
+/* ================================================== Contractor Tender Details ============================================ */
+.tender-details-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;

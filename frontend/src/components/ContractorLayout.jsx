@@ -13,7 +13,10 @@ function ContractorLayout({ activePage, children }) {
   return (
     <div className={`owner-layout ${sidebarOpen ? "" : "sidebar-collapsed"}`}>
       <aside className="owner-sidebar">
-        <div className="sidebar-brand" onClick={() => navigate("/contractor/dashboard")}>
+        <div
+          className="sidebar-brand"
+          onClick={() => navigate("/contractor/dashboard")}
+        >
           <span className="brand-icon">
             <i className="bi bi-building"></i>
           </span>
@@ -34,13 +37,13 @@ function ContractorLayout({ activePage, children }) {
             Dashboard
           </button>
 
-          <button
+          {/* <button
             className={activePage === "submit-proposal" ? "active" : ""}
             onClick={() => navigate("/contractor/submit-proposal")}
           >
             <i className="bi bi-clipboard-check"></i>
             Submit Proposal
-          </button>
+          </button> */}
 
           <button
             className={activePage === "profile" ? "active" : ""}
@@ -57,7 +60,6 @@ function ContractorLayout({ activePage, children }) {
             <i className="bi bi-chat-left"></i>
             Document Chat
           </button>
-
         </nav>
 
         <div className="sidebar-bottom">
@@ -112,13 +114,13 @@ function ContractorLayout({ activePage, children }) {
             <input placeholder="Search tenders, contractors..." />
           </div> */}
           <input
-  placeholder="Search tenders..."
-  value={localStorage.getItem("contractorTenderSearch") || ""}
-  onChange={(e) => {
-    localStorage.setItem("contractorTenderSearch", e.target.value);
-    window.dispatchEvent(new Event("contractorTenderSearchChanged"));
-  }}
-/>
+            placeholder="Search tenders..."
+            value={localStorage.getItem("contractorTenderSearch") || ""}
+            onChange={(e) => {
+              localStorage.setItem("contractorTenderSearch", e.target.value);
+              window.dispatchEvent(new Event("contractorTenderSearchChanged"));
+            }}
+          />
 
           <div className="topbar-actions">
             <button
@@ -138,9 +140,7 @@ function ContractorLayout({ activePage, children }) {
           </div>
         </header>
 
-        <div className="owner-page-wrapper">
-          {children}
-        </div>
+        <div className="owner-page-wrapper">{children}</div>
       </main>
     </div>
   );
