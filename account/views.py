@@ -1,19 +1,52 @@
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny
-from .serializers import RegisterSerializer
-# Create your views here.
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from account.models import ContractorProfiles
+from .serializers import (
+    ContractorProfileSerializer,
+    EmailTokenObtainPairSerializer,
+    RegisterSerializer,
+)
+
 
 class RegisterAPIView(APIView):
-    permission_classes=[AllowAny]
-    
-    
-    def post(self,request):
-        serializer=RegisterSerializer(request.data)
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"message":"User created successfully"},status=status.HTTP_201_CREATED)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-            
+            user = serializer.save()
+            return Response(
+                {
+                    "message": "User created successfully",
+                    "role": user.role,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EmailLoginView(TokenObtainPairView):
+    permission_classes = [AllowAny]
+    serializer_class = EmailTokenObtainPairSerializer
+
+
+class ContractorProfileAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "contractor":
+            raise PermissionDenied("Only contractors can access this resource.")
+
+        profile = (
+            ContractorProfiles.objects.filter(user=request.user).first()
+        )
+        if profile is None:
+            raise NotFound("Contractor profile not found.")
+
+        serializer = ContractorProfileSerializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
