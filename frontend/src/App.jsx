@@ -11,7 +11,7 @@ import OwnerSignUp from "./pages/OwnerSignUp";
 import ContractorSignUp from "./pages/ContractorSignUp";
 import OwnerDashboard from "./pages/OwnerDashboard";
 import CreateTender from "./pages/CreateTender";
-import Notifications from "./pages/Notifications";
+// import Notifications from "./pages/Notifications";
 import Evaluation from "./pages/Evaluation";
 import AIAnalysis from "./pages/AIAnalysis";
 import DocumentChat from "./pages/DocumentChat";
@@ -23,7 +23,7 @@ import OwnerAllTenders from "./pages/OwnerAllTenders";
 // Contractor Pages
 import ContractorDashboard from "./pages/ContractorDashboard";
 import MyContractorProfile from "./pages/MyContractorProfile";
-import ContractorNotifications from "./pages/ContractorNotifications";
+// import ContractorNotifications from "./pages/ContractorNotifications";
 import ContractorDocumentChat from "./pages/ContractorDocumentChat";
 import SubmitProposal from "./pages/SubmitProposal";
 // import ContractorTenderDetails from "./pages/ContractorTenderDetails";
@@ -43,7 +43,7 @@ function App() {
         <Route path="/signup/contractor" element={<ContractorSignUp />} />
         <Route path="/owner/dashboard" element={<OwnerDashboard />} />
         <Route path="/owner/create-tender" element={<CreateTender />} />
-        <Route path="/owner/notifications" element={<Notifications />} />
+        {/* <Route path="/owner/notifications" element={<Notifications />} /> */}
         <Route path="/owner/evaluation" element={<Evaluation />} />
         <Route path="/owner/ai-analysis" element={<AIAnalysis />} />
         <Route path="/owner/document-chat" element={<DocumentChat />} />
@@ -52,14 +52,14 @@ function App() {
         <Route path="/owner/tender-details" element={<TenderDetails />} />
         <Route path="/owner/tender-details/:id" element={<TenderDetails />} />
         <Route path="/owner/all-tenders" element={<OwnerAllTenders />} />
-        
+
         {/* Contractor Routes */}
         <Route path="/contractor/dashboard" element={<ContractorDashboard />} />
         <Route path="/contractor/profile" element={<MyContractorProfile />} />
-        <Route
+        {/* <Route
           path="/contractor/notifications"
           element={<ContractorNotifications />}
-        />
+        /> */}
         <Route
           path="/contractor/document-chat"
           element={<ContractorDocumentChat />}

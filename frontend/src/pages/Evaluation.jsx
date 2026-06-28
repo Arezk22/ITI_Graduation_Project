@@ -452,6 +452,16 @@ onClick={() => {
 
                       <td>
                         <div className="evaluation-row-actions">
+                                                    <button
+                            className="proposal-btn"
+                            onClick={() =>
+                              navigate(
+                                `/owner/proposal-details/${submission.id}`
+                              )
+                            }
+                          >
+                            Proposal
+                          </button>
                           <button
                             className="profile-btn"
                             onClick={() =>
@@ -465,16 +475,7 @@ onClick={() => {
                             Profile
                           </button>
 
-                          <button
-                            className="proposal-btn"
-                            onClick={() =>
-                              navigate(
-                                `/owner/proposal-details/${submission.id}`
-                              )
-                            }
-                          >
-                            Proposal
-                          </button>
+
                         </div>
                       </td>
                     </tr>
