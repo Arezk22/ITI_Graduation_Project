@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.exceptions import NotFound
 from django.db import transaction
-from django.db.models import Count, F
+from django.db.models import Count, F, Q
 from django.utils import timezone
 from account.models import ContractorProfiles
 from api.models import Tenders
@@ -31,10 +31,29 @@ class TendersListView(APIView):
 
     def get(self, request):
         if request.user.role == 'owner':
-            tenders = Tenders.objects.filter(owner=request.user)
-        else:
-            tenders = Tenders.objects.all()
-        tenders = tenders.annotate(submissions_count=Count('submissions'))
+            base = Tenders.objects.filter(owner=request.user)
+            # Counts run on the unjoined queryset so the submissions annotation
+            # below doesn't inflate the totals.
+            counts = base.aggregate(
+                total=Count('id'),
+                open=Count('id', filter=Q(status='open')),
+                awarded=Count('id', filter=Q(status='awarded')),
+                closed=Count('id', filter=Q(status='closed')),
+            )
+            tenders = base.annotate(submissions_count=Count('submissions'))
+            serializer = TendersSerializer(tenders, many=True)
+            return Response(
+                {
+                    'total': counts['total'],
+                    'open': counts['open'],
+                    'awarded': counts['awarded'],
+                    'closed': counts['closed'],
+                    'tenders': serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        tenders = Tenders.objects.all().annotate(submissions_count=Count('submissions'))
         serializer = TendersSerializer(tenders, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
