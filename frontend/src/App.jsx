@@ -19,14 +19,13 @@ import Reports from "./pages/Reports";
 import ContractorProfile from "./pages/ContractorProfile";
 import TenderDetails from "./pages/TenderDetails";
 
-
 // Contractor Pages
 import ContractorDashboard from "./pages/ContractorDashboard";
 import MyContractorProfile from "./pages/MyContractorProfile";
 import ContractorNotifications from "./pages/ContractorNotifications";
 import ContractorDocumentChat from "./pages/ContractorDocumentChat";
 import SubmitProposal from "./pages/SubmitProposal";
-import ContractorTenderDetails from "./pages/ContractorTenderDetails";
+// import ContractorTenderDetails from "./pages/ContractorTenderDetails";
 
 function App() {
   return (
@@ -48,20 +47,33 @@ function App() {
         <Route path="/owner/ai-analysis" element={<AIAnalysis />} />
         <Route path="/owner/document-chat" element={<DocumentChat />} />
         <Route path="/owner/reports" element={<Reports />} />
-        <Route path="/owner/contractor-profile" element={<ContractorProfile />} />
+        <Route
+          path="/owner/contractor-profile"
+          element={<ContractorProfile />}
+        />
         <Route path="/owner/tender-details" element={<TenderDetails />} />
         <Route path="/owner/tender-details/:id" element={<TenderDetails />} />
 
-
-{/* Contractor Routes */}
+        {/* Contractor Routes */}
         <Route path="/contractor/dashboard" element={<ContractorDashboard />} />
         <Route path="/contractor/profile" element={<MyContractorProfile />} />
-        <Route path="/contractor/notifications" element={<ContractorNotifications />} />
-        <Route path="/contractor/document-chat" element={<ContractorDocumentChat />} />
-        <Route path="/contractor/submit-proposal" element={<SubmitProposal />} />
-        <Route path="/contractor/submit-proposal/:id" element={<SubmitProposal />} />
-        <Route path="/contractor/tender-details/:id" element={<ContractorTenderDetails />} />
-        
+        <Route
+          path="/contractor/notifications"
+          element={<ContractorNotifications />}
+        />
+        <Route
+          path="/contractor/document-chat"
+          element={<ContractorDocumentChat />}
+        />
+        <Route
+          path="/contractor/submit-proposal"
+          element={<SubmitProposal />}
+        />
+        <Route
+          path="/contractor/submit-proposal/:id"
+          element={<SubmitProposal />}
+        />
+        {/* <Route path="/contractor/tender-details/:id" element={<ContractorTenderDetails />} /> */}
       </Routes>
     </BrowserRouter>
   );

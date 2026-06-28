@@ -7,7 +7,7 @@ from langchain_core.output_parsers import JsonOutputParser , PydanticOutputParse
 from pydantic import BaseModel, Field
 from typing import List, Literal
 
-from ITI_Graduation_Project.api.models import EvaluationRules, TenderSubmissions, Tenders
+from api.models import EvaluationRules, TenderSubmissions, Tenders
 
 from .state import TenderState
 from .prompts import (
