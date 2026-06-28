@@ -70,6 +70,12 @@ class ActiveProposalSerializer(serializers.Serializer):
     status = serializers.CharField()
     deadline_at = serializers.DateTimeField(source="tender.deadline_at")
     submitted_at = serializers.DateTimeField()
+    accepted_at = serializers.SerializerMethodField()
+
+    def get_accepted_at(self, obj):
+        if obj.status == "accepted":
+            return obj.tender.awarded_at
+        return None
 
 
 class ContractorProfileSerializer(serializers.ModelSerializer):
