@@ -165,6 +165,7 @@ if (currentEvaluationTotal !== 100) {
       console.log("Tender created:", response.data);
 
       const tenderId = response.data.id;
+      
 
 showToast("success", "Tender published", "Your tender has been created successfully.");
 
