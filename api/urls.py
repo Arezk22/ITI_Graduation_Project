@@ -28,4 +28,5 @@ urlpatterns = [
     # POST tender/<id>/award/<contractor_id>  -> award the tender to a contractor (tender owner only)
     path(BASE_URL + 'tender/<int:pk>/award/<int:contractor_id>', views.AwardTenderView.as_view(), name='award_tender'),
 
+    path(BASE_URL + 'submissions/my', views.MySubmissionsView.as_view(), name='my_submissions'),
 ]

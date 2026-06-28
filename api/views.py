@@ -8,7 +8,7 @@ from django.db import transaction
 from django.db.models import Count, F, Q
 from django.utils import timezone
 from account.models import ContractorProfiles
-from api.models import Tenders
+from api.models import Tenders, TenderSubmissions
 from api.serializers import (
     TendersSerializer,
     TenderDetailSerializer,
@@ -273,6 +273,20 @@ class AwardTenderView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+class MySubmissionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        contractor_profile = getattr(request.user, 'contractor_profile', None)
+        if not contractor_profile:
+            return Response(
+                {'message': 'Contractor profile not found.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        submissions = TenderSubmissions.objects.filter(contractor=contractor_profile)
+        serializer = TenderSubmissionsSerializer(submissions, many=True)
+        return Response(serializer.data)
 
 
 class TenderSubmissionDetailView(APIView):

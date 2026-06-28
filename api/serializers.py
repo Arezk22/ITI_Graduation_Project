@@ -22,7 +22,10 @@ from api.models import (
 FILE_EXTENSION_MAP = {
     'pdf': 'pdf',
     'doc': 'docx', 'docx': 'docx',
+    'xls': 'docx', 'xlsx': 'docx',
     'jpg': 'img', 'jpeg': 'img', 'png': 'img', 'webp': 'img',
+    'dwg': 'img',
+    'txt': 'docx',
 }
 
 
@@ -129,8 +132,18 @@ class TenderDetailSerializer(serializers.ModelSerializer):
             return None
         winner = obj.submissions.filter(status="accepted").first()
         return winner.id if winner else None
+class TenderMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tenders
+        fields = [
+            'id', 'title', 'project_category', 'location', 'deadline_at',
+            'budget', 'status',
+        ]
+        read_only_fields = fields
 
 class TenderSubmissionsSerializer(serializers.ModelSerializer):
+    tender = TenderMinimalSerializer(read_only=True)
+
     class Meta:
         model = TenderSubmissions
         fields = [
