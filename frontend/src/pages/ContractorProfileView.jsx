@@ -1,9 +1,11 @@
+
+
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import OwnerLayout from "../components/OwnerLayout";
 import api from "../services/api";
 
-function ContractorProfile() {
+function ContractorProfileView() {
   const navigate = useNavigate();
   const { contractorId } = useParams();
 
@@ -12,66 +14,92 @@ function ContractorProfile() {
   const [loading, setLoading] = useState(true);
   const [hoveredYear, setHoveredYear] = useState(null);
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (!contractorId) return;
+useEffect(() => {
+  const loadProfile = async () => {
+    if (!contractorId) return;
 
-      try {
-        const [profileResponse, submissionsResponse] = await Promise.all([
-          api.get(`/contractor/${contractorId}/`),
-          api.get(`/submissions/my`),
-        ]);
+    try {
+      const profileResponse = await api.get(`/contractor/${contractorId}/`);
+      setProfile(profileResponse.data);
 
-        setProfile(profileResponse.data);
+      const tendersResponse = await api.get("/tenders");
 
-        const list = Array.isArray(submissionsResponse.data)
-          ? submissionsResponse.data
-          : submissionsResponse.data.results || [];
+      const tendersList = Array.isArray(tendersResponse.data)
+        ? tendersResponse.data
+        : tendersResponse.data.tenders || tendersResponse.data.results || [];
 
-        const contractorSubmissions = list.filter(
-          (submission) =>
-            String(submission.contractor?.id || submission.contractor_id) ===
-            String(contractorId),
-        );
+      const submissionsResponses = await Promise.all(
+        tendersList.map((tender) =>
+          api
+            .get(`/tenders/${tender.id}/submissions`)
+            .then((response) => {
+              const list = Array.isArray(response.data)
+                ? response.data
+                : response.data.submissions || response.data.results || [];
 
-        setSubmissions(contractorSubmissions);
-      } catch (error) {
-        console.error(
-          "Load contractor profile error:",
-          error.response?.data || error,
-        );
-        setProfile(null);
-        setSubmissions([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+              return list;
+            })
+            .catch(() => [])
+        )
+      );
 
-    loadProfile();
-  }, [contractorId]);
+      const allSubmissions = submissionsResponses.flat();
 
-  const acceptedSubmissions = useMemo(() => {
+      const contractorSubmissions = allSubmissions.filter((submission) => {
+        const submissionContractorId =
+          submission.contractor?.id ||
+          submission.contractor_id ||
+          submission.contractor;
+
+        return String(submissionContractorId) === String(contractorId);
+      });
+
+      setSubmissions(contractorSubmissions);
+    } catch (error) {
+      console.error(
+        "Load contractor profile error:",
+        error.response?.data || error
+      );
+
+      setProfile(null);
+      setSubmissions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadProfile();
+}, [contractorId]);
+
+  const awardedSubmissions = useMemo(() => {
     return submissions.filter((submission) => isAwardedSubmission(submission));
   }, [submissions]);
 
-  const visibleSubmissions = submissions.slice(0, 5);
+  const visibleAwardedSubmissions = useMemo(() => {
+    return awardedSubmissions.slice(0, 5);
+  }, [awardedSubmissions]);
 
-  const totalProjectValue = useMemo(() => {
-    return submissions.reduce((sum, submission) => {
+  const totalAwardedValue = useMemo(() => {
+    return awardedSubmissions.reduce((sum, submission) => {
       return sum + Number(submission.tender?.budget || 0);
     }, 0);
-  }, [submissions]);
+  }, [awardedSubmissions]);
+
+  const averageProjectValue = useMemo(() => {
+    if (!awardedSubmissions.length) return 0;
+    return totalAwardedValue / awardedSubmissions.length;
+  }, [awardedSubmissions, totalAwardedValue]);
 
   const winRate = useMemo(() => {
     if (!submissions.length) return 0;
-    return Math.round((acceptedSubmissions.length / submissions.length) * 100);
-  }, [submissions, acceptedSubmissions]);
+    return Math.round((awardedSubmissions.length / submissions.length) * 100);
+  }, [submissions, awardedSubmissions]);
 
   const annualAwardData = useMemo(() => {
     const years = [2022, 2023, 2024, 2025, 2026];
 
     return years.map((year) => {
-      const count = acceptedSubmissions.filter((submission) => {
+      const count = awardedSubmissions.filter((submission) => {
         const dateValue =
           submission.accepted_at ||
           submission.tender?.awarded_at ||
@@ -80,7 +108,6 @@ function ContractorProfile() {
         if (!dateValue) return false;
 
         const date = new Date(dateValue);
-
         if (Number.isNaN(date.getTime())) return false;
 
         return date.getFullYear() === year;
@@ -88,7 +115,17 @@ function ContractorProfile() {
 
       return { year, count };
     });
-  }, [acceptedSubmissions]);
+  }, [awardedSubmissions]);
+
+const companyName =
+  profile?.company_name ||
+  submissions[0]?.contractor_company_name || "Company Name";
+
+    const contractorEmail =
+  profile?.email ||
+  profile?.user?.email ||
+  profile?.user_email ||
+  "No email provided";
 
   return (
     <OwnerLayout activePage="evaluation">
@@ -96,29 +133,21 @@ function ContractorProfile() {
         <div className="contractor-hero-card">
           <div className="contractor-main-info">
             <div className="contractor-avatar">
-              {getInitial(profile?.company_name || "Contractor")}
+              {getInitial(companyName)}
             </div>
 
             <div>
-              <h2>{profile?.company_name || "Contractor Profile"}</h2>
+              <h2>{companyName}</h2>
 
               <div className="contractor-contact">
                 <span>
-                  <i className="bi bi-building"></i>{" "}
-                  {profile?.company_name || "Company Name"}
-                  <span>
-                    <i className="bi bi-currency-dollar"></i>{" "}
-                    {formatShortMoney(totalProjectValue)} total value
-                  </span>
-                </span>
-
-                {/* <span>
-                  <i className="bi bi-telephone"></i> Phone not provided
+                  <i className="bi bi-envelope"></i> {contractorEmail}
                 </span>
 
                 <span>
-                  <i className="bi bi-globe"></i> Website not provided
-                </span> */}
+                  <i className="bi bi-currency-dollar"></i>{" "}
+                  {formatShortMoney(averageProjectValue)} avg project value
+                </span>
               </div>
             </div>
           </div>
@@ -133,12 +162,12 @@ function ContractorProfile() {
 
           <div className="contractor-stats">
             <div>
-              <h3>{acceptedSubmissions.length}</h3>
-              <p>Projects Accepted</p>
+              <h3>{awardedSubmissions.length}</h3>
+              <p>Projects Awarded</p>
             </div>
 
             <div>
-              <h3>{formatShortMoney(totalProjectValue)}</h3>
+              <h3>{formatShortMoney(totalAwardedValue)}</h3>
               <p>Total Project Value</p>
             </div>
 
@@ -148,8 +177,8 @@ function ContractorProfile() {
             </div>
 
             <div>
-              <h3>{profile?.experience_years || 0} yrs</h3>
-              <p>Experience</p>
+              <h3>91/100</h3>
+              <p>Avg Delivery Score</p>
             </div>
           </div>
         </div>
@@ -210,27 +239,29 @@ function ContractorProfile() {
 
         <div className="dashboard-card mt-4">
           <div className="card-header-clean">
-            <h5>Previous Projects</h5>
+            <h5>Awarded Projects</h5>
 
-            {submissions.length > 0 && (
-              <button
-                className="view-all-link"
-                onClick={() => navigate("/contractor/proposals")}
-              >
-                View all
-              </button>
-            )}
+{awardedSubmissions.length > 0 && (
+  <button
+    className="view-all-link"
+    onClick={() =>
+      navigate(`/owner/contractor-profile/${contractorId}/awarded-projects`)
+    }
+  >
+    View all
+  </button>
+)}
           </div>
 
           <div className="profile-projects-list">
             {loading ? (
-              <div className="text-muted py-3">Loading proposals...</div>
-            ) : submissions.length === 0 ? (
+              <div className="text-muted py-3">Loading awarded projects...</div>
+            ) : awardedSubmissions.length === 0 ? (
               <div className="text-muted py-3">
-                No submitted proposals for this contractor yet.
+                No awarded projects for this contractor yet.
               </div>
             ) : (
-              visibleSubmissions.map((submission) => (
+              visibleAwardedSubmissions.map((submission) => (
                 <div
                   className="profile-project-row contractor-proposal-row"
                   key={submission.id}
@@ -247,19 +278,17 @@ function ContractorProfile() {
                     <p>
                       <i className="bi bi-currency-dollar"></i>{" "}
                       {formatMoney(submission.tender?.budget)}{" "}
-                      <i className="bi bi-calendar ms-2"></i> Submitted{" "}
-                      {formatDate(submission.submitted_at)}
+                      <i className="bi bi-calendar ms-2"></i> Awarded{" "}
+                      {formatDate(
+                        submission.accepted_at ||
+                          submission.tender?.awarded_at ||
+                          submission.submitted_at
+                      )}
                     </p>
                   </div>
 
-                  <span
-                    className={
-                      isAwardedSubmission(submission)
-                        ? "completed-badge proposal-status-badge"
-                        : "submitted-badge proposal-status-badge"
-                    }
-                  >
-                    {isAwardedSubmission(submission) ? "Awarded" : "Submitted"}
+                  <span className="completed-badge proposal-status-badge">
+                    Awarded
                   </span>
                 </div>
               ))
@@ -291,7 +320,7 @@ function ContractorProfile() {
                       style={{
                         height: `${Math.max(
                           (item.count / 12) * 100,
-                          item.count ? 6 : 2,
+                          item.count ? 6 : 2
                         )}%`,
                       }}
                     ></span>
@@ -370,6 +399,15 @@ function getInitial(name) {
   return name?.trim()?.charAt(0)?.toUpperCase() || "C";
 }
 
+function getContractorEmail(profile) {
+  return (
+    profile?.email ||
+    profile?.user?.email ||
+    profile?.user_email ||
+    "No email provided"
+  );
+}
+
 function formatDate(value) {
   if (!value) return "—";
 
@@ -431,4 +469,4 @@ function formatCategory(category) {
   return map[category] || category || "Other";
 }
 
-export default ContractorProfile;
+export default ContractorProfileView;

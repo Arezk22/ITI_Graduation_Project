@@ -60,7 +60,7 @@ const selectedCategoryLabel =
         <div className="all-proposals-header">
           <div>
             <h2>All Proposals</h2>
-            <p>Review all tenders you submitted proposals for.</p>
+            {/* <p>Review all tenders you submitted proposals for.</p> */}
           </div>
 
          <div className="proposal-filter-wrap">

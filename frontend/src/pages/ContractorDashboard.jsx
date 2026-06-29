@@ -1,16 +1,36 @@
-import { useEffect, useMemo, useState } from "react";
+
+
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ContractorLayout from "../components/ContractorLayout";
 import { getAllTenders } from "../services/tenderApi";
 import { getMySubmissions } from "../services/proposalApi";
 
+const CATEGORIES = [
+  { value: "All", label: "Filter" },
+  { value: "construction", label: "Construction" },
+  { value: "roads", label: "Roads & Infrastructure" },
+  { value: "buildings", label: "Buildings" },
+  { value: "electrical", label: "Electrical" },
+  { value: "mechanical", label: "Mechanical" },
+  { value: "water", label: "Water & Sewage" },
+  { value: "it", label: "IT & Telecom" },
+  { value: "consulting", label: "Consulting" },
+  { value: "supplies", label: "Supplies & Procurement" },
+  { value: "maintenance", label: "Maintenance" },
+  { value: "other", label: "Other" },
+];
+
 function ContractorDashboard() {
   const navigate = useNavigate();
 
   const [activeCategory, setActiveCategory] = useState("All");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
   const [tenders, setTenders] = useState([]);
   const [loadingTenders, setLoadingTenders] = useState(true);
+
   const [proposals, setProposals] = useState([]);
   const [loadingProposals, setLoadingProposals] = useState(true);
 
@@ -22,15 +42,16 @@ function ContractorDashboard() {
       .then((response) => {
         const list = Array.isArray(response.data)
           ? response.data
-          : response.data.results || [];
+          : response.data.tenders || response.data.results || [];
 
         setTenders(list);
       })
       .catch((error) => {
         console.error(
           "Load available tenders error:",
-          error.response?.data || error,
+          error.response?.data || error
         );
+        setTenders([]);
       })
       .finally(() => {
         setLoadingTenders(false);
@@ -43,13 +64,12 @@ function ContractorDashboard() {
         const list = Array.isArray(response.data)
           ? response.data
           : response.data.results || [];
+
         setProposals(list);
       })
       .catch((error) => {
-        console.error(
-          "Load my proposals error:",
-          error.response?.data || error,
-        );
+        console.error("Load my proposals error:", error.response?.data || error);
+        setProposals([]);
       })
       .finally(() => {
         setLoadingProposals(false);
@@ -68,52 +88,61 @@ function ContractorDashboard() {
     };
   }, []);
 
-  const categories = useMemo(() => {
-    const uniqueCategories = [
-      ...new Set(
-        tenders.map((tender) => tender.project_category).filter(Boolean),
-      ),
-    ];
+  const submittedTenderIds = new Set(
+    proposals
+      .map((proposal) => proposal.tender?.id || proposal.tender_id)
+      .filter((id) => id != null)
+  );
 
-    return ["All", ...uniqueCategories];
-  }, [tenders]);
+  const awardedProposals = proposals.filter((proposal) =>
+    isAwardedProposal(proposal)
+  );
 
-  const filteredTenders = useMemo(() => {
-    return tenders.filter((tender) => {
-      const matchesCategory =
-        activeCategory === "All" || tender.project_category === activeCategory;
+  const activeProposals = proposals.filter(
+    (proposal) => !isAwardedProposal(proposal)
+  );
 
-      const search = searchTerm.toLowerCase();
+  const visibleProposals = proposals.slice(0, 5);
 
-      const matchesSearch =
-        tender.title?.toLowerCase().includes(search) ||
-        tender.description?.toLowerCase().includes(search) ||
-        tender.location?.toLowerCase().includes(search) ||
-        tender.project_category?.toLowerCase().includes(search);
+  const selectedCategoryLabel =
+    CATEGORIES.find((item) => item.value === activeCategory)?.label || "Filter";
 
-      return matchesCategory && matchesSearch;
-    });
-  }, [tenders, activeCategory, searchTerm]);
+  const search = searchTerm.toLowerCase().trim();
+
+  const filteredTenders = tenders.filter((tender) => {
+    const isSubmitted = submittedTenderIds.has(tender.id);
+    const isExpired = isExpiredTender(tender);
+
+    if (isExpired && !isSubmitted) return false;
+    if (tender.status === "closed" && !isSubmitted) return false;
+    if (tender.status === "awarded" && !isSubmitted) return false;
+
+    const matchesCategory =
+      activeCategory === "All" || tender.project_category === activeCategory;
+
+    const matchesSearch =
+      !search ||
+      tender.title?.toLowerCase().includes(search) ||
+      tender.description?.toLowerCase().includes(search) ||
+      tender.location?.toLowerCase().includes(search) ||
+      formatCategory(tender.project_category).toLowerCase().includes(search) ||
+      tender.project_category?.toLowerCase().includes(search);
+
+    return matchesCategory && matchesSearch;
+  });
 
   const hasNoTendersAvailable = !loadingTenders && tenders.length === 0;
+
   const hasNoMatchingTenders =
     !loadingTenders && tenders.length > 0 && filteredTenders.length === 0;
-
-  const submittedTenderIds = useMemo(() => {
-    return new Set(
-      proposals
-        .map((proposal) => proposal.tender?.id)
-        .filter((id) => id != null),
-    );
-  }, [proposals]);
 
   return (
     <ContractorLayout activePage="dashboard">
       <section className="contractor-dashboard-content">
         <div className="contractor-dashboard-header">
           <div>
-            <h2>Contractor Dashboard</h2>
             <p>{companyName}</p>
+            <h6>Contractor Dashboard</h6>
           </div>
 
           <button
@@ -133,20 +162,23 @@ function ContractorDashboard() {
             note="+2 this month"
             color="orange"
           />
+
           <StatCard
             icon="bi-file-earmark-check"
-            value={proposals.length}
+            value={activeProposals.length}
             title="Active Proposals"
-            note={`${proposals.filter(p => p.status === 'under_review').length} under review`}
+            note={`${awardedProposals.length} awarded`}
             color="blue"
           />
+
           <StatCard
             icon="bi-graph-up-arrow"
-            value="64%"
+            value={getWinRate(proposals)}
             title="Win Rate"
-            note="7 of 11 tenders"
+            note={`${awardedProposals.length} of ${proposals.length} bids`}
             color="green"
           />
+
           <StatCard
             icon="bi-arrow-up-right"
             value="86"
@@ -160,12 +192,25 @@ function ContractorDashboard() {
           <div className="col-lg-12">
             <div className="contractor-card">
               <div className="card-header-clean">
-                <h5>My Proposals</h5>
-                <p className="mb-0 text-muted">
-                  {loadingProposals
-                    ? "Loading submissions..."
-                    : `${proposals.length} total submissions`}
-                </p>
+                <div>
+                  <h5>My Proposals</h5>
+
+                  <p className="mb-0 text-muted">
+                    {loadingProposals
+                      ? "Loading submissions..."
+                      : `${proposals.length} Total Submissions`}
+                  </p>
+                </div>
+
+                {proposals.length > 0 && (
+                  <button
+                    type="button"
+                    className="view-all-link"
+                    onClick={() => navigate("/contractor/proposals")}
+                  >
+                    View all <i className="bi bi-chevron-right"></i>
+                  </button>
+                )}
               </div>
 
               {loadingProposals ? (
@@ -178,7 +223,7 @@ function ContractorDashboard() {
                   see it here.
                 </div>
               ) : (
-                proposals.map((proposal) => (
+                visibleProposals.map((proposal) => (
                   <ProposalRow
                     key={proposal.id}
                     title={proposal.tender?.title || "Untitled Tender"}
@@ -198,13 +243,14 @@ function ContractorDashboard() {
           </div>
         </div>
 
-        <div className="contractor-card mt-4">
+        <div className="contractor-card available-tenders-card mt-4">
           <div className="available-tenders-header">
             <h5>Available Tenders</h5>
 
             <div className="available-filters">
               <div className="mini-search">
                 <i className="bi bi-search"></i>
+
                 <input
                   placeholder="Search tenders..."
                   value={searchTerm}
@@ -212,17 +258,40 @@ function ContractorDashboard() {
                 />
               </div>
 
-              <div className="filter-dropdown">
-                <select
-                  value={activeCategory}
-                  onChange={(e) => setActiveCategory(e.target.value)}
+              <div className="contractor-filter-wrap">
+                <button
+                  type="button"
+                  className="contractor-filter-btn"
+                  onClick={() => setFilterOpen((prev) => !prev)}
                 >
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category === "All" ? "Filter" : formatCategory(category)}
-                    </option>
-                  ))}
-                </select>
+                  <span>{selectedCategoryLabel}</span>
+
+                  <i
+                    className={`bi ${
+                      filterOpen ? "bi-chevron-up" : "bi-chevron-down"
+                    }`}
+                  ></i>
+                </button>
+
+                {filterOpen && (
+                  <div className="contractor-filter-menu">
+                    {CATEGORIES.map((category) => (
+                      <button
+                        type="button"
+                        key={category.value}
+                        className={
+                          activeCategory === category.value ? "active" : ""
+                        }
+                        onClick={() => {
+                          setActiveCategory(category.value);
+                          setFilterOpen(false);
+                        }}
+                      >
+                        {category.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -239,7 +308,7 @@ function ContractorDashboard() {
               No tenders match your current search or filter.
             </div>
           ) : (
-            <div className="available-tenders-scroll">
+            <div className="available-tenders-list">
               {filteredTenders.map((tender) => (
                 <TenderRow
                   key={tender.id}
@@ -265,6 +334,7 @@ function StatCard({ icon, value, title, note, color }) {
         <div className={`contractor-stat-icon ${color}`}>
           <i className={`bi ${icon}`}></i>
         </div>
+
         <h3>{value}</h3>
         <p>{title}</p>
         <small className={color}>{note}</small>
@@ -274,9 +344,11 @@ function StatCard({ icon, value, title, note, color }) {
 }
 
 function ProposalRow({ title, date, score, status, rank, trophy }) {
+  const normalizedStatus = normalizeStatusClass(status);
+
   return (
     <div className="proposal-row">
-      <div>
+      <div className="proposal-main-info">
         <h6>{title}</h6>
         <p>{date}</p>
       </div>
@@ -288,59 +360,70 @@ function ProposalRow({ title, date, score, status, rank, trophy }) {
         </div>
       )}
 
-      <span
-        className={`proposal-status ${status
-          .toLowerCase()
-          .replaceAll(" ", "-")}`}
-      >
-        {status}
-      </span>
+      <div className="proposal-actions-right">
+        <span className={`proposal-status ${normalizedStatus}`}>{status}</span>
 
-      {rank && <b className="proposal-rank">{rank}</b>}
-      {trophy && <i className="bi bi-trophy-fill trophy-icon"></i>}
+        {rank && <b className="proposal-rank">{rank}</b>}
+        {trophy && <i className="bi bi-trophy-fill trophy-icon"></i>}
+      </div>
     </div>
   );
 }
 
-function TenderRow({ tender, onOpen, isAlreadySubmitted = false }) {
+function TenderRow({ tender, isAlreadySubmitted = false, onOpen }) {
   const navigate = useNavigate();
-
   const daysLeft = getDaysLeft(tender.deadline_at);
 
   return (
     <div
-      className="available-tender-row clickable-tender-row justify-content-between align-items-center"
+      className="available-tender-row clickable-tender-row"
       onClick={onOpen}
     >
-      <div className="flex-grow-1">
+      <div className="tender-row-left">
         <h6>
           {tender.title}
           <span>{formatCategory(tender.project_category)}</span>
         </h6>
 
         <p>
-          <i className="bi bi-geo-alt"></i> {tender.location || "N/A"}
-          <i className="bi bi-clock ms-3"></i> Deadline{" "}
-          {formatDate(tender.deadline_at)}
-          <span className={`ms-3 days-left ${daysLeft <= 3 ? "danger" : ""}`}>
-            {daysLeft >= 0 ? `${daysLeft} days left` : "Expired"}
+          <span>
+            <i className="bi bi-geo-alt"></i> {tender.location || "N/A"}
+          </span>
+
+          <span>
+            <i className="bi bi-clock"></i> Deadline{" "}
+            {formatDate(tender.deadline_at)}
+          </span>
+
+          <span
+            className={`days-left ${
+              daysLeft <= 3 || daysLeft < 0 ? "danger" : ""
+            }`}
+          >
+            {getDaysLeftLabel(tender.deadline_at)}
           </span>
         </p>
       </div>
 
-      <div className="d-flex flex-column align-items-end gap-2 ms-5">
-        {isAlreadySubmitted && (
-          <span className="badge bg-success-subtle text-success">
-            Already Submitted
-          </span>
-        )}
+      <div className="tender-row-right">
+        <button
+          className="owner-profile-small-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/contractor/owner-profile/${tender.owner}`);
+          }}
+        >
+          Owner Profile
+        </button>
 
         <button
           className="submit-bid-btn"
           disabled={isAlreadySubmitted}
           onClick={(e) => {
             e.stopPropagation();
+
             if (isAlreadySubmitted) return;
+
             navigate(`/contractor/submit-proposal/${tender.id}`);
           }}
         >
@@ -350,6 +433,47 @@ function TenderRow({ tender, onOpen, isAlreadySubmitted = false }) {
       </div>
     </div>
   );
+}
+
+function isAwardedProposal(proposal) {
+  return (
+    proposal.status === "accepted" ||
+    proposal.status === "awarded" ||
+    proposal.tender?.status === "awarded"
+  );
+}
+
+function normalizeStatusClass(status) {
+  const normalized = String(status || "")
+    .toLowerCase()
+    .replaceAll("_", "-")
+    .replaceAll(" ", "-");
+
+  if (normalized === "accepted") return "under-review";
+
+  return normalized;
+}
+
+function getWinRate(proposals) {
+  if (!proposals.length) return "0%";
+
+  const awarded = proposals.filter((proposal) =>
+    isAwardedProposal(proposal)
+  ).length;
+
+  return `${Math.round((awarded / proposals.length) * 100)}%`;
+}
+
+function isExpiredTender(tender) {
+  if (!tender?.deadline_at) return false;
+
+  const today = new Date();
+  const deadline = new Date(tender.deadline_at);
+
+  today.setHours(0, 0, 0, 0);
+  deadline.setHours(0, 0, 0, 0);
+
+  return deadline < today;
 }
 
 function getDaysLeft(deadline) {
@@ -364,6 +488,18 @@ function getDaysLeft(deadline) {
   const diff = deadlineDate - today;
 
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+function getDaysLeftLabel(deadline) {
+  if (!deadline) return "No deadline";
+
+  const days = getDaysLeft(deadline);
+
+  if (days < 0) return "Expired";
+  if (days === 0) return "Due today";
+  if (days === 1) return "1 day left";
+
+  return `${days} days left`;
 }
 
 function formatDate(date) {
@@ -381,7 +517,7 @@ function formatProposalStatus(status) {
 
   return status
     .replaceAll("_", " ")
-    .replace(/\w/g, (char) => char.toUpperCase());
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function formatCategory(category) {

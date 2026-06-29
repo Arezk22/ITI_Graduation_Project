@@ -143,11 +143,7 @@ function SubmitProposal() {
                   year: "numeric",
                 })
               : "N/A"}
-            <i className="bi bi-currency-dollar ms-3"></i> Budget: $
-            {tender?.budget?.toLocaleString("en-US", {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            }) || "N/A"}
+
             <i className="bi bi-geo-alt ms-3"></i> {tender?.location || "N/A"}
           </span>
         </div>

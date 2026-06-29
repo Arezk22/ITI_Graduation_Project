@@ -1,3 +1,5 @@
+
+
 import { useEffect, useMemo, useState } from "react";
 import OwnerLayout from "../components/OwnerLayout";
 import { useNavigate } from "react-router-dom";
@@ -51,13 +53,15 @@ function Evaluation() {
 
     let cancelled = false;
 
+    setLoadingSubmissions(true);
+
     getTenderSubmissions(selectedTenderId)
       .then((response) => {
         if (cancelled) return;
 
         const list = Array.isArray(response.data)
           ? response.data
-          : response.data.results || [];
+          : response.data.submissions || response.data.results || [];
 
         console.log("TENDER SUBMISSIONS:", list);
 
@@ -88,8 +92,10 @@ function Evaluation() {
     return tenders.find((tender) => String(tender.id) === selectedTenderId);
   }, [tenders, selectedTenderId]);
 
+  const visibleSubmissions = submissions.slice(0, 5);
+
   const chartSubmissions = useMemo(() => {
-    return submissions.map((submission, index) => ({
+    return visibleSubmissions.map((submission, index) => ({
       name: getContractorName(submission, index),
       price: Number(
         submission.bid_price ||
@@ -99,7 +105,7 @@ function Evaluation() {
           0
       ),
     }));
-  }, [submissions]);
+  }, [visibleSubmissions]);
 
   return (
     <OwnerLayout activePage="evaluation">
@@ -108,23 +114,17 @@ function Evaluation() {
           <div>
             <h2>Tender Evaluation</h2>
 
-            <p className="evaluation-project-subtitle">
-              {selectedTender?.title || "Select tender"} · {submissions.length}{" "}
-              submissions
-            </p>
-
-            <div className="tender-dropdown-wrapper small-dropdown">
+            <div className="tender-dropdown-wrapper small-dropdown evaluation-project-dropdown">
               <button
                 type="button"
-                className="tender-dropdown-btn"
+                className="tender-dropdown-btn evaluation-tender-btn"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
-                <div>
-                  <strong>
-                    {loadingTenders ? "Loading tenders..." : "Change Project"}
-                  </strong>
-                  <span>{selectedTender?.title || "Select tender"}</span>
-                </div>
+                <span>
+                  {loadingTenders
+                    ? "Loading tenders..."
+                    : selectedTender?.title || "Select tender"}
+                </span>
 
                 <i
                   className={`bi ${
@@ -154,16 +154,16 @@ function Evaluation() {
                         }}
                       >
                         <strong>{tender.title || `Tender ${tender.id}`}</strong>
-                        <span>
-                          {formatCategory(tender.project_category)} ·{" "}
-                          {tender.location || "N/A"}
-                        </span>
                       </button>
                     ))
                   )}
                 </div>
               )}
             </div>
+
+            <p className="evaluation-project-subtitle">
+              {submissions.length} submissions
+            </p>
           </div>
 
           <div className="evaluation-actions">
@@ -194,6 +194,7 @@ function Evaluation() {
             <h5>
               AI Recommendation <span>Pending</span>
             </h5>
+
             <p>
               AI evaluation will appear here after proposal analysis is completed.
               Contractor scores, risks, and recommendation will be generated based
@@ -208,11 +209,16 @@ function Evaluation() {
         </div>
 
         <div className="dashboard-card mt-4">
-          <div className="card-header-clean">
-            <h5>Contractor Comparison</h5>
+          <div className="card-header-clean evaluation-table-header">
+            <h5>
+              Contractor Comparison
+              <span className="submission-count-circle">
+                {submissions.length}
+              </span>
+            </h5>
           </div>
 
-          <div className="evaluation-table-wrap">
+          <div className="evaluation-table-wrap no-horizontal-scroll">
             <table className="table evaluation-table align-middle">
               <thead>
                 <tr>
@@ -236,14 +242,14 @@ function Evaluation() {
                       Loading submissions...
                     </td>
                   </tr>
-                ) : submissions.length === 0 ? (
+                ) : visibleSubmissions.length === 0 ? (
                   <tr>
                     <td colSpan="10" className="text-center text-muted py-4">
                       No submissions yet.
                     </td>
                   </tr>
                 ) : (
-                  submissions.map((submission, index) => (
+                  visibleSubmissions.map((submission, index) => (
                     <tr key={submission.id || index}>
                       <td>
                         <span className="eval-rank">{index + 1}</span>
@@ -254,12 +260,12 @@ function Evaluation() {
                       </td>
 
                       <td>{formatBidPrice(submission)}</td>
+                      <td>{submission.technical_score ?? "—"}</td>
                       <td>—</td>
                       <td>—</td>
-                      <td>—</td>
-                      <td>—</td>
-                      <td>—</td>
-                      <td>—</td>
+                      <td>{submission.final_score ?? "—"}</td>
+                      <td>{submission.risk_score ?? "—"}</td>
+                      <td>{submission.final_score ?? "—"}</td>
 
                       <td>
                         <div className="evaluation-row-actions">
@@ -315,7 +321,10 @@ function Evaluation() {
                     </div>
                   ) : (
                     chartSubmissions.map((item, index) => (
-                      <div className="score-bar-group" key={`${item.name}-${index}`}>
+                      <div
+                        className="score-bar-group"
+                        key={`${item.name}-${index}`}
+                      >
                         <div className="score-bar-area">
                           <span
                             className="score-bar"
@@ -327,6 +336,7 @@ function Evaluation() {
                             }}
                           ></span>
                         </div>
+
                         <p title={item.name}>{shortName(item.name)}</p>
                       </div>
                     ))
@@ -405,24 +415,6 @@ function shortName(name) {
   if (parts.length === 1) return parts[0];
 
   return parts.slice(0, 2).join(" ");
-}
-
-function formatCategory(category) {
-  const map = {
-    construction: "Construction",
-    roads: "Roads & Infrastructure",
-    buildings: "Buildings",
-    electrical: "Electrical",
-    mechanical: "Mechanical",
-    water: "Water & Sewage",
-    it: "IT & Telecom",
-    consulting: "Consulting",
-    supplies: "Supplies & Procurement",
-    maintenance: "Maintenance",
-    other: "Other",
-  };
-
-  return map[category] || category || "Other";
 }
 
 export default Evaluation;

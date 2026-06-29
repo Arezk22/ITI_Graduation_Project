@@ -1,29 +1,18 @@
-
-
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import OwnerLayout from "../components/OwnerLayout";
+import { useNavigate, useParams } from "react-router-dom";
+import ContractorLayout from "../components/ContractorLayout";
 import { getAllTenders } from "../services/tenderApi";
 
-function OwnerAllTenders() {
+function ContractorOwnerAllTenders() {
   const navigate = useNavigate();
+  const { ownerId } = useParams();
 
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
-
-  const statusOptions = [
-    { value: "all", label: "All Status" },
-    { value: "active", label: "Active" },
-    { value: "closed", label: "Closed" },
-    { value: "awarded", label: "Awarded" },
-  ];
-
-  const selectedStatusLabel =
-    statusOptions.find((item) => item.value === statusFilter)?.label ||
-    "All Status";
+//   const [statusFilter, setStatusFilter] = useState("all");
+const [statusFilter, setStatusFilter] = useState("all");
+const [statusFilterOpen, setStatusFilterOpen] = useState(false);
 
   useEffect(() => {
     getAllTenders()
@@ -32,15 +21,23 @@ function OwnerAllTenders() {
           ? response.data
           : response.data.tenders || response.data.results || [];
 
-        setTenders(list);
+        const ownerTenders = list.filter(
+          (tender) => String(tender.owner) === String(ownerId)
+        );
+
+        setTenders(ownerTenders);
       })
       .catch((error) => {
-        console.error("Load all tenders error:", error.response?.data || error);
+        console.error(
+          "Load owner tenders error:",
+          error.response?.data || error
+        );
+        setTenders([]);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [ownerId]);
 
   const filteredTenders = useMemo(() => {
     return tenders
@@ -68,25 +65,36 @@ function OwnerAllTenders() {
       });
   }, [tenders, searchTerm, statusFilter]);
 
+  const statusOptions = [
+  { value: "all", label: "All Status" },
+  { value: "active", label: "Active" },
+  { value: "closed", label: "Closed" },
+  { value: "awarded", label: "Awarded" },
+];
+
+const selectedStatusLabel =
+  statusOptions.find((item) => item.value === statusFilter)?.label ||
+  "All Status";
+
   return (
-    <OwnerLayout activePage="dashboard">
+    <ContractorLayout activePage="dashboard">
       <section className="dashboard-content">
         <div className="dashboard-title">
           <div>
-            <h2>All Tenders</h2>
+            <h2>All Owner Tenders</h2>
             <p>{filteredTenders.length} tenders found</p>
           </div>
 
           <button
-            className="btn new-tender-btn"
-            onClick={() => navigate("/owner/create-tender")}
+            className="btn my-profile-btn"
+            onClick={() => navigate(`/contractor/owner-profile/${ownerId}`)}
           >
-            <i className="bi bi-plus-circle"></i>
-            New Tender
+            <i className="bi bi-arrow-left"></i>
+            Back
           </button>
         </div>
 
-        <div className="dashboard-card mt-4 owner-all-tenders-card">
+        <div className="dashboard-card mt-4">
           <div className="card-header-clean all-tenders-header">
             <h5>Tenders List</h5>
 
@@ -100,39 +108,39 @@ function OwnerAllTenders() {
                 />
               </div>
 
+
               <div className="owner-tenders-filter-wrap">
-                <button
-                  type="button"
-                  className="owner-tenders-filter-btn"
-                  onClick={() => setStatusFilterOpen((prev) => !prev)}
-                >
-                  <span>{selectedStatusLabel}</span>
+  <button
+    type="button"
+    className="owner-tenders-filter-btn"
+    onClick={() => setStatusFilterOpen((prev) => !prev)}
+  >
+    <span>{selectedStatusLabel}</span>
+    <i
+      className={`bi ${
+        statusFilterOpen ? "bi-chevron-up" : "bi-chevron-down"
+      }`}
+    ></i>
+  </button>
 
-                  <i
-                    className={`bi ${
-                      statusFilterOpen ? "bi-chevron-up" : "bi-chevron-down"
-                    }`}
-                  ></i>
-                </button>
-
-                {statusFilterOpen && (
-                  <div className="owner-tenders-filter-menu">
-                    {statusOptions.map((option) => (
-                      <button
-                        type="button"
-                        key={option.value}
-                        className={statusFilter === option.value ? "active" : ""}
-                        onClick={() => {
-                          setStatusFilter(option.value);
-                          setStatusFilterOpen(false);
-                        }}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+  {statusFilterOpen && (
+    <div className="owner-tenders-filter-menu">
+      {statusOptions.map((option) => (
+        <button
+          type="button"
+          key={option.value}
+          className={statusFilter === option.value ? "active" : ""}
+          onClick={() => {
+            setStatusFilter(option.value);
+            setStatusFilterOpen(false);
+          }}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
             </div>
           </div>
 
@@ -143,8 +151,6 @@ function OwnerAllTenders() {
                   <th>Tender ID</th>
                   <th>Project Name</th>
                   <th>Status</th>
-                  <th>Bids</th>
-                  <th>Budget</th>
                   <th>Deadline</th>
                 </tr>
               </thead>
@@ -152,13 +158,13 @@ function OwnerAllTenders() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="text-center text-muted py-4">
+                    <td colSpan="4" className="text-center text-muted py-4">
                       Loading tenders...
                     </td>
                   </tr>
                 ) : filteredTenders.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center text-muted py-4">
+                    <td colSpan="4" className="text-center text-muted py-4">
                       No tenders found.
                     </td>
                   </tr>
@@ -171,7 +177,7 @@ function OwnerAllTenders() {
                         key={tender.id}
                         className="clickable-table-row"
                         onClick={() =>
-                          navigate(`/owner/tender-details/${tender.id}`)
+                          navigate(`/contractor/tender-details/${tender.id}`)
                         }
                       >
                         <td>{formatTenderId(tender.id)}</td>
@@ -194,12 +200,6 @@ function OwnerAllTenders() {
                           </span>
                         </td>
 
-                        <td>{getBidsCount(tender)}</td>
-
-                        <td className="fw-bold">
-                          {formatBudget(tender.budget)}
-                        </td>
-
                         <td>
                           <i className="bi bi-clock me-1"></i>
                           {formatDate(tender.deadline_at)}
@@ -213,7 +213,7 @@ function OwnerAllTenders() {
           </div>
         </div>
       </section>
-    </OwnerLayout>
+    </ContractorLayout>
   );
 }
 
@@ -224,23 +224,10 @@ function getTenderDisplayStatus(tender) {
   today.setHours(0, 0, 0, 0);
 
   if (tender.status === "awarded") return "Awarded";
-  if (tender.status === "closed") return "Closed";
   if (deadline && deadline < today) return "Closed";
   if (tender.status === "open") return "Active";
 
   return tender.status || "Active";
-}
-
-function getBidsCount(tender) {
-  return (
-    tender.total_submissions ||
-    tender.submissions_count ||
-    tender.bids_count ||
-    tender.proposals_count ||
-    tender.submissions?.length ||
-    tender.proposals?.length ||
-    0
-  );
 }
 
 function formatDate(date) {
@@ -251,24 +238,6 @@ function formatDate(date) {
     day: "numeric",
     year: "numeric",
   });
-}
-
-function formatBudget(value) {
-  if (!value) return "—";
-
-  const number = Number(value);
-
-  if (Number.isNaN(number)) return value;
-
-  if (number >= 1000000) {
-    return `$${(number / 1000000).toFixed(1)}M`;
-  }
-
-  if (number >= 1000) {
-    return `$${(number / 1000).toFixed(1)}K`;
-  }
-
-  return `$${number}`;
 }
 
 function formatTenderId(id) {
@@ -293,4 +262,4 @@ function formatCategory(category) {
   return map[category] || category || "Other";
 }
 
-export default OwnerAllTenders;
+export default ContractorOwnerAllTenders;

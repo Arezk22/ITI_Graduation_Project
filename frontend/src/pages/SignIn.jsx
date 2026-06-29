@@ -50,43 +50,6 @@ function SignIn() {
   };
 
 
-
-// const handleSubmit = async (e) => {
-//   e.preventDefault();
-
-//   if (!validateForm()) return;
-
-//   try {
-//     setIsLoading(true);
-
-//     const response = await login(formData.email, formData.password);
-
-//     const { access, refresh, role } = response.data;
-
-//     saveTokens(access, refresh);
-
-//     localStorage.setItem("userEmail", formData.email);
-
-
-//     if (role === "owner") {
-//       localStorage.setItem("userRole", "owner");
-//       navigate("/owner/dashboard");
-//     } else if (role === "contractor") {
-//       localStorage.setItem("userRole", "contractor");
-//       navigate("/contractor/dashboard");
-//     } else {
-//       // مؤقتًا لحد ما الباك يرجع role
-//       localStorage.setItem("userRole", "owner");
-//       navigate("/owner/dashboard");
-//     }
-//   } catch (error) {
-//     setErrors({
-//       form: error.response?.data?.detail || "Invalid email or password",
-//     });
-//   } finally {
-//     setIsLoading(false);
-//   }
-// };
 const handleSubmit = async (e) => {
   e.preventDefault();
 

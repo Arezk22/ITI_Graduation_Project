@@ -1,5 +1,3 @@
-
-
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ContractorLayout from "../components/ContractorLayout";
@@ -22,7 +20,6 @@ function ContractorProfile() {
           ? response.data
           : response.data.results || [];
 
-        console.log("MY SUBMISSIONS:", list);
         setSubmissions(list);
       })
       .catch((error) => {
@@ -41,16 +38,17 @@ function ContractorProfile() {
     return submissions.filter((submission) => isAwardedSubmission(submission));
   }, [submissions]);
 
-  const visibleSubmissions = submissions.slice(0, 5);
+  const visibleAwardedSubmissions = acceptedSubmissions.slice(0, 5);
 
   const totalProjectValue = useMemo(() => {
-    return submissions.reduce((sum, submission) => {
+    return acceptedSubmissions.reduce((sum, submission) => {
       return sum + Number(submission.tender?.budget || 0);
     }, 0);
-  }, [submissions]);
+  }, [acceptedSubmissions]);
 
   const winRate = useMemo(() => {
     if (!submissions.length) return 0;
+
     return Math.round((acceptedSubmissions.length / submissions.length) * 100);
   }, [submissions, acceptedSubmissions]);
 
@@ -87,24 +85,16 @@ function ContractorProfile() {
             <div>
               <h2>{companyName}</h2>
 
-
-
               <div className="contractor-contact">
                 <span>
                   <i className="bi bi-envelope"></i> {userEmail}
-                                  <span>
-                  <i className="bi bi-currency-dollar"></i> $4.2M avg project
-                  value
-                </span>
-                </span>
-
-                {/* <span>
-                  <i className="bi bi-telephone"></i> Phone not provided
                 </span>
 
                 <span>
-                  <i className="bi bi-globe"></i> Website not provided
-                </span> */}
+                  <i className="bi bi-currency-dollar"></i>{" "}
+                  {formatShortMoney(getAverageProjectValue(acceptedSubmissions))}{" "}
+                  avg project value
+                </span>
               </div>
             </div>
           </div>
@@ -134,8 +124,7 @@ function ContractorProfile() {
 
             <div>
               <h3>91/100</h3>
-              <p>Avg Delivery Score
-</p>
+              <p>Avg Delivery Score</p>
             </div>
           </div>
         </div>
@@ -196,25 +185,26 @@ function ContractorProfile() {
 
         <div className="dashboard-card mt-4">
           <div className="card-header-clean">
-            <h5>Previous Projects</h5>
+            <h5>Awarded Projects</h5>
 
-            {submissions.length > 0 && (
-              <button
-                className="view-all-link"
-                onClick={() => navigate("/contractor/proposals")}
-              >
-                View all
-              </button>
-            )}
+
+            {acceptedSubmissions.length > 0 && (
+  <button
+    className="view-all-link"
+    onClick={() => navigate("/contractor/awarded-projects")}
+  >
+    View all
+  </button>
+)}
           </div>
 
           <div className="profile-projects-list">
             {loading ? (
-              <div className="text-muted py-3">Loading proposals...</div>
-            ) : submissions.length === 0 ? (
-              <div className="text-muted py-3">No submitted proposals yet.</div>
+              <div className="text-muted py-3">Loading awarded projects...</div>
+            ) : acceptedSubmissions.length === 0 ? (
+              <div className="text-muted py-3">No awarded projects yet.</div>
             ) : (
-              visibleSubmissions.map((submission) => (
+              visibleAwardedSubmissions.map((submission) => (
                 <div
                   className="profile-project-row contractor-proposal-row"
                   key={submission.id}
@@ -231,19 +221,17 @@ function ContractorProfile() {
                     <p>
                       <i className="bi bi-currency-dollar"></i>{" "}
                       {formatMoney(submission.tender?.budget)}{" "}
-                      <i className="bi bi-calendar ms-2"></i> Submitted{" "}
-                      {formatDate(submission.submitted_at)}
+                      <i className="bi bi-calendar ms-2"></i> Awarded{" "}
+                      {formatDate(
+                        submission.accepted_at ||
+                          submission.tender?.awarded_at ||
+                          submission.submitted_at
+                      )}
                     </p>
                   </div>
 
-                  <span
-                    className={
-                      isAwardedSubmission(submission)
-                        ? "completed-badge proposal-status-badge"
-                        : "submitted-badge proposal-status-badge"
-                    }
-                  >
-                    {isAwardedSubmission(submission) ? "Awarded" : "Submitted"}
+                  <span className="completed-badge proposal-status-badge">
+                    Awarded
                   </span>
                 </div>
               ))
@@ -352,6 +340,16 @@ function isAwardedSubmission(submission) {
 
 function getInitial(name) {
   return name?.trim()?.charAt(0)?.toUpperCase() || "C";
+}
+
+function getAverageProjectValue(acceptedSubmissions) {
+  if (!acceptedSubmissions.length) return 0;
+
+  const total = acceptedSubmissions.reduce((sum, submission) => {
+    return sum + Number(submission.tender?.budget || 0);
+  }, 0);
+
+  return total / acceptedSubmissions.length;
 }
 
 function formatDate(value) {
