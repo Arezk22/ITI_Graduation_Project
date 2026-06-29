@@ -133,7 +133,9 @@ class TenderSubmissions(models.Model):
         ContractorProfiles, on_delete=models.CASCADE, related_name="contractor_submissions"
     )
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="submitted")
+    # status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="submitted")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="under_review")
+
 
     need_review = models.BooleanField(default=False)
     technical_score = models.FloatField(null=True, blank=True)

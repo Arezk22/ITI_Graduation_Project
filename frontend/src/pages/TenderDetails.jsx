@@ -913,6 +913,7 @@ import {
   getTenderById,
   updateTender,
 } from "../services/tenderApi";
+import { getTenderSubmissions } from "../services/proposalApi";
 
 function TenderDetails() {
   const navigate = useNavigate();
@@ -920,7 +921,9 @@ function TenderDetails() {
 
   const [tenders, setTenders] = useState([]);
   const [tender, setTender] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -1191,8 +1194,44 @@ const list = Array.isArray(response.data)
     }
   };
 
+  useEffect(() => {
+    if (!tender?.id) {
+      setSubmissions([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    setSubmissionsLoading(true);
+    getTenderSubmissions(tender.id)
+      .then((response) => {
+        if (cancelled) return;
+
+        const list = Array.isArray(response.data)
+          ? response.data
+          : response.data.submissions || [];
+
+        setSubmissions(list);
+      })
+      .catch((error) => {
+        console.error("Load tender submissions error:", error.response?.data || error);
+        if (!cancelled) {
+          setSubmissions([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setSubmissionsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tender?.id]);
+
   const documents = tender?.files || [];
-  const submissionsCount = tender?.submissions_count || 0;
+  const submissionsCount = submissions.length || tender?.submissions_count || 0;
   const projectCode = tender ? `T-${String(tender.id).padStart(4, "0")}` : "—";
 
   if (loading) {
@@ -1376,17 +1415,48 @@ const list = Array.isArray(response.data)
                   </thead>
 
                   <tbody>
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <tr key={index}>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
+                    {submissionsLoading ? (
+                      <tr>
+                        <td colSpan="7" className="text-center py-3 text-muted">
+                          Loading submissions...
+                        </td>
                       </tr>
-                    ))}
+                    ) : submissions.length > 0 ? (
+                      submissions.map((submission, index) => (
+                        <tr
+                          key={submission.id || index}
+                          onClick={() =>
+                            navigate(
+                              `/owner/proposal-details/${tender.id}/${submission.id}`
+                            )
+                          }
+                          style={{ cursor: "pointer" }}
+                        >
+                          <td>
+                            {submission.contractor_company_name ||
+                              submission.contractor?.company_name ||
+                              submission.company_name ||
+                              "—"}
+                          </td>
+                          <td>{formatDate(submission.submitted_at)}</td>
+                          <td>
+                            <span className={`badge ${getSubmissionStatusBadgeClass(submission.status)}`}>
+                              {formatSubmissionStatus(submission.status)}
+                            </span>
+                          </td>
+                          <td>{submission.technical_score ?? "—"}</td>
+                          <td>{submission.financial_score ?? "—"}</td>
+                          <td>{submission.final_score ?? "—"}</td>
+                          <td>{submission.risk_score ?? "—"}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="text-center py-3 text-muted">
+                          No submissions received yet.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1770,6 +1840,31 @@ function formatDate(value) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function formatSubmissionStatus(status) {
+  if (!status) return "Under Review";
+
+  if (status === "submitted" || status === "under_review") {
+    return "Under Review";
+  }
+
+  if (status === "accepted") return "Accepted";
+  if (status === "rejected") return "Rejected";
+
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function getSubmissionStatusBadgeClass(status) {
+  if (status === "accepted") {
+    return "bg-success-subtle text-success-emphasis";
+  }
+
+  if (status === "rejected") {
+    return "bg-danger-subtle text-danger-emphasis";
+  }
+
+  return "bg-warning-subtle text-warning-emphasis";
 }
 
 function formatMoney(value) {

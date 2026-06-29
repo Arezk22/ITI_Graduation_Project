@@ -208,7 +208,11 @@ class TenderSubmissionsView(APIView):
             return Response(status=404, data={'message': 'Tender not found'})
         self.check_object_permissions(request, tender)
         submissions = tender.submissions.all()
-        serializer = TenderSubmissionsSerializer(submissions, many=True)
+        serializer = TenderSubmissionsSerializer(
+            submissions,
+            many=True,
+            context={"request": request},
+        )
         return Response(serializer.data)
 
     def post(self, request, tender_id):
@@ -221,7 +225,11 @@ class TenderSubmissionsView(APIView):
                 tender=tender, contractor=request.user.contractor_profile
             )
             return Response(
-                TenderSubmissionsSerializer(submission).data, status=201
+                TenderSubmissionsSerializer(
+                    submission,
+                    context={"request": request},
+                ).data,
+                status=201,
             )
         return Response(serializer.errors, status=400)
 
@@ -285,7 +293,11 @@ class MySubmissionsView(APIView):
             )
 
         submissions = TenderSubmissions.objects.filter(contractor=contractor_profile)
-        serializer = TenderSubmissionsSerializer(submissions, many=True)
+        serializer = TenderSubmissionsSerializer(
+            submissions,
+            many=True,
+            context={"request": request},
+        )
         return Response(serializer.data)
 
 
@@ -305,7 +317,10 @@ class TenderSubmissionDetailView(APIView):
         if not submission:
             return Response(status=404, data={'message': 'Submission not found'})
         self.check_object_permissions(request, submission)
-        serializer = TenderSubmissionsSerializer(submission)
+        serializer = TenderSubmissionsSerializer(
+            submission,
+            context={"request": request},
+        )
         return Response(serializer.data)
 
     def put(self, request, tender_id, submission_id):

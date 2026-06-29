@@ -27,18 +27,25 @@ function ProposalDetails() {
 
   const handleAward = async () => {
     const contractorId =
-      submission.contractor_id ||
-      submission.contractor?.id ||
-      submission.contractor;
+      submission?.contractor_id ??
+      submission?.contractor?.id ??
+      submission?.contractor;
 
     if (!contractorId) return;
 
     try {
       setAwardLoading(true);
       await awardTender(tenderId, contractorId);
+      setSubmission((prev) => (prev ? { ...prev, status: "accepted" } : prev));
       navigate(`/owner/tender-details/${tenderId}`);
     } catch (error) {
       console.error("Award tender error:", error.response?.data || error);
+      alert(
+        error.response?.data?.detail ||
+          error.response?.data?.message ||
+          "Unable to award this proposal right now."
+      );
+      navigate(`/owner/tender-details/${tenderId}`);
     } finally {
       setAwardLoading(false);
     }
@@ -98,23 +105,43 @@ function ProposalDetails() {
             <p className="text-muted mb-0">No files found for this proposal.</p>
           ) : (
             <div className="proposal-files-grid">
-              {files.map((file) => (
-                <a
-                  key={file.id}
-                  href={file.file_url || file.file}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="proposal-file-card"
-                  download
-                >
-                  <div>
-                    <strong>{getFileName(file.file_url || file.file)}</strong>
-                    <span>{file.file_category || file.category || "Document"}</span>
-                  </div>
+              {files.map((file) => {
+                const fileUrl = getFileUrl(file);
+                const fileName = getFileName(fileUrl);
 
-                  <i className="bi bi-download"></i>
-                </a>
-              ))}
+                return (
+                  <div key={file.id} className="proposal-file-card">
+                    <div>
+                      <strong>{fileName}</strong>
+                      <span>
+                        {file.file_category || file.category || "Document"}
+                      </span>
+                    </div>
+
+                    <div className="d-flex gap-2">
+                      {/* <a
+                        href={fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-sm btn-outline-primary"
+                        title="Open in new tab"
+                      >
+                        <i className="bi bi-box-arrow-up-right"></i>
+                      </a> */}
+                      <a
+                        href={fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        download
+                        className="btn btn-sm btn-outline-secondary"
+                        title="Open and download"
+                      >
+                        <i className="bi bi-download"></i>
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -123,9 +150,28 @@ function ProposalDetails() {
   );
 }
 
+function getFileUrl(file) {
+  const rawUrl = file?.file_url || file?.file || "";
+
+  if (!rawUrl) return "";
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+  if (rawUrl.startsWith("/")) {
+    return `${window.location.origin}${rawUrl}`;
+  }
+
+  return rawUrl;
+}
+
 function getFileName(url = "") {
+  if (!url) return "Document";
+
   try {
-    return decodeURIComponent(url.split("/").pop());
+    const decodedUrl = decodeURIComponent(url);
+    const pathParts = decodedUrl.split("/");
+    const lastPart = pathParts[pathParts.length - 1];
+    const queryIndex = lastPart.indexOf("?");
+
+    return queryIndex >= 0 ? lastPart.slice(0, queryIndex) : lastPart;
   } catch {
     return "Document";
   }

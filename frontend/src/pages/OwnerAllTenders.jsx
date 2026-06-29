@@ -199,6 +199,7 @@ function getTenderDisplayStatus(tender) {
 
 function getBidsCount(tender) {
   return (
+    tender.total_submissions ||
     tender.submissions_count ||
     tender.bids_count ||
     tender.proposals_count ||

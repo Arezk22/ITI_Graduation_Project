@@ -13,4 +13,5 @@ urlpatterns = [
     path("api/v1/refresh/", TokenRefreshView.as_view(), name="refresh"),
     path("api/v1/register/", RegisterAPIView.as_view(), name="register"),
     path("api/v1/contractor/", ContractorProfileAPIView.as_view(), name="contractor-profile"),
+    path("api/v1/contractor/<int:pk>/", ContractorProfileAPIView.as_view(), name="contractor-profile-detail"),
 ]

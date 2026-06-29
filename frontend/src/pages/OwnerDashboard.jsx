@@ -1,5 +1,3 @@
-
-
 // import { useNavigate } from "react-router-dom";
 // import { ownerDashboardData } from "../data/ownerDashboardData";
 // import OwnerLayout from "../components/OwnerLayout";
@@ -169,18 +167,19 @@
 
 // export default OwnerDashboard;
 
-
-
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OwnerLayout from "../components/OwnerLayout";
 import { getAllTenders } from "../services/tenderApi";
+import { getTenderSubmissions } from "../services/proposalApi";
 
 function OwnerDashboard() {
   const navigate = useNavigate();
 
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tenderSubmissions, setTenderSubmissions] = useState({});
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [hoveredMonth, setHoveredMonth] = useState(null);
 
   useEffect(() => {
@@ -190,25 +189,55 @@ function OwnerDashboard() {
         //   ? response.data
         //   : response.data.results || [];
         const list = Array.isArray(response.data)
-  ? response.data
-  : response.data.tenders || response.data.results || [];
+          ? response.data
+          : response.data.tenders || response.data.results || [];
 
         setTenders(list);
       })
       .catch((error) => {
-        console.error("Load owner tenders error:", error.response?.data || error);
+        console.error(
+          "Load owner tenders error:",
+          error.response?.data || error,
+        );
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
 
+  useEffect(() => {
+    if (!tenders.length) return;
+
+    setSubmissionsLoading(true);
+    Promise.allSettled(
+      tenders.map((tender) =>
+        getTenderSubmissions(tender.id).then((response) => [
+          tender.id,
+          Array.isArray(response.data)
+            ? response.data
+            : response.data.submissions || [],
+        ]),
+      ),
+    )
+      .then((results) => {
+        const submissionsMap = {};
+        results.forEach((result) => {
+          if (result.status === "fulfilled") {
+            const [tenderId, submissions] = result.value;
+            submissionsMap[tenderId] = submissions;
+          }
+        });
+        setTenderSubmissions(submissionsMap);
+      })
+      .finally(() => setSubmissionsLoading(false));
+  }, [tenders]);
+
   const today = new Date();
 
   const totalTenders = tenders.length;
 
   const tendersThisMonth = tenders.filter((tender) =>
-    isSameMonth(tender.created_at, today)
+    isSameMonth(tender.created_at, today),
   ).length;
 
   const activeTenders = tenders.filter((tender) => {
@@ -216,16 +245,20 @@ function OwnerDashboard() {
   }).length;
 
   const totalBids = tenders.reduce((sum, tender) => {
-    return sum + getBidsCount(tender);
+    // Prefer submissions fetched in `tenderSubmissions` (if present),
+    // otherwise fall back to counts available on the tender object.
+    const subs = tenderSubmissions?.[tender.id];
+    const count = Array.isArray(subs) ? subs.length : getBidsCount(tender);
+    return sum + count;
   }, 0);
 
   const bidsThisWeek = tenders.reduce((sum, tender) => {
-    return sum + getBidsThisWeek(tender);
+    return sum + getBidsThisWeek(tender, tenderSubmissions);
   }, 0);
 
   const chartData = useMemo(() => {
-    return getMonthlyChartData(tenders);
-  }, [tenders]);
+    return getMonthlyChartData(tenders, tenderSubmissions);
+  }, [tenders, tenderSubmissions]);
 
   const recentTenders = useMemo(() => {
     return [...tenders]
@@ -278,7 +311,7 @@ function OwnerDashboard() {
             icon="bi-people"
             value={totalBids}
             title="Submitted Bids"
-            note={`${bidsThisWeek} this week`}
+            note={`This week: ${bidsThisWeek}`}
             color="purple"
           />
 
@@ -304,126 +337,122 @@ function OwnerDashboard() {
               </div>
 
               <div className="real-chart">
-  <svg viewBox="0 0 760 300" preserveAspectRatio="none">
-    {/* Y axis labels + grid lines */}
-    {[0, 15, 30, 45, 60].map((value) => {
-      const y = getChartY(value, 60);
+                <svg viewBox="0 0 760 300" preserveAspectRatio="none">
+                  {/* Y axis labels + grid lines */}
+                  {[0, 15, 30, 45, 60].map((value) => {
+                    const y = getChartY(value, 60);
 
-      return (
-        <g key={value}>
-          <text
-            x="10"
-            y={y + 4}
-            className="chart-axis-label"
-          >
-            {value}
-          </text>
+                    return (
+                      <g key={value}>
+                        <text x="10" y={y + 4} className="chart-axis-label">
+                          {value}
+                        </text>
 
-          <line
-            x1="45"
-            y1={y}
-            x2="735"
-            y2={y}
-            className="chart-grid-line"
-          />
-        </g>
-      );
-    })}
+                        <line
+                          x1="45"
+                          y1={y}
+                          x2="735"
+                          y2={y}
+                          className="chart-grid-line"
+                        />
+                      </g>
+                    );
+                  })}
 
-    {/* Smooth lines */}
-    <path
-      d={buildSmoothPath(chartData, "tenders")}
-      fill="none"
-      stroke="#2563eb"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="chart-smooth-line"
-    />
+                  {/* Smooth lines */}
+                  <path
+                    d={buildSmoothPath(chartData, "tenders")}
+                    fill="none"
+                    stroke="#2563eb"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="chart-smooth-line"
+                  />
 
-    <path
-      d={buildSmoothPath(chartData, "bids")}
-      fill="none"
-      stroke="#f97316"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="chart-smooth-line"
-    />
+                  <path
+                    d={buildSmoothPath(chartData, "bids")}
+                    fill="none"
+                    stroke="#f97316"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="chart-smooth-line"
+                  />
 
-    {/* Hover areas only */}
-    {chartData.map((item, index) => {
-      const x = getChartX(index, chartData.length);
+                  {/* Hover areas only */}
+                  {chartData.map((item, index) => {
+                    const x = getChartX(index, chartData.length);
 
-      return (
-        <g key={item.month}>
-          <rect
-            x={x - 35}
-            y="20"
-            width="70"
-            height="230"
-            fill="transparent"
-            onMouseEnter={() =>
-              setHoveredMonth({
-                ...item,
-                index,
-                x,
-              })
-            }
-            onMouseLeave={() => setHoveredMonth(null)}
-          />
+                    return (
+                      <g key={item.month}>
+                        <rect
+                          x={x - 35}
+                          y="20"
+                          width="70"
+                          height="230"
+                          fill="transparent"
+                          onMouseEnter={() =>
+                            setHoveredMonth({
+                              ...item,
+                              index,
+                              x,
+                            })
+                          }
+                          onMouseLeave={() => setHoveredMonth(null)}
+                        />
 
-          {hoveredMonth?.month === item.month && (
-            <>
-              <line
-                x1={x}
-                y1="35"
-                x2={x}
-                y2="240"
-                className="chart-hover-line"
-              />
+                        {hoveredMonth?.month === item.month && (
+                          <>
+                            <line
+                              x1={x}
+                              y1="35"
+                              x2={x}
+                              y2="240"
+                              className="chart-hover-line"
+                            />
 
-              <circle
-                cx={x}
-                cy={getChartY(item.tenders, 60)}
-                r="6"
-                fill="#2563eb"
-                className="chart-hover-dot"
-              />
+                            <circle
+                              cx={x}
+                              cy={getChartY(item.tenders, 60)}
+                              r="6"
+                              fill="#2563eb"
+                              className="chart-hover-dot"
+                            />
 
-              <circle
-                cx={x}
-                cy={getChartY(item.bids, 60)}
-                r="6"
-                fill="#f97316"
-                className="chart-hover-dot"
-              />
-            </>
-          )}
-        </g>
-      );
-    })}
-  </svg>
+                            <circle
+                              cx={x}
+                              cy={getChartY(item.bids, 60)}
+                              r="6"
+                              fill="#f97316"
+                              className="chart-hover-dot"
+                            />
+                          </>
+                        )}
+                      </g>
+                    );
+                  })}
+                </svg>
 
-  {hoveredMonth && (
-    <div
-      className="chart-tooltip"
-      style={{
-        left: `${Math.min(Math.max(hoveredMonth.x - 25, 70), 610)}px`,
-      }}
-    >
-      <strong>{hoveredMonth.month}</strong>
-      <span>Tenders: {hoveredMonth.tenders}</span>
-      <span>Bids: {hoveredMonth.bids}</span>
-    </div>
-  )}
+                {hoveredMonth && (
+                  <div
+                    className="chart-tooltip"
+                    style={{
+                      left: `${Math.min(Math.max(hoveredMonth.x - 25, 70), 610)}px`,
+                    }}
+                  >
+                    <strong>{hoveredMonth.month}</strong>
+                    <span>Tenders: {hoveredMonth.tenders}</span>
+                    <span>Bids: {hoveredMonth.bids}</span>
+                  </div>
+                )}
 
-  <div className="chart-months real-chart-months">
-    {chartData.map((item) => (
-      <span key={item.month}>{item.month}</span>
-    ))}
-  </div>
-</div>
+                <div className="chart-months real-chart-months">
+                  {chartData.map((item) => (
+                    <span key={item.month}>{item.month}</span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -491,7 +520,9 @@ function OwnerDashboard() {
                           </span>
                         </td>
                         <td>{getBidsCount(tender)}</td>
-                        <td className="fw-bold">{formatBudget(tender.budget)}</td>
+                        <td className="fw-bold">
+                          {formatBudget(tender.budget)}
+                        </td>
                         <td>
                           <i className="bi bi-clock me-1"></i>
                           {formatDate(tender.deadline_at)}
@@ -544,6 +575,7 @@ function getTenderDisplayStatus(tender) {
 
 function getBidsCount(tender) {
   return (
+    tender.total_submissions ||
     tender.submissions_count ||
     tender.bids_count ||
     tender.proposals_count ||
@@ -553,8 +585,12 @@ function getBidsCount(tender) {
   );
 }
 
-function getBidsThisWeek(tender) {
-  const submissions = tender.submissions || tender.proposals || [];
+function getBidsThisWeek(tender, tenderSubmissions) {
+  const submissions =
+    tenderSubmissions?.[tender.id] ||
+    tender.submissions ||
+    tender.proposals ||
+    [];
 
   if (!Array.isArray(submissions)) return 0;
 
@@ -564,7 +600,7 @@ function getBidsThisWeek(tender) {
   }).length;
 }
 
-function getMonthlyChartData(tenders) {
+function getMonthlyChartData(tenders, tenderSubmissions = {}) {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
 
   return months.map((month, index) => {
@@ -574,7 +610,8 @@ function getMonthlyChartData(tenders) {
     }).length;
 
     const bidsInMonth = tenders.reduce((sum, tender) => {
-      const submissions = tender.submissions || tender.proposals || [];
+      const submissions =
+        tenderSubmissions?.[tender.id] || tender.submissions || tender.proposals || [];
 
       if (!Array.isArray(submissions)) return sum;
 

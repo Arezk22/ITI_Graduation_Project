@@ -141,26 +141,6 @@ class TenderMinimalSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-class TenderSubmissionsSerializer(serializers.ModelSerializer):
-    tender = TenderMinimalSerializer(read_only=True)
-
-    class Meta:
-        model = TenderSubmissions
-        fields = [
-            'id', 'tender', 'contractor', 'status',
-            'technical_score', 'financial_score', 'risk_score', 'final_score',
-            'rank', 'recommendation', 'structured_data', 'justification',
-            'validation_result', 'risk_result', 'technical_result', 'financial_result',
-            'submitted_at',
-        ]
-        read_only_fields = [
-            'tender', 'contractor',
-            'technical_score', 'financial_score', 'risk_score', 'final_score',
-            'rank', 'recommendation', 'structured_data', 'justification',
-            'validation_result', 'risk_result', 'technical_result', 'financial_result',
-            'submitted_at',
-        ]
-
 class SubmissionFilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubmissionFiles
@@ -169,6 +149,39 @@ class SubmissionFilesSerializer(serializers.ModelSerializer):
             'extracted_data', 'extracted_meta_data',
         ]
         read_only_fields = ['file_url', 'file_type', 'extracted_data', 'extracted_meta_data']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and instance.file_url and instance.file_url.startswith('/'):
+            data['file_url'] = request.build_absolute_uri(instance.file_url)
+        return data
+
+
+class TenderSubmissionsSerializer(serializers.ModelSerializer):
+    tender = TenderMinimalSerializer(read_only=True)
+    contractor_company_name = serializers.SerializerMethodField()
+    files = SubmissionFilesSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = TenderSubmissions
+        fields = [
+            'id', 'tender', 'contractor', 'contractor_company_name', 'status',
+            'technical_score', 'financial_score', 'risk_score', 'final_score',
+            'rank', 'recommendation', 'structured_data', 'justification',
+            'validation_result', 'risk_result', 'technical_result', 'financial_result',
+            'submitted_at', 'files',
+        ]
+        read_only_fields = [
+            'tender', 'contractor', 'contractor_company_name', 'files',
+            'technical_score', 'financial_score', 'risk_score', 'final_score',
+            'rank', 'recommendation', 'structured_data', 'justification',
+            'validation_result', 'risk_result', 'technical_result', 'financial_result',
+            'submitted_at',
+        ]
+
+    def get_contractor_company_name(self, obj):
+        return getattr(obj.contractor, 'company_name', None) or ''
 
 class RiskItemSerializer(serializers.ModelSerializer):
     class Meta:

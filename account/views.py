@@ -38,13 +38,15 @@ class EmailLoginView(TokenObtainPairView):
 class ContractorProfileAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        if request.user.role != "contractor":
-            raise PermissionDenied("Only contractors can access this resource.")
+    def get(self, request, pk=None):
+        if pk is not None:
+            profile = ContractorProfiles.objects.filter(pk=pk).first()
+        else:
+            if request.user.role != "contractor":
+                raise PermissionDenied("Only contractors can access this resource.")
 
-        profile = (
-            ContractorProfiles.objects.filter(user=request.user).first()
-        )
+            profile = ContractorProfiles.objects.filter(user=request.user).first()
+
         if profile is None:
             raise NotFound("Contractor profile not found.")
 
