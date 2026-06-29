@@ -69,6 +69,7 @@ class ActiveProposalSerializer(serializers.Serializer):
     tender_title = serializers.CharField(source="tender.title")
     status = serializers.CharField()
     deadline_at = serializers.DateTimeField(source="tender.deadline_at")
+    owner_email = serializers.EmailField(source="tender.owner.email")
     submitted_at = serializers.DateTimeField()
     accepted_at = serializers.SerializerMethodField()
 
@@ -106,7 +107,7 @@ class ContractorProfileSerializer(serializers.ModelSerializer):
 
     def _active_proposals(self, obj):
         return (
-            obj.contractor_submissions.select_related("tender")
+            obj.contractor_submissions.select_related("tender", "tender__owner")
             .filter(
                 status__in=["under_review", "accepted"],
                 tender__deadline_at__gt=timezone.now(),
