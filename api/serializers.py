@@ -1,8 +1,10 @@
 import json
 
 from django.db import transaction
+from django.db.models import F
 from django.http import QueryDict
 from rest_framework import serializers
+from account.models import ContractorProfiles
 from api.signals import tender_files_uploaded, submission_files_uploaded
 from api.models import (
     Tenders,
@@ -20,7 +22,10 @@ from api.models import (
 FILE_EXTENSION_MAP = {
     'pdf': 'pdf',
     'doc': 'docx', 'docx': 'docx',
+    'xls': 'docx', 'xlsx': 'docx',
     'jpg': 'img', 'jpeg': 'img', 'png': 'img', 'webp': 'img',
+    'dwg': 'img',
+    'txt': 'docx',
 }
 
 
@@ -36,13 +41,29 @@ def detect_file_type(filename):
     return file_type
 
 class TendersSerializer(serializers.ModelSerializer):
+    total_submissions = serializers.SerializerMethodField()
+    owner_company_name = serializers.SerializerMethodField()
+    owner_email = serializers.EmailField(source='owner.email', read_only=True)
+
     class Meta:
         model = Tenders
         fields = [
-            'id', 'owner', 'title', 'description', 'project_category', 'location',
-            'budget', 'start_date', 'duration_months', 'deadline_at', 'status', 'created_at',
+            'id', 'owner', 'owner_company_name', 'owner_email', 'title', 'description',
+            'project_category', 'location', 'budget', 'start_date', 'duration_months',
+            'deadline_at', 'status', 'total_submissions', 'created_at',
         ]
         read_only_fields = ['owner', 'created_at']
+
+    def get_total_submissions(self, obj):
+        # Use the annotated value when available (list view) to avoid N+1 counts.
+        count = getattr(obj, 'submissions_count', None)
+        return count if count is not None else obj.submissions.count()
+
+    def get_owner_company_name(self, obj):
+        profile = getattr(obj.owner, 'contractor_profile', None)
+        if profile is not None:
+            return profile.company_name
+        return obj.owner.last_name or ''
 
 class TenderFilesSerializer(serializers.ModelSerializer):
     # Binary upload (multipart). Stored on the server; its path is saved to
@@ -97,34 +118,36 @@ class EvaluationRulesSerializer(serializers.ModelSerializer):
 class TenderDetailSerializer(serializers.ModelSerializer):
     files = TenderFilesSerializer(many=True, read_only=True)
     evaluation_rules = EvaluationRulesSerializer(many=True, read_only=True)
+    winning_submission_id = serializers.SerializerMethodField()
+    total_submissions = serializers.SerializerMethodField()
 
     class Meta:
         model = Tenders
         fields = [
             'id', 'owner', 'title', 'description', 'project_category', 'location',
             'budget', 'start_date', 'duration_months', 'deadline_at',
-            'status', 'structured_data', 'comparison_result', 'recommendation_result',
-            'created_at', 'files', 'evaluation_rules',
+            'status', 'winning_submission_id', 'total_submissions', 'structured_data',
+            'comparison_result', 'recommendation_result', 'created_at', 'files',
+            'evaluation_rules',
         ]
         read_only_fields = fields
 
-class TenderSubmissionsSerializer(serializers.ModelSerializer):
+    def get_total_submissions(self, obj):
+        return obj.submissions.count()
+
+    def get_winning_submission_id(self, obj):
+        if obj.status != "awarded":
+            return None
+        winner = obj.submissions.filter(status="accepted").first()
+        return winner.id if winner else None
+class TenderMinimalSerializer(serializers.ModelSerializer):
     class Meta:
-        model = TenderSubmissions
+        model = Tenders
         fields = [
-            'id', 'tender', 'contractor', 'status',
-            'technical_score', 'financial_score', 'risk_score', 'final_score',
-            'rank', 'recommendation', 'structured_data', 'justification',
-            'validation_result', 'risk_result', 'technical_result', 'financial_result',
-            'submitted_at',
+            'id', 'title', 'project_category', 'location', 'deadline_at',
+            'budget', 'status',
         ]
-        read_only_fields = [
-            'tender', 'contractor',
-            'technical_score', 'financial_score', 'risk_score', 'final_score',
-            'rank', 'recommendation', 'structured_data', 'justification',
-            'validation_result', 'risk_result', 'technical_result', 'financial_result',
-            'submitted_at',
-        ]
+        read_only_fields = fields
 
 class SubmissionFilesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -134,6 +157,39 @@ class SubmissionFilesSerializer(serializers.ModelSerializer):
             'extracted_data', 'extracted_meta_data',
         ]
         read_only_fields = ['file_url', 'file_type', 'extracted_data', 'extracted_meta_data']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and instance.file_url and instance.file_url.startswith('/'):
+            data['file_url'] = request.build_absolute_uri(instance.file_url)
+        return data
+
+
+class TenderSubmissionsSerializer(serializers.ModelSerializer):
+    tender = TenderMinimalSerializer(read_only=True)
+    contractor_company_name = serializers.SerializerMethodField()
+    files = SubmissionFilesSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = TenderSubmissions
+        fields = [
+            'id', 'tender', 'contractor', 'contractor_company_name', 'status',
+            'technical_score', 'financial_score', 'risk_score', 'final_score',
+            'rank', 'recommendation', 'structured_data', 'justification',
+            'validation_result', 'risk_result', 'technical_result', 'financial_result',
+            'submitted_at', 'files',
+        ]
+        read_only_fields = [
+            'tender', 'contractor', 'contractor_company_name', 'files',
+            'technical_score', 'financial_score', 'risk_score', 'final_score',
+            'rank', 'recommendation', 'structured_data', 'justification',
+            'validation_result', 'risk_result', 'technical_result', 'financial_result',
+            'submitted_at',
+        ]
+
+    def get_contractor_company_name(self, obj):
+        return getattr(obj.contractor, 'company_name', None) or ''
 
 class RiskItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -275,6 +331,10 @@ class CreateSubmissionSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         files = validated_data.pop('files', [])
         submission = TenderSubmissions.objects.create(**validated_data)
+        # Count this submission toward the contractor's total tenders (atomic).
+        ContractorProfiles.objects.filter(pk=submission.contractor_id).update(
+            total_tenders=F('total_tenders') + 1
+        )
         created_ids = []
         for upload in files:
             submission_file = SubmissionFiles.objects.create(

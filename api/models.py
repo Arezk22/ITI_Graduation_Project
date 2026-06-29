@@ -11,6 +11,15 @@ class Tenders(models.Model):
         ("closed", "Closed"),
     )
 
+
+    ANALYSIS_STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("processing", "Processing"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+        ("invalid_documents", "Invalid Documents"),
+    ]
+
     CATEGORY_CHOICES = (
         ("construction", "Construction"),
         ("roads", "Roads & Infrastructure"),
@@ -45,6 +54,14 @@ class Tenders(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
 
     # AI-generated outputs for the tender.
+    analysis_status = models.CharField(
+        max_length=20,
+        choices=ANALYSIS_STATUS_CHOICES,
+        default="pending",
+    )
+
+    analyzed_at = models.DateTimeField(null=True, blank=True)
+    awarded_at = models.DateTimeField(null=True, blank=True)
     structured_data = models.JSONField(null=True, blank=True)
     comparison_result = models.JSONField(null=True, blank=True)
     recommendation_result = models.JSONField(null=True, blank=True)
@@ -82,6 +99,7 @@ class TenderFiles(models.Model):
     file_category = models.CharField(max_length=20, choices=FILE_CATEGORY_CHOICES, blank=True)
 
     # AI-extracted content and metadata from the file.
+    need_review = models.BooleanField(default=False)
     extracted_data = models.JSONField(null=True, blank=True)
     extracted_meta_data = models.JSONField(null=True, blank=True)
 
@@ -112,11 +130,14 @@ class TenderSubmissions(models.Model):
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE, related_name="submissions")
 
     contractor = models.ForeignKey(
-        ContractorProfiles, on_delete=models.CASCADE, related_name="submissions"
+        ContractorProfiles, on_delete=models.CASCADE, related_name="contractor_submissions"
     )
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="submitted")
+    # status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="submitted")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="under_review")
 
+
+    need_review = models.BooleanField(default=False)
     technical_score = models.FloatField(null=True, blank=True)
     financial_score = models.FloatField(null=True, blank=True)
     risk_score = models.FloatField(null=True, blank=True)
@@ -167,6 +188,7 @@ class SubmissionFiles(models.Model):
     # file_category = models.CharField(max_length=10, choices=FILE_CATEGORY_CHOICES)
 
     # AI-extracted content and metadata from the file.
+    need_review = models.BooleanField(default=False)
     extracted_data = models.JSONField(null=True, blank=True)
     extracted_meta_data = models.JSONField(null=True, blank=True)
 

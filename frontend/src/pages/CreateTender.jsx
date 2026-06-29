@@ -165,6 +165,7 @@ if (currentEvaluationTotal !== 100) {
       console.log("Tender created:", response.data);
 
       const tenderId = response.data.id;
+      
 
 showToast("success", "Tender published", "Your tender has been created successfully.");
 
@@ -176,7 +177,31 @@ showToast("success", "Tender published", "Your tender has been created successfu
       }
     } catch (error) {
       console.error("Create tender error:", error.response?.data || error);
-showToast("error", "Publish failed", "Please review the form and try again.");
+
+      const serverErrors = error.response?.data;
+      let message = "Please review the form and try again.";
+
+      if (typeof serverErrors === "string") {
+        message = serverErrors;
+      } else if (serverErrors?.detail) {
+        message = serverErrors.detail;
+      } else if (serverErrors && typeof serverErrors === "object") {
+        const firstError = Object.entries(serverErrors).find(([, value]) => value);
+
+        if (firstError) {
+          const [, value] = firstError;
+
+          if (Array.isArray(value)) {
+            message = value[0];
+          } else if (typeof value === "string") {
+            message = value;
+          } else if (typeof value === "object" && value?.message) {
+            message = value.message;
+          }
+        }
+      }
+
+      showToast("error", "Publish failed", message);
     } finally {
       setIsPublishing(false);
     }

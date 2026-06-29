@@ -1,23 +1,29 @@
-# main_pipeline.py
 import os
-
+from dotenv import load_dotenv
 from langchain_core.documents import Document
 
-from ITI_Graduation_Project.api.models import TenderFiles
+from api.models import TenderFiles
 
-# استدعاء المكونات اللي برمجناها
 from .extractors.document_processor import DocumentIntakeProcessor 
 from .agents.tender_graph import EvaluationWorkflow
 from .llm import vision_llm , text_llm , gemini_client
-# 🌟 التعديل الجديد: استدعاء دالة حفظ البيانات في الـ Vector Store
 from .vector_store import save_documents_to_db ,prepare_documents_for_vector_db
 
+load_dotenv()
 
 vision_llm = vision_llm
 text_llm = text_llm
 gemini_client=gemini_client
 
-db_connection_string = os.getenv('VECTOR_DB_CONNECTION_STRING', None)
+db_connection_string = (
+    f"postgresql+psycopg://"
+    f"{os.getenv('DB_USER')}:"
+    f"{os.getenv('DB_PASSWORD')}@"
+    f"{os.getenv('DB_HOST')}:"
+    f"{os.getenv('DB_PORT')}/"
+    f"{os.getenv('DB_NAME')}"
+)
+
 doc_processor = DocumentIntakeProcessor(vision_llm, text_llm,gemini_client)
 workflow_app = EvaluationWorkflow(text_llm)
 

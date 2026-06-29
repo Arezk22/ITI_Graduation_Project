@@ -19,14 +19,14 @@ export const createTender = (form) => {
     formData.append("deadline_at", `${form.Submission_Deadline}T00:00:00Z`);
   }
 
-const evaluationRules = Object.entries(form.evaluationRules || {}).map(
-  ([ruleName, ruleValue]) => ({
-    rule_name: ruleName,
-    rule_value: String(ruleValue),
-  })
-);
+  const evaluationRules = Object.entries(form.evaluationRules || {}).map(
+    ([ruleName, ruleValue]) => ({
+      rule_name: ruleName,
+      rule_value: String(ruleValue),
+    })
+  );
 
-formData.append("evaluation_rules", JSON.stringify(evaluationRules));
+  formData.append("evaluation_rules", JSON.stringify(evaluationRules));
 
   if (form.BOQ) {
     formData.append("files", form.BOQ);
@@ -59,8 +59,9 @@ export const getTenderById = (id) => {
   return api.get(`/tenders/${id}`);
 };
 
-export const updateTender = (id, payload) => api.put(`/tenders/${id}`, payload);
-
+export const updateTender = (id, payload) => {
+  return api.put(`/tenders/${id}`, payload);
+};
 
 export const deleteTender = (id) => {
   return api.delete(`/tenders/${id}`);

@@ -50,7 +50,6 @@ function SignIn() {
   };
 
 
-
 const handleSubmit = async (e) => {
   e.preventDefault();
 
@@ -61,22 +60,21 @@ const handleSubmit = async (e) => {
 
     const response = await login(formData.email, formData.password);
 
-    const { access, refresh, role } = response.data;
+    const { access, refresh, role, first_name, company_name } = response.data;
 
     saveTokens(access, refresh);
 
     localStorage.setItem("userEmail", formData.email);
+    localStorage.setItem("userRole", role || "");
 
+    localStorage.setItem("userName", first_name || "User");
+    localStorage.setItem("companyName", company_name || "");
 
     if (role === "owner") {
-      localStorage.setItem("userRole", "owner");
       navigate("/owner/dashboard");
     } else if (role === "contractor") {
-      localStorage.setItem("userRole", "contractor");
       navigate("/contractor/dashboard");
     } else {
-      // مؤقتًا لحد ما الباك يرجع role
-      localStorage.setItem("userRole", "owner");
       navigate("/owner/dashboard");
     }
   } catch (error) {

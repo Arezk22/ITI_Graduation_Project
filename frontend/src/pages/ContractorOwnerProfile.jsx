@@ -1,47 +1,47 @@
 
-
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import OwnerLayout from "../components/OwnerLayout";
+import { useNavigate, useParams } from "react-router-dom";
+import ContractorLayout from "../components/ContractorLayout";
 import { getAllTenders } from "../services/tenderApi";
 import { getTenderSubmissions } from "../services/proposalApi";
 
-function OwnerDashboard() {
+function ContractorOwnerProfile() {
   const navigate = useNavigate();
+  const { ownerId } = useParams();
 
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tenderSubmissions, setTenderSubmissions] = useState({});
-  const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [hoveredMonth, setHoveredMonth] = useState(null);
 
   useEffect(() => {
     getAllTenders()
       .then((response) => {
-        // const list = Array.isArray(response.data)
-        //   ? response.data
-        //   : response.data.results || [];
         const list = Array.isArray(response.data)
           ? response.data
           : response.data.tenders || response.data.results || [];
 
-        setTenders(list);
+        const ownerTenders = list.filter(
+          (tender) => String(tender.owner) === String(ownerId)
+        );
+
+        setTenders(ownerTenders);
       })
       .catch((error) => {
         console.error(
-          "Load owner tenders error:",
-          error.response?.data || error,
+          "Load owner profile tenders error:",
+          error.response?.data || error
         );
+        setTenders([]);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [ownerId]);
 
   useEffect(() => {
     if (!tenders.length) return;
 
-    setSubmissionsLoading(true);
     Promise.allSettled(
       tenders.map((tender) =>
         getTenderSubmissions(tender.id).then((response) => [
@@ -49,44 +49,40 @@ function OwnerDashboard() {
           Array.isArray(response.data)
             ? response.data
             : response.data.submissions || [],
-        ]),
-      ),
-    )
-      .then((results) => {
-        const submissionsMap = {};
-        results.forEach((result) => {
-          if (result.status === "fulfilled") {
-            const [tenderId, submissions] = result.value;
-            submissionsMap[tenderId] = submissions;
-          }
-        });
-        setTenderSubmissions(submissionsMap);
-      })
-      .finally(() => setSubmissionsLoading(false));
+        ])
+      )
+    ).then((results) => {
+      const submissionsMap = {};
+
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          const [tenderId, submissions] = result.value;
+          submissionsMap[tenderId] = submissions;
+        }
+      });
+
+      setTenderSubmissions(submissionsMap);
+    });
   }, [tenders]);
 
-  const today = new Date();
+  const ownerInfo = useMemo(() => {
+    return getOwnerInfo(tenders, ownerId);
+  }, [tenders, ownerId]);
 
   const totalTenders = tenders.length;
 
-  const tendersThisMonth = tenders.filter((tender) =>
-    isSameMonth(tender.created_at, today),
+  const activeTenders = tenders.filter(
+    (tender) => getTenderDisplayStatus(tender) === "Active"
   ).length;
 
-  const activeTenders = tenders.filter((tender) => {
-    return getTenderDisplayStatus(tender) === "Active";
-  }).length;
-
   const totalBids = tenders.reduce((sum, tender) => {
-    // Prefer submissions fetched in `tenderSubmissions` (if present),
-    // otherwise fall back to counts available on the tender object.
-    const subs = tenderSubmissions?.[tender.id];
-    const count = Array.isArray(subs) ? subs.length : getBidsCount(tender);
-    return sum + count;
-  }, 0);
+    const subs = tenderSubmissions[tender.id];
 
-  const bidsThisWeek = tenders.reduce((sum, tender) => {
-    return sum + getBidsThisWeek(tender, tenderSubmissions);
+    if (Array.isArray(subs)) {
+      return sum + subs.length;
+    }
+
+    return sum + getBidsCount(tender);
   }, 0);
 
   const chartData = useMemo(() => {
@@ -104,22 +100,36 @@ function OwnerDashboard() {
   }, [tenders]);
 
   return (
-    <OwnerLayout activePage="dashboard">
+    <ContractorLayout activePage="dashboard">
       <section className="dashboard-content">
-        <div className="dashboard-title">
+        <div className="dashboard-title owner-profile-title">
+
           <div>
-            <h2>Project Overview</h2>
-            <p>
-              {formatToday()} · {activeTenders} active tenders
-            </p>
-          </div>
+  <h2>{ownerInfo.company}</h2>
+
+  <p>
+    {formatToday()} · {totalTenders} total tenders
+  </p>
+
+  {ownerInfo.email ? (
+    <a className="owner-email-link" href={`mailto:${ownerInfo.email}`}>
+      <i className="bi bi-envelope"></i>
+      {ownerInfo.email}
+    </a>
+  ) : (
+    <p className="owner-email-placeholder">
+      <i className="bi bi-envelope"></i>
+      Email not available
+    </p>
+  )}
+</div>
 
           <button
-            className="btn new-tender-btn"
-            onClick={() => navigate("/owner/create-tender")}
+            className="btn my-profile-btn"
+            onClick={() => navigate("/contractor/dashboard")}
           >
-            <i className="bi bi-plus-circle"></i>
-            New Tender
+            <i className="bi bi-arrow-left"></i>
+            Back to Dashboard
           </button>
         </div>
 
@@ -128,7 +138,7 @@ function OwnerDashboard() {
             icon="bi-file-earmark-text"
             value={totalTenders}
             title="Total Tenders"
-            note={`+${tendersThisMonth} this month`}
+            note={`${totalTenders} published tenders`}
             color="blue"
           />
 
@@ -144,16 +154,8 @@ function OwnerDashboard() {
             icon="bi-people"
             value={totalBids}
             title="Submitted Bids"
-            note={`This week: ${bidsThisWeek}`}
+            note={`${totalBids} total bids`}
             color="purple"
-          />
-
-          <StatCard
-            icon="bi-exclamation-triangle"
-            value="0"
-            title="AI Risk Flags"
-            note="No high priority"
-            color="red"
           />
         </div>
 
@@ -171,7 +173,6 @@ function OwnerDashboard() {
 
               <div className="real-chart">
                 <svg viewBox="0 0 760 300" preserveAspectRatio="none">
-                  {/* Y axis labels + grid lines */}
                   {[0, 15, 30, 45, 60].map((value) => {
                     const y = getChartY(value, 60);
 
@@ -192,7 +193,6 @@ function OwnerDashboard() {
                     );
                   })}
 
-                  {/* Smooth lines */}
                   <path
                     d={buildSmoothPath(chartData, "tenders")}
                     fill="none"
@@ -213,7 +213,6 @@ function OwnerDashboard() {
                     className="chart-smooth-line"
                   />
 
-                  {/* Hover areas only */}
                   {chartData.map((item, index) => {
                     const x = getChartX(index, chartData.length);
 
@@ -228,7 +227,6 @@ function OwnerDashboard() {
                           onMouseEnter={() =>
                             setHoveredMonth({
                               ...item,
-                              index,
                               x,
                             })
                           }
@@ -271,7 +269,10 @@ function OwnerDashboard() {
                   <div
                     className="chart-tooltip"
                     style={{
-                      left: `${Math.min(Math.max(hoveredMonth.x - 25, 70), 610)}px`,
+                      left: `${Math.min(
+                        Math.max(hoveredMonth.x - 25, 70),
+                        610
+                      )}px`,
                     }}
                   >
                     <strong>{hoveredMonth.month}</strong>
@@ -297,7 +298,7 @@ function OwnerDashboard() {
             <button
               type="button"
               className="view-all-link"
-              onClick={() => navigate("/owner/all-tenders")}
+              onClick={() => navigate(`/contractor/owner-profile/${ownerId}/tenders`)}
             >
               View all <i className="bi bi-chevron-right"></i>
             </button>
@@ -311,7 +312,6 @@ function OwnerDashboard() {
                   <th>Project Name</th>
                   <th>Status</th>
                   <th>Bids</th>
-                  <th>Budget</th>
                   <th>Deadline</th>
                 </tr>
               </thead>
@@ -319,14 +319,14 @@ function OwnerDashboard() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="text-center text-muted py-4">
+                    <td colSpan="5" className="text-center text-muted py-4">
                       Loading tenders...
                     </td>
                   </tr>
                 ) : recentTenders.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center text-muted py-4">
-                      No tenders found.
+                    <td colSpan="5" className="text-center text-muted py-4">
+                      No tenders found for this owner.
                     </td>
                   </tr>
                 ) : (
@@ -338,11 +338,13 @@ function OwnerDashboard() {
                         key={tender.id}
                         className="clickable-table-row"
                         onClick={() =>
-                          navigate(`/owner/tender-details/${tender.id}`)
+                          navigate(`/contractor/tender-details/${tender.id}`)
                         }
                       >
                         <td>{formatTenderId(tender.id)}</td>
+
                         <td className="fw-bold">{tender.title}</td>
+
                         <td>
                           <span
                             className={`status-badge ${displayStatus
@@ -352,10 +354,9 @@ function OwnerDashboard() {
                             {displayStatus}
                           </span>
                         </td>
-                        <td>{getBidsCount(tender)}</td>
-                        <td className="fw-bold">
-                          {formatBudget(tender.budget)}
-                        </td>
+
+                        <td>{getBidsCountFromMap(tender, tenderSubmissions)}</td>
+
                         <td>
                           <i className="bi bi-clock me-1"></i>
                           {formatDate(tender.deadline_at)}
@@ -369,13 +370,13 @@ function OwnerDashboard() {
           </div>
         </div>
       </section>
-    </OwnerLayout>
+    </ContractorLayout>
   );
 }
 
 function StatCard({ icon, value, title, note, color }) {
   return (
-    <div className="col-lg-3 col-md-6">
+    <div className="col-lg-4 col-md-6">
       <div className="owner-stat-card">
         <div className={`stat-icon ${color}`}>
           <i className={`bi ${icon}`}></i>
@@ -391,6 +392,19 @@ function StatCard({ icon, value, title, note, color }) {
   );
 }
 
+
+
+function getOwnerInfo(tenders, ownerId) {
+  const firstTender = tenders[0] || {};
+
+  return {
+    company:
+      firstTender.owner_company_name ||
+      `Owner Company #${ownerId}`,
+    email: firstTender.owner_email || "",
+  };
+}
+
 function getTenderDisplayStatus(tender) {
   const deadline = tender.deadline_at ? new Date(tender.deadline_at) : null;
   const today = new Date();
@@ -398,9 +412,7 @@ function getTenderDisplayStatus(tender) {
   today.setHours(0, 0, 0, 0);
 
   if (tender.status === "awarded") return "Awarded";
-
   if (deadline && deadline < today) return "Closed";
-
   if (tender.status === "open") return "Active";
 
   return tender.status || "Active";
@@ -418,19 +430,14 @@ function getBidsCount(tender) {
   );
 }
 
-function getBidsThisWeek(tender, tenderSubmissions) {
-  const submissions =
-    tenderSubmissions?.[tender.id] ||
-    tender.submissions ||
-    tender.proposals ||
-    [];
+function getBidsCountFromMap(tender, tenderSubmissions) {
+  const subs = tenderSubmissions[tender.id];
 
-  if (!Array.isArray(submissions)) return 0;
+  if (Array.isArray(subs)) {
+    return subs.length;
+  }
 
-  return submissions.filter((submission) => {
-    const date = submission.created_at || submission.submitted_at;
-    return isThisWeek(date);
-  }).length;
+  return getBidsCount(tender);
 }
 
 function getMonthlyChartData(tenders, tenderSubmissions = {}) {
@@ -444,13 +451,18 @@ function getMonthlyChartData(tenders, tenderSubmissions = {}) {
 
     const bidsInMonth = tenders.reduce((sum, tender) => {
       const submissions =
-        tenderSubmissions?.[tender.id] || tender.submissions || tender.proposals || [];
+        tenderSubmissions[tender.id] ||
+        tender.submissions ||
+        tender.proposals ||
+        [];
 
       if (!Array.isArray(submissions)) return sum;
 
       const count = submissions.filter((submission) => {
         const date = submission.created_at || submission.submitted_at;
+
         if (!date) return false;
+
         return new Date(date).getMonth() === index;
       }).length;
 
@@ -464,8 +476,6 @@ function getMonthlyChartData(tenders, tenderSubmissions = {}) {
     };
   });
 }
-
-
 
 function getChartX(index, total) {
   if (total <= 1) return 45;
@@ -503,33 +513,6 @@ function buildSmoothPath(chartData, key) {
   return path;
 }
 
-function isSameMonth(date, today) {
-  if (!date) return false;
-
-  const target = new Date(date);
-
-  return (
-    target.getMonth() === today.getMonth() &&
-    target.getFullYear() === today.getFullYear()
-  );
-}
-
-function isThisWeek(date) {
-  if (!date) return false;
-
-  const current = new Date();
-  const target = new Date(date);
-
-  const firstDay = new Date(current);
-  firstDay.setDate(current.getDate() - current.getDay());
-  firstDay.setHours(0, 0, 0, 0);
-
-  const lastDay = new Date(firstDay);
-  lastDay.setDate(firstDay.getDate() + 7);
-
-  return target >= firstDay && target < lastDay;
-}
-
 function formatToday() {
   return new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -549,26 +532,8 @@ function formatDate(date) {
   });
 }
 
-function formatBudget(value) {
-  if (!value) return "—";
-
-  const number = Number(value);
-
-  if (Number.isNaN(number)) return value;
-
-  if (number >= 1000000) {
-    return `$${(number / 1000000).toFixed(1)}M`;
-  }
-
-  if (number >= 1000) {
-    return `$${(number / 1000).toFixed(1)}K`;
-  }
-
-  return `$${number}`;
-}
-
 function formatTenderId(id) {
   return `T-${String(id).padStart(4, "0")}`;
 }
 
-export default OwnerDashboard;
+export default ContractorOwnerProfile;

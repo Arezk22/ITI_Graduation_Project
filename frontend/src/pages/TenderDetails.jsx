@@ -1,672 +1,3 @@
-// // import { useNavigate } from "react-router-dom";
-// // import OwnerLayout from "../components/OwnerLayout";
-
-// // function TenderDetails() {
-// //   const navigate = useNavigate();
-
-// //   return (
-// //     <OwnerLayout activePage="tender-details">
-// //       <section className="tender-details-content">
-// //         <div className="tender-details-header">
-// //           <div>
-// //             <div className="tender-tags">
-// //               <span>T-2024-089</span>
-// //               <b>● Active</b>
-// //             </div>
-
-// //             <h2>Eastfield Tower Complex</h2>
-
-// //             <p>
-// //               <i className="bi bi-geo-alt"></i> Dubai, UAE
-// //               <i className="bi bi-calendar ms-3"></i> Deadline Jun 28, 2026
-// //               <i className="bi bi-currency-dollar ms-3"></i> Budget $8.4M
-// //             </p>
-// //           </div>
-
-// //           <div className="tender-header-actions">
-// //             <button
-// //               className="btn ask-ai-btn"
-// //               onClick={() => navigate("/owner/document-chat")}
-// //             >
-// //               <i className="bi bi-cpu"></i>
-// //               Ask AI
-// //             </button>
-
-// //             <button
-// //               className="btn view-eval-btn"
-// //               onClick={() => navigate("/owner/evaluation")}
-// //             >
-// //               View Evaluation
-// //               <i className="bi bi-chevron-right"></i>
-// //             </button>
-// //           </div>
-// //         </div>
-
-// //         <div className="tender-details-grid">
-// //           <div className="tender-main-column">
-// //             <div className="ai-summary-box">
-// //               <h5>
-// //                 <i className="bi bi-cpu"></i>
-// //                 AI Analysis Summary
-// //               </h5>
-
-// //               <p>
-// //                 12 contractors have submitted. AlSalam Construction leads with the
-// //                 highest technical score (91/100) and a strong trust rating. Peak
-// //                 Contracting's bid is 34% below market average — flagged for anomaly
-// //                 review. Recommend shortlisting top 3 based on composite AI score.
-// //               </p>
-
-// //               <div className="summary-links">
-// //                 <button onClick={() => navigate("/owner/ai-analysis")}>
-// //                   Full AI Report <i className="bi bi-chevron-right"></i>
-// //                 </button>
-
-// //                 <button onClick={() => navigate("/owner/evaluation")}>
-// //                   Evaluation Dashboard <i className="bi bi-chevron-right"></i>
-// //                 </button>
-// //               </div>
-// //             </div>
-
-// //             <div className="details-card">
-// //               <div className="card-header-clean">
-// //                 <h5>
-// //                   <i className="bi bi-people text-primary"></i>
-// //                   Contractor Submissions <span>12</span>
-// //                 </h5>
-
-// //                 <button onClick={() => navigate("/owner/evaluation")}>
-// //                   Compare all <i className="bi bi-chevron-right"></i>
-// //                 </button>
-// //               </div>
-
-// //               <table className="table tender-submissions-table align-middle">
-// //                 <thead>
-// //                   <tr>
-// //                     <th>Contractor</th>
-// //                     <th>Submitted</th>
-// //                     <th>Status</th>
-// //                     <th>Tech Score</th>
-// //                     <th>Bid Price</th>
-// //                     <th>Trust</th>
-// //                     <th>Risk</th>
-// //                   </tr>
-// //                 </thead>
-
-// //                 <tbody>
-// //                   <tr>
-// //                     <td><span className="mini-avatar">A</span> AlSalam Construction</td>
-// //                     <td>Jun 8, 2026</td>
-// //                     <td><span className="status-badge active">Complete</span></td>
-// //                     <td>91/100</td>
-// //                     <td>$4.2M</td>
-// //                     <td className="blue-text">88</td>
-// //                     <td><span className="risk low">• Low</span></td>
-// //                   </tr>
-
-// //                   <tr>
-// //                     <td><span className="mini-avatar">M</span> Meridian Builders Ltd</td>
-// //                     <td>Jun 9, 2026</td>
-// //                     <td><span className="status-badge active">Complete</span></td>
-// //                     <td>84/100</td>
-// //                     <td>$3.9M</td>
-// //                     <td className="blue-text">82</td>
-// //                     <td><span className="risk med">• Medium</span></td>
-// //                   </tr>
-
-// //                   <tr>
-// //                     <td><span className="mini-avatar">P</span> Peak Contracting LLC</td>
-// //                     <td>Jun 9, 2026</td>
-// //                     <td><span className="status-badge active">Complete</span></td>
-// //                     <td>76/100</td>
-// //                     <td>$3.7M</td>
-// //                     <td className="blue-text">71</td>
-// //                     <td><span className="risk high">• High</span></td>
-// //                   </tr>
-
-// //                   <tr>
-// //                     <td><span className="mini-avatar">N</span> Nexus Civil Works</td>
-// //                     <td>—</td>
-// //                     <td><span className="status-badge awarded">Pending</span></td>
-// //                     <td>—</td>
-// //                     <td>—</td>
-// //                     <td className="blue-text">79</td>
-// //                     <td>—</td>
-// //                   </tr>
-
-// //                   <tr>
-// //                     <td><span className="mini-avatar">A</span> Arcline Infrastructure</td>
-// //                     <td>—</td>
-// //                     <td><span className="status-badge under-review">Invited</span></td>
-// //                     <td>—</td>
-// //                     <td>—</td>
-// //                     <td className="blue-text">85</td>
-// //                     <td>—</td>
-// //                   </tr>
-// //                 </tbody>
-// //               </table>
-// //             </div>
-
-// //             <div className="details-card mt-4">
-// //               <h5>
-// //                 <i className="bi bi-file-earmark-text text-primary"></i>
-// //                 Tender Documents
-// //               </h5>
-
-// //               <div className="documents-grid">
-// //                 <DocumentItem type="XLSX" name="BOQ_Eastfield_Tower.xlsx" meta="2.4 MB · May 15" />
-// //                 <DocumentItem type="PDF" name="Arch_Drawings_v3.pdf" meta="18.2 MB · May 15" />
-// //                 <DocumentItem type="PDF" name="Structural_Layout.pdf" meta="9.1 MB · May 15" />
-// //                 <DocumentItem type="DOCX" name="Technical_Specifications.docx" meta="1.8 MB · May 16" />
-// //               </div>
-// //             </div>
-// //           </div>
-
-// //           <aside className="tender-side-column">
-// //             <div className="details-card">
-// //               <h6>PROJECT DETAILS</h6>
-
-// //               <InfoRow label="Category" value="Commercial Building" />
-// //               <InfoRow label="Project Value" value="USD 8,400,000" />
-// //               <InfoRow label="Duration" value="18 months" />
-// //               <InfoRow label="Invited Contractors" value="47" />
-// //               <InfoRow label="Submissions Received" value="12 of 47" />
-// //               <InfoRow label="Days to Deadline" value="18 days" danger />
-// //             </div>
-
-// //             <div className="details-card mt-4">
-// //               <h6>TENDER TIMELINE</h6>
-
-// //               <TimelineItem done title="Tender Published" date="May 15, 2026" text="Tender posted and contractor notifications sent" />
-// //               <TimelineItem done title="Pre-Qualification Open" date="May 18, 2026" text="47 contractors invited to pre-qualify" />
-// //               <TimelineItem done title="Site Visit" date="Jun 5, 2026" text="12 contractors attended the site walkthrough" />
-// //               <TimelineItem active title="Submission Deadline" date="Jun 28, 2026" text="Technical and financial proposals due" />
-// //               <TimelineItem title="AI Evaluation" date="Jul 5, 2026" />
-// //               <TimelineItem title="Shortlisting" date="Jul 15, 2026" />
-// //               <TimelineItem title="Contract Award" date="Aug 1, 2026" />
-// //             </div>
-// //           </aside>
-// //         </div>
-// //       </section>
-// //     </OwnerLayout>
-// //   );
-// // }
-
-// // function InfoRow({ label, value, danger }) {
-// //   return (
-// //     <div className="info-row">
-// //       <span>{label}</span>
-// //       <b className={danger ? "danger" : ""}>{value}</b>
-// //     </div>
-// //   );
-// // }
-
-// // function DocumentItem({ type, name, meta }) {
-// //   return (
-// //     <div className="document-item">
-// //       <span>{type}</span>
-// //       <div>
-// //         <strong>{name}</strong>
-// //         <p>{meta}</p>
-// //       </div>
-// //     </div>
-// //   );
-// // }
-
-// // function TimelineItem({ done, active, title, date, text }) {
-// //   return (
-// //     <div className={`timeline-item ${done ? "done" : ""} ${active ? "active" : ""}`}>
-// //       <span></span>
-// //       <div>
-// //         <strong>{title}</strong>
-// //         <p>{date}</p>
-// //         {text && <small>{text}</small>}
-// //       </div>
-// //     </div>
-// //   );
-// // }
-
-// // export default TenderDetails;
-
-// import { useEffect, useMemo, useState } from "react";
-// import { useNavigate, useParams } from "react-router-dom";
-// import OwnerLayout from "../components/OwnerLayout";
-// import { getAllTenders, getTenderById } from "../services/tenderApi";
-
-// function TenderDetails() {
-//   const navigate = useNavigate();
-//   const { id } = useParams();
-
-//   const [tenders, setTenders] = useState([]);
-//   const [tender, setTender] = useState(null);
-//   const [loading, setLoading] = useState(true);
-
-// useEffect(() => {
-//   let cancelled = false;
-
-//   getAllTenders()
-//     .then((response) => {
-//       if (cancelled) return;
-
-//       const list = Array.isArray(response.data)
-//         ? response.data
-//         : response.data.results || [];
-
-//       setTenders(list);
-
-//       if (!id && list.length > 0) {
-//         navigate(`/owner/tender-details/${list[0].id}`, { replace: true });
-//       }
-//     })
-//     .catch((error) => {
-//       console.error("Load tenders error:", error.response?.data || error);
-//     });
-
-//   return () => {
-//     cancelled = true;
-//   };
-// }, [id, navigate]);
-
-// useEffect(() => {
-//   if (!id) return;
-
-//   let cancelled = false;
-
-//   getTenderById(id)
-//     .then((response) => {
-//       if (cancelled) return;
-//       setTender(response.data);
-//     })
-//     .catch((error) => {
-//       console.error("Load tender details error:", error.response?.data || error);
-//     })
-//     .finally(() => {
-//       if (!cancelled) {
-//         setLoading(false);
-//       }
-//     });
-
-//   return () => {
-//     cancelled = true;
-//   };
-// }, [id]);
-
-
-//   const daysToDeadline = useMemo(() => {
-//     if (!tender?.deadline_at) return "—";
-
-//     const today = new Date();
-//     const deadline = new Date(tender.deadline_at);
-
-//     today.setHours(0, 0, 0, 0);
-//     deadline.setHours(0, 0, 0, 0);
-
-//     const diff = deadline - today;
-//     const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-
-//     if (days < 0) return "Expired";
-//     if (days === 0) return "Today";
-
-//     return `${days} days`;
-//   }, [tender]);
-
-//   const files = tender?.files || [];
-
-//   const submissionsCount =
-//     tender?.submissions_count ??
-//     tender?.submissions_received ??
-//     0;
-
-//   const invitedContractors =
-//     tender?.invited_contractors ??
-//     tender?.invited_contractors_count ??
-//     0;
-
-//   if (loading) {
-//     return (
-//       <OwnerLayout activePage="tender-details">
-//         <section className="tender-details-content">
-//           <p>Loading tender details...</p>
-//         </section>
-//       </OwnerLayout>
-//     );
-//   }
-
-//   if (!tender) {
-//     return (
-//       <OwnerLayout activePage="tender-details">
-//         <section className="tender-details-content">
-//           <p>No tender found.</p>
-//         </section>
-//       </OwnerLayout>
-//     );
-//   }
-
-//   return (
-//     <OwnerLayout activePage="tender-details">
-//       <section className="tender-details-content">
-//         <div className="tender-details-header">
-//           <div>
-//             <div className="tender-tags">
-//               <span>T-{String(tender.id).padStart(4, "0")}</span>
-//               <b>● {formatStatus(tender.status)}</b>
-//             </div>
-
-//             <select
-//               className="tender-title-dropdown"
-//               value={tender.id}
-//               onChange={(e) =>
-//                 navigate(`/owner/tender-details/${e.target.value}`)
-//               }
-//             >
-//               {tenders.map((item) => (
-//                 <option key={item.id} value={item.id}>
-//                   {item.title}
-//                 </option>
-//               ))}
-//             </select>
-
-//             <p>
-//               <i className="bi bi-geo-alt"></i> {tender.location || "—"}
-//               <i className="bi bi-calendar ms-3"></i> Deadline{" "}
-//               {formatDate(tender.deadline_at)}
-//               <i className="bi bi-currency-dollar ms-3"></i> Budget{" "}
-//               {formatMoney(tender.budget)}
-//             </p>
-//           </div>
-
-//           <div className="tender-header-actions">
-//             <button
-//               className="btn ask-ai-btn"
-//               onClick={() => navigate("/owner/document-chat")}
-//             >
-//               <i className="bi bi-cpu"></i>
-//               Ask AI
-//             </button>
-
-//             <button
-//               className="btn view-eval-btn"
-//               onClick={() => navigate("/owner/evaluation")}
-//             >
-//               View Evaluation
-//               <i className="bi bi-chevron-right"></i>
-//             </button>
-//           </div>
-//         </div>
-
-//         <div className="tender-details-grid">
-//           <div className="tender-main-column">
-//             <div className="ai-summary-box">
-//               <h5>
-//                 <i className="bi bi-cpu"></i>
-//                 AI Analysis Summary
-//               </h5>
-
-//               <p className="empty-ai-summary">
-//                 AI analysis summary will appear here once the analysis is generated.
-//               </p>
-
-//               <div className="summary-links">
-//                 <button onClick={() => navigate("/owner/ai-analysis")}>
-//                   Full AI Report <i className="bi bi-chevron-right"></i>
-//                 </button>
-
-//                 <button onClick={() => navigate("/owner/evaluation")}>
-//                   Evaluation Dashboard <i className="bi bi-chevron-right"></i>
-//                 </button>
-//               </div>
-//             </div>
-
-//             <div className="details-card">
-//               <div className="card-header-clean">
-//                 <h5>
-//                   <i className="bi bi-people text-primary"></i>
-//                   Contractor Submissions <span>{submissionsCount}</span>
-//                 </h5>
-
-//                 <button onClick={() => navigate("/owner/evaluation")}>
-//                   Compare all <i className="bi bi-chevron-right"></i>
-//                 </button>
-//               </div>
-
-//               <table className="table tender-submissions-table align-middle">
-//                 <thead>
-//                   <tr>
-//                     <th>Contractor</th>
-//                     <th>Submitted</th>
-//                     <th>Status</th>
-//                     <th>Tech Score</th>
-//                     <th>Bid Price</th>
-//                     <th>Trust</th>
-//                     <th>Risk</th>
-//                   </tr>
-//                 </thead>
-
-//                 <tbody>
-//                   {Array.from({ length: 5 }).map((_, index) => (
-//                     <tr key={index}>
-//                       <td>
-//                         <button
-//                           className="contractor-name-btn"
-//                           onClick={() =>
-//                             navigate(`/owner/contractor-profile/${index + 1}`)
-//                           }
-//                           disabled
-//                         >
-//                           <span className="mini-avatar">—</span>
-//                           —
-//                         </button>
-//                       </td>
-//                       <td>—</td>
-//                       <td>—</td>
-//                       <td>—</td>
-//                       <td>—</td>
-//                       <td className="blue-text">—</td>
-//                       <td>—</td>
-//                     </tr>
-//                   ))}
-//                 </tbody>
-//               </table>
-//             </div>
-
-//             <div className="details-card mt-4">
-//               <h5>
-//                 <i className="bi bi-file-earmark-text text-primary"></i>
-//                 Tender Documents
-//               </h5>
-
-//               <div className="documents-grid">
-//                 {files.length > 0 ? (
-//                   files.map((file) => (
-//                     <DocumentItem key={file.id} file={file} />
-//                   ))
-//                 ) : (
-//                   <p className="empty-documents">No documents uploaded.</p>
-//                 )}
-//               </div>
-//             </div>
-//           </div>
-
-//           <aside className="tender-side-column">
-//             <div className="details-card">
-//               <h6>PROJECT DETAILS</h6>
-
-//               <InfoRow
-//                 label="Category"
-//                 value={formatCategory(tender.project_category)}
-//               />
-
-//               <InfoRow
-//                 label="Project Value"
-//                 value={formatMoney(tender.budget)}
-//               />
-
-//               <InfoRow
-//                 label="Duration"
-//                 value={`${tender.duration_months || 0} months`}
-//               />
-
-//               <InfoRow
-//                 label="Submissions Received"
-//                 value={`${submissionsCount} of ${invitedContractors || 0}`}
-//               />
-
-//               <InfoRow
-//                 label="Days to Deadline"
-//                 value={daysToDeadline}
-//                 danger
-//               />
-//             </div>
-
-//             <div className="details-card mt-4">
-//               <h6>TENDER TIMELINE</h6>
-
-//               <TimelineItem
-//                 done
-//                 title="Tender Published"
-//                 date={formatDate(tender.created_at || tender.start_date)}
-//                 text="Tender posted"
-//               />
-
-//               <TimelineItem
-//                 active
-//                 title="Submission Deadline"
-//                 date={formatDate(tender.deadline_at)}
-//                 text="Technical and financial proposals due"
-//               />
-
-//               <TimelineItem title="AI Evaluation" date="Pending" />
-
-//               <TimelineItem title="Contract Award" date="Pending" />
-//             </div>
-//           </aside>
-//         </div>
-//       </section>
-//     </OwnerLayout>
-//   );
-// }
-
-// function InfoRow({ label, value, danger }) {
-//   return (
-//     <div className="info-row">
-//       <span>{label}</span>
-//       <b className={danger ? "danger" : ""}>{value || "—"}</b>
-//     </div>
-//   );
-// }
-
-// function DocumentItem({ file }) {
-//   const fileUrl = file.file_url || file.file || file.url;
-
-//   const fileName = getFileNameFromUrl(fileUrl);
-
-//   const fileType = file.file_type
-//     ? file.file_type.toUpperCase()
-//     : getFileType(fileName);
-
-//   const fileCategory = formatCategory(file.file_category);
-
-//   const meta = `${fileCategory} · ${formatDate(file.uploaded_at)}`;
-
-//   return (
-//     <a
-//       className="document-item document-download"
-//       href={fileUrl}
-//       target="_blank"
-//       rel="noreferrer"
-//       download
-//     >
-//       <span>{fileType}</span>
-
-//       <div>
-//         <strong>{fileName}</strong>
-//         <p>{meta}</p>
-//       </div>
-
-//       <i className="bi bi-download ms-auto"></i>
-//     </a>
-//   );
-// }
-
-// function TimelineItem({ done, active, title, date, text }) {
-//   return (
-//     <div
-//       className={`timeline-item ${done ? "done" : ""} ${
-//         active ? "active" : ""
-//       }`}
-//     >
-//       <span></span>
-
-//       <div>
-//         <strong>{title}</strong>
-//         <p>{date}</p>
-//         {text && <small>{text}</small>}
-//       </div>
-//     </div>
-//   );
-// }
-
-// function formatDate(value) {
-//   if (!value) return "—";
-
-//   const date = new Date(value);
-
-//   if (Number.isNaN(date.getTime())) return "—";
-
-//   return date.toLocaleDateString("en-US", {
-//     month: "short",
-//     day: "numeric",
-//     year: "numeric",
-//   });
-// }
-
-// function formatMoney(value) {
-//   if (!value) return "—";
-
-//   const number = Number(value);
-
-//   if (Number.isNaN(number)) return value;
-
-//   return new Intl.NumberFormat("en-US", {
-//     style: "currency",
-//     currency: "USD",
-//     maximumFractionDigits: 0,
-//   }).format(number);
-// }
-
-// function formatStatus(status) {
-//   if (!status) return "Active";
-
-//   if (status === "open") return "Active";
-
-//   return status.charAt(0).toUpperCase() + status.slice(1);
-// }
-
-// function formatCategory(category) {
-//   if (!category) return "—";
-
-//   return category
-//     .replaceAll("_", " ")
-//     .replace(/\b\w/g, (char) => char.toUpperCase());
-// }
-
-// function getFileNameFromUrl(url) {
-//   if (!url) return "Document";
-
-//   const fileName = url.split("/").pop();
-
-//   return decodeURIComponent(fileName);
-// }
-
-// function getFileType(name) {
-//   if (!name) return "FILE";
-
-//   const ext = name.split(".").pop();
-
-//   return ext ? ext.toUpperCase() : "FILE";
-// }
-
-// export default TenderDetails;
 
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -678,6 +9,7 @@ import {
   getTenderById,
   updateTender,
 } from "../services/tenderApi";
+import { getTenderSubmissions } from "../services/proposalApi";
 
 function TenderDetails() {
   const navigate = useNavigate();
@@ -685,10 +17,13 @@ function TenderDetails() {
 
   const [tenders, setTenders] = useState([]);
   const [tender, setTender] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  // const [showCompareModal, setShowCompareModal] = useState(false);
 
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -700,7 +35,7 @@ function TenderDetails() {
     message: "",
   });
 
-    const [editForm, setEditForm] = useState({
+  const [editForm, setEditForm] = useState({
     title: "",
     description: "",
     project_category: "other",
@@ -734,7 +69,7 @@ function TenderDetails() {
 
         const list = Array.isArray(response.data)
           ? response.data
-          : response.data.results || [];
+          : response.data.tenders || response.data.results || [];
 
         setTenders(list);
 
@@ -773,6 +108,18 @@ function TenderDetails() {
         const data = response.data;
         setTender(data);
 
+        setTenders((prev) => {
+          const exists = prev.some((item) => String(item.id) === String(data.id));
+
+          if (exists) {
+            return prev.map((item) =>
+              String(item.id) === String(data.id) ? { ...item, ...data } : item
+            );
+          }
+
+          return [data, ...prev];
+        });
+
         setEditForm({
           title: data.title || "",
           description: data.description || "",
@@ -788,11 +135,7 @@ function TenderDetails() {
       .catch((error) => {
         console.error("Load tender details error:", error.response?.data || error);
         setTender(null);
-        showToast(
-          "error",
-          "Failed to load tender",
-          "Unable to fetch tender details."
-        );
+        showToast("error", "Failed to load tender", "Unable to fetch tender details.");
       })
       .finally(() => {
         if (!cancelled) {
@@ -805,91 +148,43 @@ function TenderDetails() {
     };
   }, [id]);
 
-  // const [editForm, setEditForm] = useState({
-  //   title: "",
-  //   description: "",
-  //   project_category: "other",
-  //   location: "",
-  //   budget: "",
-  //   start_date: "",
-  //   duration_months: "",
-  //   deadline_at: "",
-  //   status: "open",
-  // });
+  useEffect(() => {
+    if (!tender?.id) {
+      setSubmissions([]);
+      return;
+    }
 
-  // useEffect(() => {
-  //   let cancelled = false;
+    let cancelled = false;
 
-  //   getAllTenders()
-  //     .then((response) => {
-  //       if (cancelled) return;
+    setSubmissionsLoading(true);
 
-  //       const list = Array.isArray(response.data)
-  //         ? response.data
-  //         : response.data.results || [];
+    getTenderSubmissions(tender.id)
+      .then((response) => {
+        if (cancelled) return;
 
-  //       setTenders(list);
+        const list = Array.isArray(response.data)
+          ? response.data
+          : response.data.submissions || response.data.results || [];
 
-  //       if (!id && list.length > 0) {
-  //         navigate(`/owner/tender-details/${list[0].id}`, { replace: true });
-  //       }
+        setSubmissions(list);
+      })
+      .catch((error) => {
+        console.error("Load tender submissions error:", error.response?.data || error);
 
-  //       if (!id && list.length === 0) {
-  //         setLoading(false);
-  //       }
-  //     })
-  //     .catch((error) => {
-  //       console.error("Load tenders error:", error.response?.data || error);
-  //       setLoading(false);
-  //       showToast("error", "Failed to load projects", "Please login again or try later.");
-  //     });
+        if (!cancelled) {
+          setSubmissions([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setSubmissionsLoading(false);
+        }
+      });
 
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [id, navigate]);
-
-  // useEffect(() => {
-  //   if (!id) return;
-
-  //   let cancelled = false;
-
-  //   setLoading(true);
-
-  //   getTenderById(id)
-  //     .then((response) => {
-  //       if (cancelled) return;
-
-  //       const data = response.data;
-  //       setTender(data);
-
-  //       setEditForm({
-  //         title: data.title || "",
-  //         description: data.description || "",
-  //         project_category: data.project_category || "other",
-  //         location: data.location || "",
-  //         budget: data.budget || "",
-  //         start_date: data.start_date || "",
-  //         duration_months: data.duration_months || "",
-  //         deadline_at: data.deadline_at ? data.deadline_at.split("T")[0] : "",
-  //         status: data.status || "open",
-  //       });
-  //     })
-  //     .catch((error) => {
-  //       console.error("Load tender details error:", error.response?.data || error);
-  //       setTender(null);
-  //       showToast("error", "Failed to load tender", "Unable to fetch tender details.");
-  //     })
-  //     .finally(() => {
-  //       if (!cancelled) {
-  //         setLoading(false);
-  //       }
-  //     });
-
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [id]);
+    return () => {
+      cancelled = true;
+    };
+  }, [tender?.id]);
 
   const daysToDeadline = useMemo(() => {
     if (!tender?.deadline_at) return "—";
@@ -906,19 +201,6 @@ function TenderDetails() {
     if (diff === 0) return "Today";
     return `${diff} days`;
   }, [tender]);
-
-  // const showToast = (type, title, message) => {
-  //   setToast({
-  //     show: true,
-  //     type,
-  //     title,
-  //     message,
-  //   });
-  // };
-
-  // const closeToast = () => {
-  //   setToast((prev) => ({ ...prev, show: false }));
-  // };
 
   const handleProjectChange = (e) => {
     const tenderId = e.target.value;
@@ -937,110 +219,69 @@ function TenderDetails() {
     }));
   };
 
-  // const handleUpdateTender = async (e) => {
-  //   e.preventDefault();
-
-  //   if (!tender?.id) return;
-
-  //   try {
-  //     setEditLoading(true);
-
-  //     const payload = {
-  //       title: editForm.title,
-  //       description: editForm.description,
-  //       project_category: editForm.project_category,
-  //       location: editForm.location || "N/A",
-  //       budget: editForm.budget,
-  //       start_date: editForm.start_date || null,
-  //       duration_months: Number(editForm.duration_months || 0),
-  //       deadline_at: editForm.deadline_at
-  //         ? `${editForm.deadline_at}T00:00:00Z`
-  //         : null,
-  //       status: editForm.status,
-  //     };
-
-  //     await updateTender(tender.id, payload);
-
-  //     setShowEditModal(false);
-  //     showToast("success", "Tender updated", "Project details updated successfully.");
-
-  //     const refreshed = await getTenderById(tender.id);
-  //     setTender(refreshed.data);
-  //   } catch (error) {
-  //     console.error("Update tender error:", error.response?.data || error);
-  //     showToast("error", "Update failed", "Unable to update tender.");
-  //   } finally {
-  //     setEditLoading(false);
-  //   }
-  // };
-
   const handleUpdateTender = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!tender?.id) return;
+    if (!tender?.id) return;
 
-  try {
-    setEditLoading(true);
+    try {
+      setEditLoading(true);
 
-    const payload = {
-      title: editForm.title,
-      description: editForm.description,
-      project_category: editForm.project_category,
-      location: editForm.location || "N/A",
-      budget: editForm.budget,
-      start_date: editForm.start_date || null,
-      duration_months: Number(editForm.duration_months || 0),
-      deadline_at: editForm.deadline_at
-        ? `${editForm.deadline_at}T00:00:00Z`
-        : null,
-      status: editForm.status,
-    };
+      const payload = {
+        title: editForm.title,
+        description: editForm.description,
+        project_category: editForm.project_category,
+        location: editForm.location || "N/A",
+        budget: editForm.budget,
+        start_date: editForm.start_date || null,
+        duration_months: Number(editForm.duration_months || 0),
+        deadline_at: editForm.deadline_at
+          ? `${editForm.deadline_at}T00:00:00Z`
+          : null,
+        status: editForm.status,
+      };
 
-    const response = await updateTender(tender.id, payload);
-    const updatedData = response.data;
+      const response = await updateTender(tender.id, payload);
+      const updatedData = response.data;
 
-    setTender((prev) => ({
-      ...prev,
-      ...updatedData,
-      id: prev.id,
-      files: prev.files,
-      created_at: prev.created_at,
-    }));
+      setTender((prev) => ({
+        ...prev,
+        ...updatedData,
+        id: prev.id,
+        files: prev.files,
+        created_at: prev.created_at,
+      }));
 
-    setTenders((prev) =>
-      prev.map((item) =>
-        item.id === tender.id
-          ? {
-              ...item,
-              title: updatedData.title || payload.title,
-              description: updatedData.description || payload.description,
-              project_category:
-                updatedData.project_category || payload.project_category,
-              location: updatedData.location || payload.location,
-              budget: updatedData.budget || payload.budget,
-              start_date: updatedData.start_date || payload.start_date,
-              duration_months:
-                updatedData.duration_months || payload.duration_months,
-              deadline_at: updatedData.deadline_at || payload.deadline_at,
-              status: updatedData.status || payload.status,
-            }
-          : item
-      )
-    );
+      setTenders((prev) =>
+        prev.map((item) =>
+          item.id === tender.id
+            ? {
+                ...item,
+                title: updatedData.title || payload.title,
+                description: updatedData.description || payload.description,
+                project_category:
+                  updatedData.project_category || payload.project_category,
+                location: updatedData.location || payload.location,
+                budget: updatedData.budget || payload.budget,
+                start_date: updatedData.start_date || payload.start_date,
+                duration_months:
+                  updatedData.duration_months || payload.duration_months,
+                deadline_at: updatedData.deadline_at || payload.deadline_at,
+                status: updatedData.status || payload.status,
+              }
+            : item
+        )
+      );
 
-    setShowEditModal(false);
-    showToast(
-      "success",
-      "Tender updated",
-      "Project details updated successfully."
-    );
-  } catch (error) {
-    console.error("Update tender error:", error.response?.data || error);
-    showToast("error", "Update failed", "Unable to update tender.");
-  } finally {
-    setEditLoading(false);
-  }
-};
+      setShowEditModal(false);
+      showToast("success", "Tender updated", "Project details updated successfully.");
+    } catch (error) {
+      console.error("Update tender error:", error.response?.data || error);
+      showToast("error", "Update failed", "Unable to update tender.");
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   const handleDeleteTender = async () => {
     if (!tender?.id) return;
@@ -1066,8 +307,10 @@ function TenderDetails() {
   };
 
   const documents = tender?.files || [];
-  const submissionsCount = tender?.submissions_count || 0;
+  const submissionsCount = submissions.length || tender?.submissions_count || 0;
+  const visibleSubmissions = submissions.slice(0, 5);
   const projectCode = tender ? `T-${String(tender.id).padStart(4, "0")}` : "—";
+  const displayStatus = getTenderDisplayStatus(tender);
 
   if (loading) {
     return (
@@ -1081,8 +324,9 @@ function TenderDetails() {
         />
 
         <section className="tender-details-content">
-          <div className="details-card">
-            <p>Loading tender details...</p>
+          <div className="details-card text-center py-5">
+            <div className="spinner-border text-primary mb-3" role="status"></div>
+            <p className="mb-0">Loading tender details...</p>
           </div>
         </section>
       </OwnerLayout>
@@ -1101,12 +345,14 @@ function TenderDetails() {
         />
 
         <section className="tender-details-content">
-          <div className="details-card">
+          <div className="details-card text-center py-5">
             <h5>No tender selected</h5>
-            <p>Please create a tender first or select another project.</p>
+            <p className="text-muted">
+              Please create a tender first or select another project.
+            </p>
 
             <button
-              className="btn view-eval-btn mt-3"
+              className="btn btn-primary px-4 mt-3"
               onClick={() => navigate("/owner/create-tender")}
             >
               Create Tender
@@ -1129,15 +375,16 @@ function TenderDetails() {
 
       <section className="tender-details-content">
         <div className="tender-details-header">
-          <div>
+          <div className="header-info-side">
             <div className="tender-tags">
-              <span>{projectCode}</span>
-              <b>● {formatStatus(tender.status)}</b>
+              <span className="project-code-badge">{projectCode}</span>
+
+              <b className={`status-indicator ${displayStatus.toLowerCase()}`}>
+                ● {displayStatus}
+              </b>
             </div>
 
             <div className="project-switcher-wrap">
-              <label className="project-switcher-label">Project</label>
-
               <div className="project-switcher-box">
                 <select
                   className="project-switcher"
@@ -1146,7 +393,7 @@ function TenderDetails() {
                 >
                   {tenders.map((item) => (
                     <option key={item.id} value={item.id}>
-                      {item.title}
+                      {item.title || item.projectName || `Tender ${item.id}`}
                     </option>
                   ))}
                 </select>
@@ -1155,12 +402,20 @@ function TenderDetails() {
               </div>
             </div>
 
-            <p>
-              <i className="bi bi-geo-alt"></i> {tender.location || "N/A"}
-              <i className="bi bi-calendar ms-3"></i> Deadline{" "}
-              {formatDate(tender.deadline_at)}
-              <i className="bi bi-currency-dollar ms-3"></i> Budget{" "}
-              {formatMoney(tender.budget)}
+            <p className="tender-meta-text">
+              <span>
+                <i className="bi bi-geo-alt"></i> {tender.location || "N/A"}
+              </span>
+
+              <span>
+                <i className="bi bi-calendar ms-md-3"></i> Deadline{" "}
+                {formatDate(tender.deadline_at)}
+              </span>
+
+              <span>
+                <i className="bi bi-currency-dollar ms-md-3"></i> Budget{" "}
+                {formatMoney(tender.budget)}
+              </span>
             </p>
           </div>
 
@@ -1209,47 +464,33 @@ function TenderDetails() {
             <div className="details-card">
               <div className="card-header-clean">
                 <h5>
-                  <i className="bi bi-people text-primary"></i>
-                  Contractor Submissions <span>{submissionsCount}</span>
+                  <i className="bi bi-people text-primary me-2"></i>
+                  Contractor Submissions{" "}
+                  <span className="badge bg-light text-dark ms-2">
+                    {submissionsCount}
+                  </span>
                 </h5>
 
-                <button onClick={() => navigate("/owner/evaluation")}>
-                  Compare all <i className="bi bi-chevron-right"></i>
-                </button>
+<button
+  className="btn btn-link text-decoration-none p-0"
+  onClick={() => navigate(`/owner/tender-details/${tender.id}/submissions`)}
+>
+  Compare all <i className="bi bi-chevron-right"></i>
+</button>
               </div>
 
-              <table className="table tender-submissions-table align-middle">
-                <thead>
-                  <tr>
-                    <th>Contractor</th>
-                    <th>Submitted</th>
-                    <th>Status</th>
-                    <th>Tech Score</th>
-                    <th>Bid Price</th>
-                    <th>Trust</th>
-                    <th>Risk</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <tr key={index}>
-                      <td>—</td>
-                      <td>—</td>
-                      <td>—</td>
-                      <td>—</td>
-                      <td>—</td>
-                      <td>—</td>
-                      <td>—</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <SubmissionsTable
+                submissions={visibleSubmissions}
+                loading={submissionsLoading}
+                tenderId={tender.id}
+                navigate={navigate}
+                emptyText="No submissions received yet."
+              />
             </div>
 
             <div className="details-card mt-4">
               <h5>
-                <i className="bi bi-file-earmark-text text-primary"></i>
+                <i className="bi bi-file-earmark-text text-primary me-2"></i>
                 Tender Documents
               </h5>
 
@@ -1267,7 +508,7 @@ function TenderDetails() {
                     />
                   ))
                 ) : (
-                  <p className="empty-documents">No documents uploaded yet.</p>
+                  <p className="empty-documents mb-0">No documents uploaded yet.</p>
                 )}
               </div>
             </div>
@@ -1275,42 +516,18 @@ function TenderDetails() {
 
           <aside className="tender-side-column">
             <div className="details-card">
-              <h6>PROJECT DETAILS</h6>
+              <h6 className="side-card-title">PROJECT DETAILS</h6>
 
-              <InfoRow
-                label="Category"
-                value={formatCategory(tender.project_category)}
-              />
-
-              <InfoRow
-                label="Project Value"
-                value={formatMoney(tender.budget)}
-              />
-
-              <InfoRow
-                label="Duration"
-                value={`${tender.duration_months || 0} months`}
-              />
-
-              <InfoRow
-                label="Start Date"
-                value={formatDate(tender.start_date)}
-              />
-
-              <InfoRow
-                label="Submissions Received"
-                value={String(submissionsCount)}
-              />
-
-              <InfoRow
-                label="Days to Deadline"
-                value={daysToDeadline}
-                danger
-              />
+              <InfoRow label="Category" value={formatCategory(tender.project_category)} />
+              <InfoRow label="Project Value" value={formatMoney(tender.budget)} />
+              <InfoRow label="Duration" value={`${tender.duration_months || 0} months`} />
+              <InfoRow label="Start Date" value={formatDate(tender.start_date)} />
+              <InfoRow label="Submissions Received" value={String(submissionsCount)} />
+              <InfoRow label="Days to Deadline" value={daysToDeadline} danger />
             </div>
 
             <div className="details-card mt-4">
-              <h6>TENDER TIMELINE</h6>
+              <h6 className="side-card-title">TENDER TIMELINE</h6>
 
               <TimelineItem
                 done
@@ -1326,15 +543,8 @@ function TenderDetails() {
                 text="Technical and financial proposals due"
               />
 
-              <TimelineItem
-                title="AI Evaluation"
-                date="After submission deadline"
-              />
-
-              <TimelineItem
-                title="Contract Award"
-                date="To be scheduled"
-              />
+              <TimelineItem title="AI Evaluation" date="After submission deadline" />
+              <TimelineItem title="Contract Award" date="To be scheduled" />
             </div>
 
             <div className="tender-actions-panel mt-4">
@@ -1364,20 +574,25 @@ function TenderDetails() {
             <div className="custom-modal-header">
               <h4>Update Tender</h4>
 
-              <button onClick={() => setShowEditModal(false)}>
+              <button
+                className="close-modal-btn"
+                onClick={() => setShowEditModal(false)}
+              >
                 <i className="bi bi-x-lg"></i>
               </button>
             </div>
 
-            <form className="custom-modal-body" onSubmit={handleUpdateTender}>
+            <form className="custom-modal-body-form" onSubmit={handleUpdateTender}>
               <div className="modal-form-grid">
                 <div className="modal-field full">
                   <label>Project Title</label>
                   <input
                     type="text"
                     name="title"
+                    className="form-control"
                     value={editForm.title}
                     onChange={handleEditChange}
+                    required
                   />
                 </div>
 
@@ -1386,8 +601,10 @@ function TenderDetails() {
                   <textarea
                     rows="4"
                     name="description"
+                    className="form-control"
                     value={editForm.description}
                     onChange={handleEditChange}
+                    required
                   />
                 </div>
 
@@ -1395,6 +612,7 @@ function TenderDetails() {
                   <label>Category</label>
                   <select
                     name="project_category"
+                    className="form-select"
                     value={editForm.project_category}
                     onChange={handleEditChange}
                   >
@@ -1417,6 +635,7 @@ function TenderDetails() {
                   <input
                     type="text"
                     name="location"
+                    className="form-control"
                     value={editForm.location}
                     onChange={handleEditChange}
                   />
@@ -1427,8 +646,10 @@ function TenderDetails() {
                   <input
                     type="number"
                     name="budget"
+                    className="form-control"
                     value={editForm.budget}
                     onChange={handleEditChange}
+                    required
                   />
                 </div>
 
@@ -1437,6 +658,7 @@ function TenderDetails() {
                   <input
                     type="number"
                     name="duration_months"
+                    className="form-control"
                     value={editForm.duration_months}
                     onChange={handleEditChange}
                   />
@@ -1447,6 +669,7 @@ function TenderDetails() {
                   <input
                     type="date"
                     name="start_date"
+                    className="form-control"
                     value={editForm.start_date}
                     onChange={handleEditChange}
                   />
@@ -1457,6 +680,7 @@ function TenderDetails() {
                   <input
                     type="date"
                     name="deadline_at"
+                    className="form-control"
                     value={editForm.deadline_at}
                     onChange={handleEditChange}
                   />
@@ -1466,6 +690,7 @@ function TenderDetails() {
                   <label>Status</label>
                   <select
                     name="status"
+                    className="form-select"
                     value={editForm.status}
                     onChange={handleEditChange}
                   >
@@ -1503,20 +728,22 @@ function TenderDetails() {
             <div className="custom-modal-header">
               <h4>Delete Tender</h4>
 
-              <button onClick={() => setShowDeleteModal(false)}>
+              <button
+                className="close-modal-btn"
+                onClick={() => setShowDeleteModal(false)}
+              >
                 <i className="bi bi-x-lg"></i>
               </button>
             </div>
 
             <div className="custom-modal-body">
-              <div className="delete-confirm-box">
-                <div className="delete-icon">
-                  <i className="bi bi-exclamation-triangle-fill"></i>
+              <div className="delete-confirm-box text-center py-3">
+                <div className="delete-icon mb-3">
+                  <i className="bi bi-exclamation-triangle-fill text-danger fs-1"></i>
                 </div>
 
                 <h5>Are you sure you want to delete this tender?</h5>
-
-                <p>
+                <p className="text-muted">
                   This action will permanently remove <b>{tender.title}</b>.
                 </p>
               </div>
@@ -1543,7 +770,79 @@ function TenderDetails() {
           </div>
         </div>
       )}
+
+
     </OwnerLayout>
+  );
+}
+
+function SubmissionsTable({ submissions, loading, tenderId, navigate, emptyText }) {
+  return (
+    <div className="table-responsive">
+      <table className="table tender-submissions-table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Contractor</th>
+            <th>Submitted</th>
+            <th>Status</th>
+            <th>Tech Score</th>
+            <th>Bid Price</th>
+            <th>Trust</th>
+            <th>Risk</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {loading ? (
+            <tr>
+              <td colSpan="7" className="text-center py-3 text-muted">
+                Loading submissions...
+              </td>
+            </tr>
+          ) : submissions.length > 0 ? (
+            submissions.map((submission, index) => (
+              <tr
+                key={submission.id || index}
+                onClick={() =>
+                  navigate(`/owner/proposal-details/${tenderId}/${submission.id}`)
+                }
+                style={{ cursor: "pointer" }}
+              >
+                <td>
+                  {submission.contractor_company_name ||
+                    submission.contractor?.company_name ||
+                    submission.company_name ||
+                    "—"}
+                </td>
+
+                <td>{formatDate(submission.submitted_at)}</td>
+
+                <td>
+                  <span
+                    className={`badge ${getSubmissionStatusBadgeClass(
+                      submission.status
+                    )}`}
+                  >
+                    {formatSubmissionStatus(submission.status)}
+                  </span>
+                </td>
+
+                <td>{submission.technical_score ?? "—"}</td>
+                <td>{submission.financial_score ?? "—"}</td>
+                <td>{submission.final_score ?? "—"}</td>
+                <td>{submission.risk_score ?? "—"}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="7" className="text-center py-3 text-muted">
+                {emptyText}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -1551,7 +850,7 @@ function InfoRow({ label, value, danger }) {
   return (
     <div className="info-row">
       <span>{label}</span>
-      <b className={danger ? "danger" : ""}>{value || "—"}</b>
+      <b className={danger ? "text-danger danger-highlight" : ""}>{value || "—"}</b>
     </div>
   );
 }
@@ -1559,9 +858,9 @@ function InfoRow({ label, value, danger }) {
 function DocumentItem({ type, name, meta, fileUrl }) {
   return (
     <div className="document-item">
-      <span>{type}</span>
+      <span className="doc-type-badge">{type}</span>
 
-      <div>
+      <div className="doc-details-text">
         <strong>{name}</strong>
         <p>{meta}</p>
       </div>
@@ -1582,15 +881,29 @@ function DocumentItem({ type, name, meta, fileUrl }) {
 function TimelineItem({ done, active, title, date, text }) {
   return (
     <div className={`timeline-item ${done ? "done" : ""} ${active ? "active" : ""}`}>
-      <span></span>
+      <span className="timeline-dot"></span>
 
-      <div>
+      <div className="timeline-body-content">
         <strong>{title}</strong>
         <p>{date}</p>
         {text && <small>{text}</small>}
       </div>
     </div>
   );
+}
+
+function getTenderDisplayStatus(tender) {
+  const deadline = tender?.deadline_at ? new Date(tender.deadline_at) : null;
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+
+  if (tender?.status === "awarded") return "Awarded";
+  if (tender?.status === "closed") return "Closed";
+  if (deadline && deadline < today) return "Closed";
+  if (tender?.status === "open") return "Active";
+
+  return tender?.status || "Active";
 }
 
 function getFileNameFromUrl(url = "") {
@@ -1615,6 +928,19 @@ function formatDate(value) {
   });
 }
 
+function formatSubmissionStatus(status) {
+  if (status === "accepted" || status === "awarded") return "Awarded";
+  return "Under Review";
+}
+
+function getSubmissionStatusBadgeClass(status) {
+  if (status === "accepted" || status === "awarded") {
+    return "bg-success-subtle text-success-emphasis";
+  }
+
+  return "bg-warning-subtle text-warning-emphasis";
+}
+
 function formatMoney(value) {
   if (!value) return "—";
 
@@ -1627,15 +953,6 @@ function formatMoney(value) {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(number);
-}
-
-function formatStatus(status) {
-  if (!status) return "Active";
-
-  if (status === "open") return "Active";
-  if (status === "closed") return "Closed";
-
-  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function formatCategory(category) {
@@ -1661,48 +978,3 @@ function formatCategory(category) {
 }
 
 export default TenderDetails;
-
-// import { useEffect } from "react";
-
-// function AppToast({ show, type = "success", title, message, onClose }) {
-//   useEffect(() => {
-//     if (!show) return;
-
-//     const timer = setTimeout(() => {
-//       onClose?.();
-//     }, 3500);
-
-//     return () => clearTimeout(timer);
-//   }, [show, onClose]);
-
-//   if (!show) return null;
-
-
-  
-//   return (
-//     <div className={`app-toast ${type}`}>
-//       <div className="app-toast-icon">
-//         <i
-//           className={`bi ${
-//             type === "success"
-//               ? "bi-check-circle-fill"
-//               : type === "error"
-//               ? "bi-x-circle-fill"
-//               : "bi-info-circle-fill"
-//           }`}
-//         ></i>
-//       </div>
-
-//       <div className="app-toast-content">
-//         <strong>{title}</strong>
-//         <p>{message}</p>
-//       </div>
-
-//       <button className="app-toast-close" onClick={onClose}>
-//         <i className="bi bi-x-lg"></i>
-//       </button>
-//     </div>
-//   );
-// }
-
-// export default AppToast;

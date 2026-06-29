@@ -5,7 +5,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.exceptions import NotFound
 from django.db import transaction
-from api.models import Tenders
+from django.db.models import Count, F, Q
+from django.utils import timezone
+from account.models import ContractorProfiles
+from api.models import Tenders, TenderSubmissions
 from api.serializers import (
     TendersSerializer,
     TenderDetailSerializer,
@@ -28,9 +31,27 @@ class TendersListView(APIView):
 
     def get(self, request):
         if request.user.role == 'owner':
-            tenders = Tenders.objects.filter(owner=request.user)
-        else:
-            tenders = Tenders.objects.all()
+            base = Tenders.objects.filter(owner=request.user)
+            counts = base.aggregate(
+                total=Count('id'),
+                open=Count('id', filter=Q(status='open')),
+                awarded=Count('id', filter=Q(status='awarded')),
+                closed=Count('id', filter=Q(status='closed')),
+            )
+            tenders = base.annotate(submissions_count=Count('submissions'))
+            serializer = TendersSerializer(tenders, many=True)
+            return Response(
+                {
+                    'total': counts['total'],
+                    'open': counts['open'],
+                    'awarded': counts['awarded'],
+                    'closed': counts['closed'],
+                    'tenders': serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        tenders = Tenders.objects.all().annotate(submissions_count=Count('submissions'))
         serializer = TendersSerializer(tenders, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -187,7 +208,11 @@ class TenderSubmissionsView(APIView):
             return Response(status=404, data={'message': 'Tender not found'})
         self.check_object_permissions(request, tender)
         submissions = tender.submissions.all()
-        serializer = TenderSubmissionsSerializer(submissions, many=True)
+        serializer = TenderSubmissionsSerializer(
+            submissions,
+            many=True,
+            context={"request": request},
+        )
         return Response(serializer.data)
 
     def post(self, request, tender_id):
@@ -200,9 +225,80 @@ class TenderSubmissionsView(APIView):
                 tender=tender, contractor=request.user.contractor_profile
             )
             return Response(
-                TenderSubmissionsSerializer(submission).data, status=201
+                TenderSubmissionsSerializer(
+                    submission,
+                    context={"request": request},
+                ).data,
+                status=201,
             )
         return Response(serializer.errors, status=400)
+
+
+class AwardTenderView(APIView):
+    """Award a tender to a contractor (tender owner only)."""
+
+    permission_classes = [IsAuthenticated, IsOwner, IsTenderOwner]
+
+    def post(self, request, pk, contractor_id):
+        try:
+            tender = Tenders.objects.get(pk=pk)
+        except Tenders.DoesNotExist:
+            raise NotFound("Tender not found.")
+        self.check_object_permissions(request, tender)
+
+        if tender.status == "awarded":
+            return Response(
+                {"detail": "This tender has already been awarded."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        submission = tender.submissions.filter(contractor_id=contractor_id).first()
+        if submission is None:
+            return Response(
+                {"detail": "This contractor has no submission on this tender."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            tender.status = "awarded"
+            tender.awarded_at = timezone.now()
+            tender.save(update_fields=["status", "awarded_at"])
+
+            submission.status = "accepted"
+            submission.save(update_fields=["status"])
+
+            ContractorProfiles.objects.filter(pk=contractor_id).update(
+                total_wins=F("total_wins") + 1
+            )
+
+        return Response(
+            {
+                "tender_id": tender.id,
+                "status": tender.status,
+                "awarded_at": tender.awarded_at,
+                "winning_submission_id": submission.id,
+                "contractor_id": contractor_id,
+            },
+            status=status.HTTP_200_OK,
+        )
+class MySubmissionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        contractor_profile = getattr(request.user, 'contractor_profile', None)
+        if not contractor_profile:
+            return Response(
+                {'message': 'Contractor profile not found.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        submissions = TenderSubmissions.objects.filter(contractor=contractor_profile)
+        serializer = TenderSubmissionsSerializer(
+            submissions,
+            many=True,
+            context={"request": request},
+        )
+        return Response(serializer.data)
 
 
 class TenderSubmissionDetailView(APIView):
@@ -221,7 +317,10 @@ class TenderSubmissionDetailView(APIView):
         if not submission:
             return Response(status=404, data={'message': 'Submission not found'})
         self.check_object_permissions(request, submission)
-        serializer = TenderSubmissionsSerializer(submission)
+        serializer = TenderSubmissionsSerializer(
+            submission,
+            context={"request": request},
+        )
         return Response(serializer.data)
 
     def put(self, request, tender_id, submission_id):

@@ -1,12 +1,11 @@
 import os
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import PGVector
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from .extractors.document_processor import DocumentIntakeProcessor 
 
-
+ 
 def prepare_documents_for_vector_db(files_data : list,base_metadata: dict | None = None) -> list[Document]:
     """
     دالة مساعدة لتحويل النصوص الخام أو الجداول إلى قائمة من كائنات Document 

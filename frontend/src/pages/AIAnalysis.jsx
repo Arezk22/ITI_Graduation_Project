@@ -1,24 +1,187 @@
+
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import OwnerLayout from "../components/OwnerLayout";
+import { getAllTenders } from "../services/tenderApi";
+import { getTenderSubmissions } from "../services/proposalApi";
 
 function AIAnalysis() {
+  const navigate = useNavigate();
+
+  const [tenders, setTenders] = useState([]);
+  const [selectedTenderId, setSelectedTenderId] = useState("");
+  const [tenderDropdownOpen, setTenderDropdownOpen] = useState(false);
+  const [loadingTenders, setLoadingTenders] = useState(true);
+
+  const [reviewSubmissions, setReviewSubmissions] = useState([]);
+  const [loadingReviewDocs, setLoadingReviewDocs] = useState(false);
+
+  useEffect(() => {
+    getAllTenders()
+      .then((response) => {
+        const list = Array.isArray(response.data)
+          ? response.data
+          : response.data.tenders || response.data.results || [];
+
+        setTenders(list);
+
+        if (list.length > 0) {
+          setSelectedTenderId(String(list[0].id));
+        }
+      })
+      .catch((error) => {
+        console.error("Load tenders error:", error.response?.data || error);
+        setTenders([]);
+      })
+      .finally(() => {
+        setLoadingTenders(false);
+      });
+  }, []);
+
+  const selectedTender = useMemo(() => {
+    return tenders.find((tender) => String(tender.id) === selectedTenderId);
+  }, [tenders, selectedTenderId]);
+
+  const selectedTenderTitle = selectedTender?.title || "Select Tender";
+
+  useEffect(() => {
+    if (!selectedTenderId) return;
+
+    setLoadingReviewDocs(true);
+
+    getTenderSubmissions(selectedTenderId)
+      .then((response) => {
+        const list = Array.isArray(response.data)
+          ? response.data
+          : response.data.results || [];
+
+        setReviewSubmissions(list);
+      })
+      .catch((error) => {
+        console.error(
+          "Load review submissions error:",
+          error.response?.data || error
+        );
+        setReviewSubmissions([]);
+      })
+      .finally(() => {
+        setLoadingReviewDocs(false);
+      });
+  }, [selectedTenderId]);
+
   const checks = [
-    ["bi-check-circle", "BOQ completeness check", "All 247 line items accounted for", "Pass", "pass"],
-    ["bi-check-circle", "Document authenticity verification", "No tampering indicators detected", "Pass", "pass"],
-    ["bi-exclamation-circle", "License validity check", "1 of 5 contractors has expiring license", "Warning", "warning"],
-    ["bi-x-circle", "Price reasonableness analysis", "1 bid flagged as anomalously low (>30% below avg)", "Fail", "fail"],
-    ["bi-check-circle", "Previous performance scan", "Cross-referenced 28 public project records", "Pass", "pass"],
-    ["bi-check-circle", "Compliance requirements check", "All contractors meet minimum requirements", "Pass", "pass"],
-    ["bi-exclamation-circle", "Insurance coverage verification", "2 contractors need updated insurance docs", "Warning", "warning"],
-    ["bi-check-circle", "Financial capacity assessment", "4 of 5 contractors meet financial threshold", "Pass", "pass"],
+    [
+      "bi-check-circle",
+      "BOQ completeness check",
+      "All 247 line items accounted for",
+      "Pass",
+      "pass",
+    ],
+    [
+      "bi-check-circle",
+      "Document authenticity verification",
+      "No tampering indicators detected",
+      "Pass",
+      "pass",
+    ],
+    [
+      "bi-exclamation-circle",
+      "License validity check",
+      "1 of 5 contractors has expiring license",
+      "Warning",
+      "warning",
+    ],
+    [
+      "bi-x-circle",
+      "Price reasonableness analysis",
+      "1 bid flagged as anomalously low (>30% below avg)",
+      "Fail",
+      "fail",
+    ],
+    [
+      "bi-check-circle",
+      "Previous performance scan",
+      "Cross-referenced 28 public project records",
+      "Pass",
+      "pass",
+    ],
+    [
+      "bi-check-circle",
+      "Compliance requirements check",
+      "All contractors meet minimum requirements",
+      "Pass",
+      "pass",
+    ],
+    [
+      "bi-exclamation-circle",
+      "Insurance coverage verification",
+      "2 contractors need updated insurance docs",
+      "Warning",
+      "warning",
+    ],
+    [
+      "bi-check-circle",
+      "Financial capacity assessment",
+      "4 of 5 contractors meet financial threshold",
+      "Pass",
+      "pass",
+    ],
   ];
 
   return (
     <OwnerLayout activePage="ai-analysis">
       <section className="ai-analysis-content">
-        <div className="ai-analysis-header">
+        <div className="ai-analysis-header ai-analysis-header-with-dropdown">
           <div>
-            <h2>AI Analysis & Risk Center</h2>
-            <p>Eastfield Tower Complex · Analyzed Jun 10, 2026 at 08:15 AM</p>
+            <div className="ai-tender-dropdown-wrap">
+              <button
+                type="button"
+                className="ai-tender-dropdown-btn"
+                onClick={() => setTenderDropdownOpen((prev) => !prev)}
+              >
+                <span>
+                  {loadingTenders ? "Loading tenders..." : selectedTenderTitle}
+                </span>
+
+                <i
+                  className={`bi ${
+                    tenderDropdownOpen ? "bi-chevron-up" : "bi-chevron-down"
+                  }`}
+                ></i>
+              </button>
+
+              {tenderDropdownOpen && (
+                <div className="ai-tender-dropdown-menu">
+                  {tenders.length === 0 ? (
+                    <div className="ai-tender-empty">No tenders found</div>
+                  ) : (
+                    tenders.map((tender) => (
+                      <button
+                        type="button"
+                        key={tender.id}
+                        className={
+                          String(tender.id) === selectedTenderId ? "active" : ""
+                        }
+                        onClick={() => {
+                          setSelectedTenderId(String(tender.id));
+                          setTenderDropdownOpen(false);
+                        }}
+                      >
+                        <strong>{tender.title}</strong>
+                        <span>
+                          {formatTenderId(tender.id)} ·{" "}
+                          {formatCategory(tender.project_category)}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            <p>
+              AI Analysis & Risk Center · Analyzed Jun 10, 2026 at 08:15 AM
+            </p>
           </div>
 
           <span className="ai-version">
@@ -27,11 +190,46 @@ function AIAnalysis() {
           </span>
         </div>
 
-        <div className="row g-4">
-          <AIMetric icon="bi-shield-check" value="8/8" title="Validation Checks" note="All passed/reviewed" color="green" />
-          <AIMetric icon="bi-exclamation-triangle" value="1" title="Critical Flags" note="Requires action" color="red" />
-          <AIMetric icon="bi-exclamation-circle" value="3" title="Medium Risks" note="Monitor closely" color="orange" />
-          <AIMetric icon="bi-file-earmark-x" value="4" title="Missing Documents" note="Across 2 contractors" color="purple" />
+        <div className="row g-4 ai-metrics-row">
+          <AIMetric
+            icon="bi-shield-check"
+            value="8/8"
+            title="Validation Checks"
+            note="All passed/reviewed"
+            color="green"
+          />
+
+          <AIMetric
+            icon="bi-exclamation-triangle"
+            value="1"
+            title="Critical Flags"
+            note="Requires action"
+            color="red"
+          />
+
+          <AIMetric
+            icon="bi-exclamation-circle"
+            value="3"
+            title="Medium Risks"
+            note="Monitor closely"
+            color="orange"
+          />
+
+          <AIMetric
+            icon="bi-file-earmark-x"
+            value="4"
+            title="Missing Documents"
+            note="Across 2 contractors"
+            color="purple"
+          />
+
+          <AIMetric
+            icon="bi-file-earmark-check"
+            value={reviewSubmissions.length}
+            title="Need Review Documents"
+            note="Manual review required"
+            color="blue"
+          />
         </div>
 
         <div className="ai-card mt-4">
@@ -98,33 +296,105 @@ function AIAnalysis() {
 
           <div className="missing-doc-row">
             <div className="doc-avatar">M</div>
+
             <div>
               <strong>Meridian Builders Ltd</strong>
               <p>
-                <span>Missing: ISO 9001 (current)</span>
+                <span>Missing: ISO 9001 current certificate</span>
                 <span>Missing: Updated insurance certificate</span>
               </p>
             </div>
+
             <a href="#">Request →</a>
           </div>
 
           <div className="missing-doc-row">
             <div className="doc-avatar">A</div>
+
             <div>
               <strong>Arcline Infrastructure</strong>
               <p>
-                <span>Missing: Company financial statement (2025)</span>
+                <span>Missing: Company financial statement 2025</span>
                 <span>Missing: Bank guarantee letter</span>
               </p>
             </div>
+
             <a href="#">Request →</a>
           </div>
         </div>
 
+        <div className="ai-card mt-4">
+          <h5>
+            <i className="bi bi-file-earmark-check text-primary"></i>
+            Documents Need Review
+          </h5>
+
+          {loadingReviewDocs ? (
+            <div className="text-muted py-3">
+              Loading contractor documents...
+            </div>
+          ) : reviewSubmissions.length === 0 ? (
+            <div className="text-muted py-3">
+              No submitted documents found.
+            </div>
+          ) : (
+            reviewSubmissions.slice(0, 2).map((submission) => (
+              <div className="missing-doc-row review-doc-row" key={submission.id}>
+                <div className="doc-avatar">
+                  {getInitial(submission.contractor_company_name)}
+                </div>
+
+                <div>
+                  <strong>
+                    {submission.contractor_company_name ||
+                      `Contractor ${submission.contractor || ""}`}
+                  </strong>
+
+                  <p>
+                    {submission.files && submission.files.length > 0 ? (
+                      submission.files.map((file) => (
+                        <span key={file.id}>{getFileName(file.file_url)}</span>
+                      ))
+                    ) : (
+                      <span>No files uploaded</span>
+                    )}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="review-link-btn"
+                  onClick={() =>
+                    navigate(
+                      `/owner/proposal-details/${selectedTenderId}/${submission.id}`
+                    )
+                  }
+                >
+                  Review →
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
         <div className="row g-4 mt-1">
-          <DecisionCard type="success" title="Proceed with Award" text="AlSalam Construction meets all criteria. Recommend proceeding to contract negotiation." />
-          <DecisionCard type="warning" title="Request Clarifications" text="2 contractors need updated documentation before final ranking can be confirmed." />
-          <DecisionCard type="danger" title="Disqualify Peak Contracting" text="Anomalous pricing warrants disqualification unless credible cost justification is provided." />
+          <DecisionCard
+            type="success"
+            title="Proceed with Award"
+            text="AlSalam Construction meets all criteria. Recommend proceeding to contract negotiation."
+          />
+
+          <DecisionCard
+            type="warning"
+            title="Request Clarifications"
+            text="2 contractors need updated documentation before final ranking can be confirmed."
+          />
+
+          <DecisionCard
+            type="danger"
+            title="Disqualify Peak Contracting"
+            text="Anomalous pricing warrants disqualification unless credible cost justification is provided."
+          />
         </div>
       </section>
     </OwnerLayout>
@@ -133,11 +403,12 @@ function AIAnalysis() {
 
 function AIMetric({ icon, value, title, note, color }) {
   return (
-    <div className="col-lg-3 col-md-6">
+    <div className="col-xl col-lg-4 col-md-6">
       <div className="ai-metric-card">
         <div className={`ai-metric-icon ${color}`}>
           <i className={`bi ${icon}`}></i>
         </div>
+
         <h3 className={color}>{value}</h3>
         <h6>{title}</h6>
         <p>{note}</p>
@@ -146,7 +417,17 @@ function AIMetric({ icon, value, title, note, color }) {
   );
 }
 
-function RiskIssue({ type, icon, title, severity, impact, contractor, text, details, recommendation }) {
+function RiskIssue({
+  type,
+  icon,
+  title,
+  severity,
+  impact,
+  contractor,
+  text,
+  details,
+  recommendation,
+}) {
   return (
     <div className={`risk-issue ${type}`}>
       <div className="risk-issue-header">
@@ -156,13 +437,17 @@ function RiskIssue({ type, icon, title, severity, impact, contractor, text, deta
             {title}
             <span>{severity}</span>
           </h5>
+
           <p>{contractor}</p>
         </div>
+
         <b>{impact}</b>
       </div>
 
       <p className="risk-main-text">{text}</p>
+
       <div className="risk-code">{details}</div>
+
       <div className="risk-recommendation">
         <i className="bi bi-info-circle"></i>
         <strong>Recommendation:</strong> {recommendation}
@@ -175,14 +460,57 @@ function DecisionCard({ type, title, text }) {
   return (
     <div className="col-lg-4">
       <div className={`decision-card ${type}`}>
-        <i className={`bi ${
-          type === "success" ? "bi-check-circle" : type === "warning" ? "bi-exclamation-circle" : "bi-x-circle"
-        }`}></i>
+        <i
+          className={`bi ${
+            type === "success"
+              ? "bi-check-circle"
+              : type === "warning"
+              ? "bi-exclamation-circle"
+              : "bi-x-circle"
+          }`}
+        ></i>
+
         <h5>{title}</h5>
         <p>{text}</p>
       </div>
     </div>
   );
+}
+
+function formatTenderId(id) {
+  return `T-${String(id).padStart(4, "0")}`;
+}
+
+function formatCategory(category) {
+  const map = {
+    construction: "Construction",
+    roads: "Roads & Infrastructure",
+    buildings: "Buildings",
+    electrical: "Electrical",
+    mechanical: "Mechanical",
+    water: "Water & Sewage",
+    it: "IT & Telecom",
+    consulting: "Consulting",
+    supplies: "Supplies & Procurement",
+    maintenance: "Maintenance",
+    other: "Other",
+  };
+
+  return map[category] || category || "Other";
+}
+
+function getInitial(name) {
+  return name?.trim()?.charAt(0)?.toUpperCase() || "C";
+}
+
+function getFileName(url = "") {
+  if (!url) return "Uploaded file";
+
+  try {
+    return decodeURIComponent(url.split("/").pop());
+  } catch {
+    return "Uploaded file";
+  }
 }
 
 export default AIAnalysis;

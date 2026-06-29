@@ -1,19 +1,54 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+
+function getInitials(name) {
+  if (!name) return "U";
+
+  const parts = name.trim().split(" ").filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+
+  return parts[0][0].toUpperCase();
+}
+
 function ContractorLayout({ activePage, children }) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
-  const handleSignOut = () => {
-    navigate("/");
-  };
+
+const userName = localStorage.getItem("userName") || "User";
+const companyName = localStorage.getItem("companyName") || "Company Name";
+const userInitials = getInitials(userName);
+
+
+  // const handleSignOut = () => {
+  //   navigate("/");
+  // };
+
+const handleSignOut = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("userRole");
+  localStorage.removeItem("userEmail");
+  localStorage.removeItem("userName");
+  localStorage.removeItem("companyName");
+  localStorage.removeItem("contractorTenderSearch");
+
+  navigate("/");
+};
+  
 
   return (
     <div className={`owner-layout ${sidebarOpen ? "" : "sidebar-collapsed"}`}>
       <aside className="owner-sidebar">
-        <div className="sidebar-brand" onClick={() => navigate("/contractor/dashboard")}>
+        <div
+          className="sidebar-brand"
+          onClick={() => navigate("/contractor/dashboard")}
+        >
           <span className="brand-icon">
             <i className="bi bi-building"></i>
           </span>
@@ -22,6 +57,11 @@ function ContractorLayout({ activePage, children }) {
             <p>AI Platform</p>
           </div>
         </div>
+
+
+
+
+
 
         <span className="owner-badge">Contractor</span>
 
@@ -34,13 +74,13 @@ function ContractorLayout({ activePage, children }) {
             Dashboard
           </button>
 
-          <button
+          {/* <button
             className={activePage === "submit-proposal" ? "active" : ""}
             onClick={() => navigate("/contractor/submit-proposal")}
           >
             <i className="bi bi-clipboard-check"></i>
             Submit Proposal
-          </button>
+          </button> */}
 
           <button
             className={activePage === "profile" ? "active" : ""}
@@ -57,18 +97,17 @@ function ContractorLayout({ activePage, children }) {
             <i className="bi bi-chat-left"></i>
             Document Chat
           </button>
-
         </nav>
 
         <div className="sidebar-bottom">
-          <button
+          {/* <button
             className={activePage === "notifications" ? "active" : ""}
             onClick={() => navigate("/contractor/notifications")}
           >
             <i className="bi bi-bell"></i>
             Notifications
             <span>4</span>
-          </button>
+          </button> */}
 
           {/* <button>
             <i className="bi bi-gear"></i>
@@ -87,11 +126,11 @@ function ContractorLayout({ activePage, children }) {
               className="owner-profile profile-click"
               onClick={() => setProfileMenuOpen(!profileMenuOpen)}
             >
-              <div className="avatar">RA</div>
-              <div>
-                <h6>Rania Al-Hassan</h6>
-                <p>AlSalam Construction</p>
-              </div>
+<div className="avatar">{userInitials}</div>
+<div>
+  <h6>{userName}</h6>
+  <p>{companyName}</p>
+</div>
               <i className="bi bi-chevron-down ms-auto"></i>
             </button>
           </div>
@@ -111,36 +150,49 @@ function ContractorLayout({ activePage, children }) {
             <i className="bi bi-search"></i>
             <input placeholder="Search tenders, contractors..." />
           </div> */}
-          <input
+{/* <input
   placeholder="Search tenders..."
   value={localStorage.getItem("contractorTenderSearch") || ""}
   onChange={(e) => {
     localStorage.setItem("contractorTenderSearch", e.target.value);
     window.dispatchEvent(new Event("contractorTenderSearchChanged"));
   }}
-/>
+
+/> */}
+
+
+{/* <div
+
+  className="topbar-brand-center"
+  onClick={() => navigate("/contractor/dashboard")}
+>
+  <span className="brand-icon">
+    <i className="bi bi-building"></i>
+  </span>
+
+  <strong>BuildTender</strong>
+  <small>AI Platform</small>
+</div> */}
 
           <div className="topbar-actions">
-            <button
+            {/* <button
               className="notification-icon-btn"
               onClick={() => navigate("/contractor/notifications")}
             >
               <i className="bi bi-bell"></i>
               <span></span>
-            </button>
+            </button> */}
 
             <button
               className="top-avatar-btn"
               onClick={() => navigate("/contractor/dashboard")}
             >
-              <div className="avatar">RA</div>
+<div className="avatar">{userInitials}</div>
             </button>
           </div>
-        </header>
+      </header>
 
-        <div className="owner-page-wrapper">
-          {children}
-        </div>
+        <div className="owner-page-wrapper">{children}</div>
       </main>
     </div>
   );
