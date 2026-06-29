@@ -42,13 +42,15 @@ def detect_file_type(filename):
 
 class TendersSerializer(serializers.ModelSerializer):
     total_submissions = serializers.SerializerMethodField()
+    owner_company_name = serializers.SerializerMethodField()
+    owner_email = serializers.EmailField(source='owner.email', read_only=True)
 
     class Meta:
         model = Tenders
         fields = [
-            'id', 'owner', 'title', 'description', 'project_category', 'location',
-            'budget', 'start_date', 'duration_months', 'deadline_at', 'status',
-            'total_submissions', 'created_at',
+            'id', 'owner', 'owner_company_name', 'owner_email', 'title', 'description',
+            'project_category', 'location', 'budget', 'start_date', 'duration_months',
+            'deadline_at', 'status', 'total_submissions', 'created_at',
         ]
         read_only_fields = ['owner', 'created_at']
 
@@ -56,6 +58,12 @@ class TendersSerializer(serializers.ModelSerializer):
         # Use the annotated value when available (list view) to avoid N+1 counts.
         count = getattr(obj, 'submissions_count', None)
         return count if count is not None else obj.submissions.count()
+
+    def get_owner_company_name(self, obj):
+        profile = getattr(obj.owner, 'contractor_profile', None)
+        if profile is not None:
+            return profile.company_name
+        return obj.owner.last_name or ''
 
 class TenderFilesSerializer(serializers.ModelSerializer):
     # Binary upload (multipart). Stored on the server; its path is saved to
