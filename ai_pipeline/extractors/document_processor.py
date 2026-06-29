@@ -1,27 +1,22 @@
 # boq_router.py
 import os
 from django.db import transaction
-import fitz  # PyMuPDF
 import json
 from typing import List, Optional, Dict, Any
 import base64
-import time
 import pandas as pd
 import pdfplumber
 from io import BytesIO
 from docx import Document as DocxReader
 from pdf2image import convert_from_path
 from langchain_core.messages import HumanMessage
-from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
-import arabic_reshaper
 from bidi.algorithm import get_display
-from google import genai
 from dotenv import load_dotenv
 from api.models import (Tenders,TenderSubmissions,EvaluationRules,BoqItems,BoqPrice)
 from django.shortcuts import get_object_or_404
-
+from ai_pipeline.iti_llm import chat , vision_chat
 load_dotenv()
 
 # تعريف الهيكل الموحد المرجو من الـ Structuring Agent باستخدام Pydantic
@@ -251,10 +246,10 @@ class UnifiedStructuredTender(BaseModel):
     )
 
 class DocumentIntakeProcessor:
-    def __init__(self, vision_llm, text_llm):
+    def __init__(self, vision_llm =None, text_llm=None,gemini_client=None):
         self.vision_llm = vision_llm  # نموذج الرؤية (مثل Llama-Vision أو GPT-4o-mini)
         self.text_llm = text_llm      # نموذج النصوص القياسي للهيكلة
-        self.ai_client=genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        self.ai_client=gemini_client
     # 1. Intake Agent: تحديد نوع الملف وتوجيهه للمسار الصحيح
     def intake_and_route(self, file) -> str:
         """وظيفة الـ Routing ومعرفة نوع الملف بالضبط"""
@@ -292,29 +287,42 @@ class DocumentIntakeProcessor:
         elif file_type == "word":
             doc = DocxReader(file_path)
             full_text = []
-            for para in doc.paragraphs:
-                if para.text.strip():
-                    full_text.append(para.text)
-            for table in doc.tables:
-                for row in table.rows:
-                    text_row = [cell.text.strip() for cell in row.cells]
-                    full_text.append(" | ".join(text_row))
+    
+            for element in doc.element.body:
+                if element.tag.endswith('p'):
+                    from docx.text.paragraph import Paragraph
+                    para = Paragraph(element, doc)
+                    if para.text.strip():
+                        full_text.append(para.text)
+                        
+                elif element.tag.endswith('tbl'):
+                    from docx.table import Table
+                    table = Table(element, doc)
+                    for row in table.rows:
+                        text_row = []
+                        for cell in row.cells:
+                            text_row.append(cell.text.strip())
+                        
+                        row_string = " | ".join(text_row)
+                        if row_string.strip(): 
+                            full_text.append(row_string)
+                            
             return full_text
             
         elif file_type == "pdf":
             with pdfplumber.open(file_path) as pdf:
                 full_text = []
                 for page_num, page in enumerate(pdf.pages,start=1):
-                    text=page.extract_text()
-                    tables=page.extract_tables()
-                    if len(text.strip())>50 or tables:
-                        full_text.append({
-                        "page":page_num,
-                        "type":"digital",
-                        "content":text,
-                        "tables":tables
-                    })
-                    else:
+                    # text=page.extract_text()
+                    # tables=page.extract_tables()
+                    # if len(text.strip())>50 or tables:
+                    #     full_text.append({
+                    #     "page":page_num,
+                    #     "type":"digital",
+                    #     "content":text,
+                    #     "tables":tables
+                    # })
+                    # else:
                         poppler_path=os.getenv("POPPLER_PATH")
                         page_image=convert_from_path(file_path,first_page=page_num,last_page=page_num,poppler_path=poppler_path)[0]
                         ocr_data=self._extract_scanned_pdf_via_vision(page_image)
@@ -336,8 +344,7 @@ class DocumentIntakeProcessor:
 
     def _extract_scanned_pdf_via_vision(self, img):
         """دالة مساعدة لتحويل صفحات الـ Scanned PDF لصور وتمريرها للـ Vision LLM"""
-        try:
-            prompt="""You are an OCR engine specialized in construction documents.
+        prompt="""You are an OCR engine specialized in construction documents.
 
         Extract all visible text from this image.
 
@@ -374,8 +381,24 @@ class DocumentIntakeProcessor:
             - Do not merge table data into normal text.
             - Return tables inside the "tables" field.
             - Each table should be represented as a list of rows."""
+        try:
+            
+        # # ITI_GATEWAY
+        # buffered = BytesIO()
+        # img.save(buffered, format="JPEG")
+        # img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        # res = vision_chat(prompt, img_str)
+        # return res
+        # res = self.vision_llm.invoke([message])
+        # response_text = res.content
+        # clean_json = response_text.replace("```json", "").replace("```", "").strip()
+        # clean_json = response_text.strip()
+        # ocr_data = json.loads(clean_json)
+        # print(ocr_data)
+        # return ocr_data   
             
             
+        # in gemini model   
             vision_response = self.ai_client.models.generate_content(
             model='gemini-2.5-flash',
             contents=[
@@ -387,22 +410,41 @@ class DocumentIntakeProcessor:
             clean_json = response_text.replace("```json", "").replace("```", "").strip()
             ocr_data = json.loads(clean_json)
             return ocr_data
-            # إرسال الصورة للـ Vision LLM لاستخراج النصوص والجداول بدقة
-            # buffered = BytesIO()
-            # img.save(buffered, format="JPEG")
-            # img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-            # message = HumanMessage(
-            #     content=[
-            #         {"type": "text", "text": prompt},
-            #         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_str}"}}
-            #     ]
-            # )
-            # res = self.vision_llm.invoke([message])
-            # extracted_parts.append(res.content)
-            # return "\n\n".join(extracted_parts)
+            
+            # in openai model
+        # buffered = BytesIO()
+        # img.save(buffered, format="JPEG")
+        # img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        # message = HumanMessage(
+        #     content=[
+        #         {"type": "text", "text": prompt},
+        #         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_str}"}}
+        #     ]
+        # )
+        # res = self.vision_llm.invoke([message])
+        # response_text = res.content
+        # clean_json = response_text.replace("```json", "").replace("```", "").strip()
+        # clean_json = response_text.strip()
+        # ocr_data = json.loads(clean_json)
+        # print(ocr_data)
+        # return ocr_data
+        
+        
+        
+        
+        
+    
+        
         except Exception as e:
             print(f"❌ Error during Vision PDF extraction: {e}")
-            return ""
+            return {
+            "confidence_score": 0,
+            "needs_human_review": True,
+            "review_reason": "Didnot extract successfully",
+            "unclear_sections": [],
+            "extracted_text": "",
+            "tables":[]
+                }
         
     def analyze_extraction_quality(self,extracted_pages):
 
@@ -455,7 +497,7 @@ class DocumentIntakeProcessor:
         for file in files:
             try:
                 file_type = self.intake_and_route(file)
-                if not file_type=="drawing file":
+                if not file_type=="drawing file": # edit to suit model
                     raw_data = self.extract_content(
                         file.file_url,
                         file_type
@@ -467,8 +509,10 @@ class DocumentIntakeProcessor:
 
                     file.extracted_data = cleaned_data
                     file.extracted_meta_data = file_meta_data
+                    file.need_review=file_meta_data["needs_human_review"]
                     file.save()
-
+                    if file_meta_data["needs_human_review"]:
+                        return None
                     all_files_cleaned_data.append({
                         "file_id": file.id,
                         "file_category": file.file_category,

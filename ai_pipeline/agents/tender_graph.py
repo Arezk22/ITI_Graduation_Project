@@ -7,6 +7,8 @@ from langchain_core.output_parsers import JsonOutputParser , PydanticOutputParse
 from pydantic import BaseModel, Field
 from typing import List, Literal
 
+from ITI_Graduation_Project.ai_pipeline.tasks import notify
+from ITI_Graduation_Project.api.models import EvaluationRules, TenderSubmissions, Tenders
 from api.models import EvaluationRules, TenderSubmissions, Tenders
 
 from .state import TenderState
@@ -324,8 +326,17 @@ class EvaluationWorkflow:
                 "submission_data": json.dumps(sub.structured_data)
             },ValidationResult)
             validation_results[sub.id]=result
-            
-        return {"validation_results": validation_results}
+            if not result.mandatory_passed:
+                sub.recommendation="Disqualified"
+                sub.justification="Failed mandatory requirements"
+                sub.save(update_fields=["recommendation", "justification"])
+                state["submission_ids"].remove(sub.id)
+                notify.delay({
+                    "event":"Disqualified",
+                    "sub":sub.id,
+                })
+        return {"validation_results": validation_results,
+                "submission_ids": state["submission_ids"],}
 
 
 
@@ -346,7 +357,16 @@ class EvaluationWorkflow:
                 "validation_result":json.dumps(validation_results[sub.id]),
                 "submission":json.dumps(risk_payload)
         },RiskAssessment)
-            risk_result[sub.id]=result            
+            risk_result[sub.id]=result
+            if result.overall_risk in ["High", "Critical"]:
+                notify.delay({
+                    "event":"risk",
+                    "sub":sub.id,
+                    "payload":{
+                        "score":result.risk_score,
+                        "level":result.overall_risk
+                    }
+                })
         return {"risk_result": risk_result}
     
     
