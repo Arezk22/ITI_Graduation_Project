@@ -72,7 +72,7 @@ INSTALLED_APPS = [
 
     "account",
     "api",
-    "ai_agent",
+    "ai_pipeline",
 ]
 
 REST_FRAMEWORK = {

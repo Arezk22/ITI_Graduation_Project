@@ -1,8 +1,9 @@
 from celery import shared_task
+import time
 from django.utils import timezone
 from django.core.mail import send_mail
-from ITI_Graduation_Project.api.models import TenderSubmissions, Tenders
-from main_pipeline import run_tender_evaluation_job
+from api.models import TenderSubmissions, Tenders
+from .main_pipeline import run_tender_evaluation_job
 from django.conf import settings
 # @shared_task
 # def send_upload_complete_signal(user_id):
@@ -12,7 +13,18 @@ from django.conf import settings
 
 #     upload_complete.send(sender=None, user_id=user_id)
 
+@shared_task
+def hello():
+    print("Hello from Celery")
+    return "Hello ITI"
 
+
+@shared_task
+def long_task():
+    print("Started...")
+    time.sleep(10)
+    print("Finished")
+    return "Done"
 
 @shared_task
 def check_due_tenders():
