@@ -638,7 +638,7 @@ class DocumentIntakeProcessor:
             - Focus on finding the client/owner requirements, project scope, technical specifications, and the empty/blank Bill of Quantities (BOQ) tables.
             - Extract any rules, deadlines, or general compliance conditions set by the owner.
             """
-        elif type == "Submission":
+        elif type == "submission":
             parser = JsonOutputParser(pydantic_object=UnifiedStructuredProposal)
             doc_context = """
             - Carefully find the contractor name, total experience years, financial bids, pricing parameters, delivery timeframe, and the priced Bill of Quantities (BOQ) tables.
@@ -714,6 +714,11 @@ class DocumentIntakeProcessor:
                         tender=submission.tender,
                         item_name=item["item_name"]
                     ).first()
+                
+                if boq_item is None:
+                    print(f"BOQ item not found: {item['item_name']}")
+                    continue
+                
                 BoqPrice.objects.create(
                     submission=submission,
                     boq_item=boq_item,

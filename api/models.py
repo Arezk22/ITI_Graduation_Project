@@ -185,7 +185,7 @@ class SubmissionFiles(models.Model):
     file_url = models.CharField(max_length=500, blank=True)
 
     file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
-    # file_category = models.CharField(max_length=10, choices=FILE_CATEGORY_CHOICES)
+    file_category = models.CharField(max_length=20, choices=FILE_CATEGORY_CHOICES)
 
     # AI-extracted content and metadata from the file.
     need_review = models.BooleanField(default=False)
