@@ -156,7 +156,7 @@ class ChatViewSet(viewsets.ViewSet):
     permission_classes=[IsAuthenticated]
     
     def list(self, request):
-        tender_id = request.data.get('tender_id')
+        tender_id = request.query_params.get('tender_id')
         chats = memory.list_chats(request.user, tender=tender_id)
         return Response(_serialize_chats(chats))
     
