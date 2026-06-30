@@ -2,20 +2,22 @@ from langchain_openai import ChatOpenAI
 import os
 from dotenv import load_dotenv
 from ai_pipeline.vector_store import search_documents
-
+from ai_pipeline.llm import text_llm
 
 
 load_dotenv()
 class RagAgent:
     
     def __init__(self):
-        self.llm= ChatOpenAI(
-            model='gpt-4o-mini',
-            temperature=0,
-            api_key=os.getenv('OPENAI_API_KEY'),
-            openai_api_base=os.getenv('OPENAI_API_BASE')
-        )
-    
+        self.llm= text_llm
+        self.db_connection_string = (
+    f"postgresql+psycopg://"
+    f"{os.getenv('DB_USER')}:"
+    f"{os.getenv('DB_PASSWORD')}@"
+    f"{os.getenv('DB_HOST')}:"
+    f"{os.getenv('DB_PORT')}/"
+    f"{os.getenv('DB_NAME')}"
+)
     
     def _build_rag_prompt(self,query, documents):
         """Build a prompt that includes retrieved documents and the user query."""
@@ -43,7 +45,7 @@ class RagAgent:
 
 
     def run_rag_query(self,tender_id, query, top_k=5):
-        db_connection_string = os.getenv('DATABASE_URL') or os.getenv('VECTOR_DB_CONNECTION_STRING')
+        db_connection_string = self.db_connection_string
         if not db_connection_string:
             raise RuntimeError('Vector DB connection string not configured.')
 
