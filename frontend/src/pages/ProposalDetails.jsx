@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import OwnerLayout from "../components/OwnerLayout";
@@ -74,7 +72,7 @@ function ProposalDetails() {
       showToast(
         "success",
         "Proposal awarded",
-        "The tender has been awarded successfully."
+        "The tender has been awarded successfully.",
       );
 
       setTimeout(() => {
@@ -88,29 +86,13 @@ function ProposalDetails() {
         "Award failed",
         error.response?.data?.detail ||
           error.response?.data?.message ||
-          "Unable to award this proposal right now."
+          "Unable to award this proposal right now.",
       );
     } finally {
       setAwardLoading(false);
     }
   };
 
-  const handleContact = () => {
-    const email = getContractorEmail(submission);
-
-    if (!email) {
-      showToast(
-        "error",
-        "Email not found",
-        "No contractor email was found for this proposal."
-      );
-      return;
-    }
-
-    const companyName = getCompanyName(submission);
-
-    window.location.href = `mailto:${email}?subject=Regarding your proposal&body=Hello ${companyName},`;
-  };
 
   if (loading) {
     return (
@@ -165,34 +147,35 @@ function ProposalDetails() {
       <section className="evaluation-content">
         <div className="evaluation-header">
           <div>
-  <h2>Proposal Details</h2>
+            <h2>Proposal Details</h2>
 
-  <p>
-    <strong>Contractor Company Name:</strong> {getCompanyName(submission)}
-  </p>
-</div>
-
-<div className="proposal-header-actions">
-  <button
-    className="btn contact-contractor-btn"
-    onClick={handleContact}
-  >
-    <i className="bi bi-envelope"></i>
-    Contact
-  </button>
-
-  <button
-    className="btn export-report-btn"
-    onClick={handleAward}
-    disabled={awardLoading || isAwarded}
-  >
-    <i className="bi bi-trophy"></i>
-    {awardLoading ? "Awarding..." : isAwarded ? "Awarded" : "Award"}
-  </button>
-</div>
-
- 
+            <p>
+              <strong>Contractor Company Name:</strong>{" "}
+              {getCompanyName(submission)}
+            </p>
           </div>
+
+          <div className="proposal-header-actions">
+            <a
+              href={`https://mail.google.com/mail/?view=cm&fs=1&to=${getContractorEmail(submission)}&su=${encodeURIComponent("Regarding your proposal")}&body=${encodeURIComponent(`Hello ${getCompanyName(submission) || "there"},\n\nI would like to discuss your proposal for this tender.\n\nBest regards,\n[Your Name]`)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn contact-contractor-btn"
+            >
+              <i className="bi bi-envelope"></i>
+              Contact
+            </a>
+
+            <button
+              className="btn export-report-btn"
+              onClick={handleAward}
+              disabled={awardLoading || isAwarded}
+            >
+              <i className="bi bi-trophy"></i>
+              {awardLoading ? "Awarding..." : isAwarded ? "Awarded" : "Award"}
+            </button>
+          </div>
+        </div>
 
         <div className="dashboard-card mt-4">
           <div className="card-header-clean">
@@ -250,14 +233,18 @@ function getCompanyName(submission) {
 }
 
 function getContractorEmail(submission) {
-  return (
-    submission?.contractor_email ||
-    submission?.contractor?.email ||
-    submission?.email ||
-    submission?.user?.email ||
-    submission?.contractor_profile?.email ||
+  const candidates = [
+    submission?.contractor_email,
+    submission?.contractor?.email,
+    submission?.contractor?.user?.email,
+    submission?.user?.email,
+    submission?.email,
+  ];
 
-    ""
+  return (
+    candidates
+      .find((value) => typeof value === "string" && value.trim())
+      ?.trim() || ""
   );
 }
 
