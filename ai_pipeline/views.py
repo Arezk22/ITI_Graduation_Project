@@ -18,7 +18,7 @@ from langchain_openai import ChatOpenAI
 from .services.rag import RagAgent
 from rest_framework.decorators import action
 from .services.chat_memory import ChatMemoryService
-from api.permissions import IsTenderOwner
+from api.permissions import IsContractor, IsTenderOwner
 rag=RagAgent()
 memory=ChatMemoryService()
 
@@ -152,8 +152,9 @@ class ChatViewSet(viewsets.ViewSet):
         GET    /api/v1/chats/{id}/            — retrieve a chat
                                                        with its full message history
         DELETE /api/v1/chats/{id}/            — delete a chat
+        POST /api/v1/chats/{id}/messages/     — send a message
     """
-    permission_classes=[IsAuthenticated]
+    permission_classes=[IsAuthenticated,IsContractor]
     
     def list(self, request):
         tender_id = request.query_params.get('tender_id')

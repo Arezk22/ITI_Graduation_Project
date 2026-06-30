@@ -98,7 +98,7 @@ class TenderFilesSerializer(serializers.ModelSerializer):
         # with a one-row QuerySet so indexing happens here too.
         files_qs = TenderFiles.objects.filter(id=instance.id)
         transaction.on_commit(
-            lambda: tender_files_uploaded.send(sender=Tenders, files=files_qs)
+            lambda: tender_files_uploaded.send(sender=Tenders, files_ids=[instance.id])
         )
         return instance
 
@@ -302,7 +302,7 @@ class CreateTenderSerializer(serializers.ModelSerializer):
         if created_ids:
             files_qs = TenderFiles.objects.filter(id__in=created_ids)
             transaction.on_commit(
-                lambda: tender_files_uploaded.send(sender=Tenders, files=files_qs)
+                lambda: tender_files_uploaded.send(sender=Tenders, files_ids=created_ids ,files_type="tender")
             )
         return tender
 
@@ -352,7 +352,7 @@ class CreateSubmissionSerializer(serializers.ModelSerializer):
             files_qs = SubmissionFiles.objects.filter(id__in=created_ids)
             transaction.on_commit(
                 lambda: submission_files_uploaded.send(
-                    sender=TenderSubmissions, files=files_qs
+                    sender=TenderSubmissions, files_ids=created_ids,files_type="submission"
                 )
             )
         return submission
