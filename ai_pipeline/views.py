@@ -10,8 +10,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from ITI_Graduation_Project.api.models import TenderSubmissions, Tenders
-from ITI_Graduation_Project.api.serializers import TenderSubmissionsSerializer, TendersSerializer
+from api.models import TenderSubmissions, Tenders
+from api.serializers import TenderSubmissionsSerializer, TendersSerializer
 from ai_pipeline.main_pipeline import run_tender_evaluation_job
 from ai_pipeline.vector_store import search_documents
 from langchain_openai import ChatOpenAI
