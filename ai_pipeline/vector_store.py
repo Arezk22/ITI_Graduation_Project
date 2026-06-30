@@ -56,7 +56,6 @@ def prepare_documents_for_vector_db(files_data : list,base_metadata: dict | None
             tables = page.get("tables", [])
             
             for table_index, table in enumerate(tables):
-
                 table_text = DocumentIntakeProcessor.table_to_text(table)
 
                 docs.append(
@@ -103,7 +102,7 @@ def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     """
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small", 
-        api_key=os.getenv("OPENAI_API_KEY"),
+        api_key=os.getenv("OPENROUTER_API_KEY"),
         openai_api_base=os.getenv("OPENAI_API_BASE")
     )
 

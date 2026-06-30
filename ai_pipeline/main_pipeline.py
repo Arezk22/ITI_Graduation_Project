@@ -1,9 +1,5 @@
 import os
 from dotenv import load_dotenv
-from langchain_core.documents import Document
-
-from api.models import TenderFiles
-
 from .extractors.document_processor import DocumentIntakeProcessor 
 from .agents.tender_graph import EvaluationWorkflow
 from .llm import vision_llm , text_llm , gemini_client
@@ -58,7 +54,7 @@ def index_files_for_rag(files):
     extraction -> chunking -> pgvector pipeline (see process_and_store_tender) when ready,
     ideally off the request thread (e.g. a Celery task).
     """
-    
+    print(" 📁 Start indexing files ..📁")
     if not files.exists():
         return 
 
@@ -84,13 +80,15 @@ def index_files_for_rag(files):
     if type=="tender":
         if db_connection_string:
             print(f"💾 Saving Employer Tender to Vector DB...")
-            employer_docs = prepare_documents_for_vector_db(structured_data, {"doc_type": "employer_tender"})
+            employer_docs = prepare_documents_for_vector_db(files_data, {"doc_type": "employer_tender"})
             save_documents_to_db(
                 documents=employer_docs, 
                 connection_string=db_connection_string, 
                 tender_id=id, 
                 source_id="tender" 
             )
+            print(f"Indexing done successfully ✅...")
+            
 
 
 
