@@ -3,7 +3,6 @@ import time
 from django.utils import timezone
 from django.core.mail import send_mail
 from api.models import TenderSubmissions, Tenders
-from .main_pipeline import run_tender_evaluation_job
 from django.conf import settings
 # @shared_task
 # def send_upload_complete_signal(user_id):
@@ -27,6 +26,23 @@ def long_task():
     return "Done"
 
 @shared_task
+def index_files_task(files_ids,files_type):
+    from ai_pipeline.main_pipeline import index_files_for_rag
+    from api.models import TenderFiles,SubmissionFiles
+    if files_type == "tender":
+        files=TenderFiles.objects.filter(id__in=files_ids)
+    elif files_type == "submission":
+        files=SubmissionFiles.objects.filter(id__in=files_ids)
+    else:
+        raise ValueError(f"Unknown files_type: {files_type}")
+
+    index_files_for_rag(files)
+
+
+
+
+
+@shared_task
 def check_due_tenders():
     """
     Runs every minute.
@@ -45,6 +61,8 @@ def check_due_tenders():
         
 @shared_task
 def run_tender_analysis(tender_id):
+    from .main_pipeline import run_tender_evaluation_job
+
     tender = Tenders.objects.get(id=tender_id)
 
     tender.analysis_status = "processing"
