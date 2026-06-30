@@ -36,7 +36,7 @@ def index_files_task(files_ids,files_type):
     else:
         raise ValueError(f"Unknown files_type: {files_type}")
 
-    index_files_for_rag(files)
+    index_files_for_rag(files,files_type)
 
 
 
@@ -49,12 +49,17 @@ def check_due_tenders():
     Finds all tenders whose deadline has passed.
     """
 
+    print("=" * 50)
+    print("CHECK DUE TENDERS IS RUNNING")
+    print("=" * 50)
+    
     due_tenders = Tenders.objects.filter(
     deadline_at__lte=timezone.now(),
     analysis_status="pending",
 )
-
+    print(f"Found {due_tenders.count()} due tenders")
     for tender in due_tenders:
+        print(f"Running analysis for tender {tender.id}")
         run_tender_analysis.delay(tender.id)
         
         

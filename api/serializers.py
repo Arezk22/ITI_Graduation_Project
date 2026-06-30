@@ -351,7 +351,7 @@ class CreateSubmissionSerializer(serializers.ModelSerializer):
             files_qs = SubmissionFiles.objects.filter(id__in=created_ids)
             transaction.on_commit(
                 lambda: submission_files_uploaded.send(
-                    sender=TenderSubmissions, files_id=created_ids,files_type="submission"
+                    sender=TenderSubmissions, files_ids=created_ids,files_type="submission"
                 )
             )
         return submission

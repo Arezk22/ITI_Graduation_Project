@@ -25,8 +25,8 @@ workflow_app = EvaluationWorkflow(text_llm)
 
 def run_tender_evaluation_job(tender):
     
-    print(f"🚀 [AI Pipeline] Starting complete evaluation for tender: {tender_id}")
     tender_id=tender.id
+    print(f"🚀 [AI Pipeline] Starting complete evaluation for tender: {tender_id}")
     submission_ids = tender.submissions.filter(need_review=False).values_list('id', flat=True)
     
     initial_state = {
@@ -43,7 +43,7 @@ def run_tender_evaluation_job(tender):
     
 
 
-def index_files_for_rag(files):
+def index_files_for_rag(files,type):
     """
     Hook called (via a post_save signal) whenever a tender/submission file is uploaded.
 
@@ -57,22 +57,22 @@ def index_files_for_rag(files):
     print(" 📁 Start indexing files ..📁")
     if not files.exists():
         return 
-
-    if files[0].tender:
-        type = "tender"
-        id=files[0].tender.id
-    else:
-        type = "submission"
-        id=files[0].submission.id
         
     files_data=doc_processor.process_files(files)
     
     if not files_data:
         if type=="tender":
             files[0].tender.analysis_status="invalid_documents"
+            files[0].tender.save(update_fields=["analysis_status"])
         elif type == "submission":
-            files[0].submission["need_review"]=True
+            files[0].submission.need_review=True
+            files[0].submission.save(update_fields=["need_review"])
         return
+    
+    if type=="tender":
+            id = files[0].tender.id
+    elif type == "submission":
+            id = files[0].submission.id
     
     structured_data = doc_processor.structure_to_unified_json(type,files_data)
     doc_processor.to_db(type,id,structured_data)

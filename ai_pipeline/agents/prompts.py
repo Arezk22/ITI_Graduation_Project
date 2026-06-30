@@ -87,24 +87,40 @@ Tender Requirements:
 Contractor Structured Data:
 {submission_data}
 
-Return ONLY valid JSON matching this schema."""
+Return ONLY valid JSON matching this schema.
+{
+    "mandatory_passed": true/false,
 
-SCORING_AGENT_PROMPT = """You are a Tender Evaluation Committee Member.
-Calculate the scores for the Contractor based on the Owner's Evaluation Rules.
+    "compliance_score": 0-100 ,
 
-Evaluation Rules (Weights):
-{evaluation_rules}
+    "missing_documents": [],
 
-Contractor's Structured Data:
-{contractor_data}
+    "missing_certificates": [],
 
-Calculate the scores proportionally. Output strictly in JSON format matching this schema:
-{{
-  "technical_score": float,
-  "financial_score": float,
-  "experience_score": float,
-  "total_score": float
-}}"""
+    "missing_licenses": [],
+
+    "technical_gaps": [],
+
+    "warnings": [],
+    "summary": ""
+  }"""
+
+# SCORING_AGENT_PROMPT = """You are a Tender Evaluation Committee Member.
+# Calculate the scores for the Contractor based on the Owner's Evaluation Rules.
+
+# Evaluation Rules (Weights):
+# {evaluation_rules}
+
+# Contractor's Structured Data:
+# {contractor_data}
+
+# Calculate the scores proportionally. Output strictly in JSON format matching this schema:
+# {{
+#   "technical_score": float,
+#   "financial_score": float,
+#   "experience_score": float,
+#   "total_score": float
+# }}"""
 
 RISK_AGENT_PROMPT =  """
 You are an AI Tender Risk Assessment Agent.

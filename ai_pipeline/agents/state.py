@@ -29,7 +29,8 @@ class ValidationResult(BaseModel):
     )
 
     summary: str = Field(
-        description="Short explanation of the compliance evaluation."
+        description="Short explanation of the compliance evaluation.",
+        default_factory=""
     )
 
 class RiskAssessment(BaseModel):
@@ -43,7 +44,10 @@ class RiskAssessment(BaseModel):
         "Critical"
     ]
 
-    summary: str
+    summary: str = Field(
+        description="Short explanation of the risk assessment.",
+        default_factory=""
+    )
 
     top_risks: List[str]
     
