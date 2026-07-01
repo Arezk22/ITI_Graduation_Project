@@ -30,3 +30,7 @@ build/
 dist/
 
 *.log
+
+# Celery Beat schedule files
+celerybeat-schedule
+celerybeat-schedule.dat
