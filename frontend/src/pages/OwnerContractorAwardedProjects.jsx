@@ -12,50 +12,28 @@ function OwnerContractorAwardedProjects() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadProfile = async () => {
       if (!contractorId) return;
 
       try {
         const profileResponse = await api.get(`/contractor/${contractorId}/`);
         setProfile(profileResponse.data);
 
-        const tendersResponse = await api.get("/tenders");
-
-        const tendersList = Array.isArray(tendersResponse.data)
-          ? tendersResponse.data
-          : tendersResponse.data.tenders || tendersResponse.data.results || [];
-
-        const submissionsResponses = await Promise.all(
-          tendersList.map((tender) =>
-            api
-              .get(`/tenders/${tender.id}/submissions`)
-              .then((response) => {
-                const list = Array.isArray(response.data)
-                  ? response.data
-                  : response.data.submissions || response.data.results || [];
-
-                return list;
-              })
-              .catch(() => [])
-          )
+        const submissionsResponse = await api.get(
+          `/contractor/${contractorId}/submissions/`,
         );
 
-        const allSubmissions = submissionsResponses.flat();
+        const list = Array.isArray(submissionsResponse.data)
+          ? submissionsResponse.data
+          : submissionsResponse.data.submissions ||
+            submissionsResponse.data.results ||
+            [];
 
-        const contractorSubmissions = allSubmissions.filter((submission) => {
-          const submissionContractorId =
-            submission.contractor?.id ||
-            submission.contractor_id ||
-            submission.contractor;
-
-          return String(submissionContractorId) === String(contractorId);
-        });
-
-        setSubmissions(contractorSubmissions);
+        setSubmissions(list);
       } catch (error) {
         console.error(
-          "Load awarded projects error:",
-          error.response?.data || error
+          "Load contractor profile error:",
+          error.response?.data || error,
         );
 
         setProfile(null);
@@ -65,7 +43,7 @@ function OwnerContractorAwardedProjects() {
       }
     };
 
-    loadData();
+    loadProfile();
   }, [contractorId]);
 
   const awardedSubmissions = useMemo(() => {
@@ -128,7 +106,7 @@ function OwnerContractorAwardedProjects() {
                       {formatDate(
                         submission.accepted_at ||
                           submission.tender?.awarded_at ||
-                          submission.submitted_at
+                          submission.submitted_at,
                       )}
                     </p>
                   </div>

@@ -169,19 +169,20 @@ class SubmissionFilesSerializer(serializers.ModelSerializer):
 class TenderSubmissionsSerializer(serializers.ModelSerializer):
     tender = TenderMinimalSerializer(read_only=True)
     contractor_company_name = serializers.SerializerMethodField()
+    contractor_email = serializers.EmailField(source='contractor.user.email', read_only=True)
     files = SubmissionFilesSerializer(many=True, read_only=True)
 
     class Meta:
         model = TenderSubmissions
         fields = [
-            'id', 'tender', 'contractor', 'contractor_company_name', 'status',
+            'id', 'tender', 'contractor', 'contractor_company_name', 'contractor_email', 'status',
             'technical_score', 'financial_score', 'risk_score', 'final_score',
             'rank', 'recommendation', 'structured_data', 'justification',
             'validation_result', 'risk_result', 'technical_result', 'financial_result',
             'submitted_at', 'files',
         ]
         read_only_fields = [
-            'tender', 'contractor', 'contractor_company_name', 'files',
+            'tender', 'contractor', 'contractor_company_name', 'contractor_email', 'files',
             'technical_score', 'financial_score', 'risk_score', 'final_score',
             'rank', 'recommendation', 'structured_data', 'justification',
             'validation_result', 'risk_result', 'technical_result', 'financial_result',

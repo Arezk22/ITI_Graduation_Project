@@ -1,9 +1,7 @@
-
-
 import { useEffect, useMemo, useState } from "react";
 import OwnerLayout from "../components/OwnerLayout";
 import { useNavigate } from "react-router-dom";
-import { getAllTenders } from "../services/tenderApi";
+import { getAllTenders, getTenderEvaluation } from "../services/tenderApi";
 import { getTenderSubmissions } from "../services/proposalApi";
 
 function Evaluation() {
@@ -15,6 +13,10 @@ function Evaluation() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loadingTenders, setLoadingTenders] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [loadingEvaluation, setLoadingEvaluation] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState(null);
+  const [aiTenderData, setAiTenderData] = useState(null);
+  const [aiSubmissions, setAiSubmissions] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,6 +52,30 @@ function Evaluation() {
 
   useEffect(() => {
     if (!selectedTenderId) return;
+    setLoadingEvaluation(true);
+    getTenderEvaluation(selectedTenderId)
+      .then((response) => {
+        const { status, tender, submissions } = response.data;
+        setAnalysisStatus(status);
+        if (status === "completed") {
+          setAiTenderData(tender);
+          setAiSubmissions(submissions);
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "Load tender evaluation error:",
+          error.response?.data || error,
+        );
+        setAnalysisStatus("failed");
+      })
+      .finally(() => {
+        setLoadingEvaluation(false);
+      });
+  }, [selectedTenderId]);
+
+  useEffect(() => {
+    if (!selectedTenderId) return;
 
     let cancelled = false;
 
@@ -72,7 +98,7 @@ function Evaluation() {
 
         console.error(
           "Load tender submissions error:",
-          error.response?.data || error
+          error.response?.data || error,
         );
 
         setSubmissions([]);
@@ -92,7 +118,11 @@ function Evaluation() {
     return tenders.find((tender) => String(tender.id) === selectedTenderId);
   }, [tenders, selectedTenderId]);
 
-  const visibleSubmissions = submissions.slice(0, 5);
+  const displaySubmissions =
+    analysisStatus === "completed" && aiSubmissions.length > 0
+      ? aiSubmissions
+      : submissions;
+  const visibleSubmissions = displaySubmissions.slice(0, 5);
 
   const chartSubmissions = useMemo(() => {
     return visibleSubmissions.map((submission, index) => ({
@@ -102,7 +132,7 @@ function Evaluation() {
           submission.price ||
           submission.financial_value ||
           submission.total_price ||
-          0
+          0,
       ),
     }));
   }, [visibleSubmissions]);
@@ -162,7 +192,7 @@ function Evaluation() {
             </div>
 
             <p className="evaluation-project-subtitle">
-              {submissions.length} submissions
+              {displaySubmissions.length} submissions
             </p>
           </div>
 
@@ -192,19 +222,56 @@ function Evaluation() {
 
           <div>
             <h5>
-              AI Recommendation <span>Pending</span>
+              AI Recommendation{" "}
+              <span>
+                {loadingEvaluation
+                  ? "Loading..."
+                  : analysisStatus === "completed"
+                    ? "Ready"
+                    : analysisStatus === "Invalid Documents"
+                      ? "Invalid"
+                      : "Pending"}
+              </span>
             </h5>
 
             <p>
-              AI evaluation will appear here after proposal analysis is completed.
-              Contractor scores, risks, and recommendation will be generated based
-              on submitted proposal documents.
+              {loadingEvaluation
+                ? "Fetching AI evaluation results..."
+                : analysisStatus === "completed"
+                  ? "AI analysis completed. View contractor evaluations, risk scores, and recommendations below."
+                  : analysisStatus === "Invalid Documents"
+                    ? "The tender documents could not be analyzed. Please re-upload clearer documents."
+                    : "AI evaluation will appear here after proposal analysis is completed. Contractor scores, risks, and recommendation will be generated based on submitted proposal documents."}
             </p>
           </div>
 
           <div className="rank-badge muted-rank">
-            <i className="bi bi-hourglass-split"></i>
-            Pending
+            {loadingEvaluation ? (
+              <>
+                <i className="bi bi-arrow-repeat"></i>
+                Loading...
+              </>
+            ) : analysisStatus === "completed" ? (
+              <>
+                <i className="bi bi-check-circle"></i>
+                Completed
+              </>
+            ) : analysisStatus === "processing" ? (
+              <>
+                <i className="bi bi-arrow-repeat"></i>
+                Processing
+              </>
+            ) : analysisStatus === "Invalid Documents" ? (
+              <>
+                <i className="bi bi-exclamation-triangle"></i>
+                Invalid
+              </>
+            ) : (
+              <>
+                <i className="bi bi-hourglass-split"></i>
+                Pending
+              </>
+            )}
           </div>
         </div>
 
@@ -213,7 +280,7 @@ function Evaluation() {
             <h5>
               Contractor Comparison
               <span className="submission-count-circle">
-                {submissions.length}
+                {displaySubmissions.length}
               </span>
             </h5>
           </div>
@@ -260,12 +327,37 @@ function Evaluation() {
                       </td>
 
                       <td>{formatBidPrice(submission)}</td>
-                      <td>{submission.technical_score ?? "—"}</td>
-                      <td>—</td>
-                      <td>—</td>
-                      <td>{submission.final_score ?? "—"}</td>
-                      <td>{submission.risk_score ?? "—"}</td>
-                      <td>{submission.final_score ?? "—"}</td>
+                      <td>
+                        {submission.technical_score ??
+                          submission.evaluation?.technical_score ??
+                          "—"}
+                      </td>
+                      <td>
+                        {submission.experience_score ??
+                          submission.evaluation?.experience_score ??
+                          "—"}
+                      </td>
+                      <td>
+                        {submission.compliance_score ??
+                          submission.evaluation?.compliance_score ??
+                          "—"}
+                      </td>
+                      <td>
+                        {submission.trust_score ??
+                          submission.evaluation?.trust_score ??
+                          "—"}
+                      </td>
+                      <td>
+                        {submission.risk_score ??
+                          submission.evaluation?.risk_score ??
+                          "—"}
+                      </td>
+                      <td>
+                        {submission.final_score ??
+                          submission.evaluation?.final_score ??
+                          submission.overall_score ??
+                          "—"}
+                      </td>
 
                       <td>
                         <div className="evaluation-row-actions">
@@ -273,7 +365,7 @@ function Evaluation() {
                             className="proposal-btn"
                             onClick={() =>
                               navigate(
-                                `/owner/proposal-details/${selectedTenderId}/${submission.id}`
+                                `/owner/proposal-details/${selectedTenderId}/${submission.id}`,
                               )
                             }
                           >
@@ -285,8 +377,8 @@ function Evaluation() {
                             onClick={() =>
                               navigate(
                                 `/owner/contractor-profile/${getContractorId(
-                                  submission
-                                )}`
+                                  submission,
+                                )}`,
                               )
                             }
                           >
@@ -331,7 +423,7 @@ function Evaluation() {
                             style={{
                               height: `${getBidBarHeight(
                                 item.price,
-                                chartSubmissions
+                                chartSubmissions,
                               )}%`,
                             }}
                           ></span>

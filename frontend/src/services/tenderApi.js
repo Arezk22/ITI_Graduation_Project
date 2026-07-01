@@ -23,7 +23,7 @@ export const createTender = (form) => {
     ([ruleName, ruleValue]) => ({
       rule_name: ruleName,
       rule_value: String(ruleValue),
-    })
+    }),
   );
 
   formData.append("evaluation_rules", JSON.stringify(evaluationRules));
@@ -65,4 +65,8 @@ export const updateTender = (id, payload) => {
 
 export const deleteTender = (id) => {
   return api.delete(`/tenders/${id}`);
+};
+
+export const getTenderEvaluation = (tenderId) => {
+  return api.get(`/tenders/${tenderId}/evaluate`);
 };
