@@ -209,6 +209,10 @@ class EvaluationWorkflow:
                 "submission_data": json.dumps(sub.structured_data)
             },ValidationResult)
             validation_results[sub.id]=result
+            print("=" * 40)
+            print(f"Submission {sub.id}")
+            print(result)
+            print("=" * 40)
             if not result.mandatory_passed:
                 sub.recommendation="Disqualified"
                 sub.justification="Failed mandatory requirements"
@@ -218,6 +222,7 @@ class EvaluationWorkflow:
                     "event":"Disqualified",
                     "sub":sub.id,
                 })
+        print(state["submission_ids"])
         return {"validation_results": validation_results,
                 "submission_ids": state["submission_ids"],}
 
@@ -233,6 +238,7 @@ class EvaluationWorkflow:
         validation_results=state["validation_results"]
         submissions=TenderSubmissions.objects.filter(id__in=state["submission_ids"])
         for sub in submissions:
+            print(f"⭕risk ai for sub {sub.id}")
             risk_payload=prepare_risk_data(sub)
             result = self._run_agent(RISK_AGENT_PROMPT, {
                 # "historical_prices": json.dumps(hist_prices),
@@ -261,6 +267,7 @@ class EvaluationWorkflow:
         validation_results=state["validation_results"]
         submissions=TenderSubmissions.objects.filter(id__in=state["submission_ids"])
         for sub in submissions:
+            print(f"⭕tech ai for sub {sub.id}")
             tech_payload=prepare_technical_data(sub)
             result = self._run_agent(TECHNICAL_AGENT_PROMPT, {
                 "tender_reqs":json.dumps(tender_reqs),
@@ -277,6 +284,7 @@ class EvaluationWorkflow:
         tender_reqs=get_tender_financial(state["tender_id"])
         submissions=TenderSubmissions.objects.filter(id__in=state["submission_ids"])
         for sub in submissions:
+            print(f"⭕fin ai for sub {sub.id}")
             financail_payload=prepare_financial_data(sub)
             result = self._run_agent(FINANCIAL_AGENT_PROMPT, {
                 "tender_reqs":json.dumps(tender_reqs),
@@ -303,12 +311,13 @@ class EvaluationWorkflow:
             rule.rule_name:rule.rule_value 
             for rule in EvaluationRules.objects.filter(id=state["tender_id"])
         }
-        tech_weight=rules["technical"]
-        fin_weight=rules["financial"]
-        compilance_weight=rules["compilance"]
-        exp_weight=rules["expreience"]
+        tech_weight=rules["Technical"]
+        fin_weight=rules["Price"]
+        compilance_weight=rules["Compliance"]
+        exp_weight=rules["Experience"]
         final_score=[]
-        for sub in submissions:            
+        for sub in submissions:  
+            print(f"⭕final score for sub {sub.id}")          
             if not state["validation_results"][sub.id]["mandatory_passed"]:
                 overall_score=0
                 sub.status="rejected"

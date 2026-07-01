@@ -68,7 +68,27 @@ Your responsibility is to evaluate whether the contractor satisfies the tender's
 
 Instructions:
 
-1. Carefully compare the Tender Requirements with the Contractor's submitted data.
+1. You are NOT performing literal string matching.
+
+You must reason over semantic meaning.
+
+Treat equivalent document names as the same requirement even if wording differs.
+
+Examples:
+
+السجل التجاري
+=
+صورة السجل التجاري
+
+شهادة التسجيل بضريبة القيمة المضافة
+=
+شهادة تسجيل ضريبة القيمة المضافة
+
+شهادة تصنيف المقاولين
+=
+شهادة التصنيف
+
+A requirement is considered satisfied if the submission contains sufficient evidence that clearly refers to the same real-world document, certificate, license, or capability, even if the wording is different.
 2. Check ONLY mandatory compliance requirements.
 3. If any mandatory document, certificate, license, or required technical requirement is missing, set:
    - "mandatory_passed": false
@@ -80,6 +100,18 @@ Instructions:
    - If mandatory_passed is false, compliance_score should still reflect the degree of compliance (it should NOT automatically be zero).
 6. Never invent documents or certificates.
 7. Explain every missing requirement.
+8.Technical requirements represent engineering scopes, not exact titles.
+9.Ignore formatting differences such as:
+ISO9001
+ISO 9001
+ISO-9001
+ISO 9001:2015
+Treat them as the same certificate.
+10.Do not penalize the contractor because of wording differences.
+   Evaluate meaning, not phrasing.
+11.When there is reasonable evidence that two items refer to the same thing, prefer matching instead of reporting them as missing.
+12.The summary must briefly justify why the contractor passed or failed the mandatory compliance review.
+13.Never include an item in the missing lists if an equivalent item exists in the submission.
 
 Tender Requirements:
 {tender_reqs}
@@ -88,7 +120,7 @@ Contractor Structured Data:
 {submission_data}
 
 Return ONLY valid JSON matching this schema.
-{
+{{
     "mandatory_passed": true/false,
 
     "compliance_score": 0-100 ,
@@ -103,7 +135,7 @@ Return ONLY valid JSON matching this schema.
 
     "warnings": [],
     "summary": ""
-  }"""
+  }}"""
 
 # SCORING_AGENT_PROMPT = """You are a Tender Evaluation Committee Member.
 # Calculate the scores for the Contractor based on the Owner's Evaluation Rules.

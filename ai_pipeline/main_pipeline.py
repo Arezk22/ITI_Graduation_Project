@@ -27,7 +27,7 @@ def run_tender_evaluation_job(tender):
     
     tender_id=tender.id
     print(f"🚀 [AI Pipeline] Starting complete evaluation for tender: {tender_id}")
-    submission_ids = tender.submissions.filter(need_review=False).values_list('id', flat=True)
+    submission_ids =list( tender.submissions.filter(need_review=False).values_list('id', flat=True))
     
     initial_state = {
             "tender_id": tender_id,
