@@ -1,13 +1,24 @@
-
 import { useEffect, useMemo, useState } from "react";
 import ContractorLayout from "../components/ContractorLayout";
 import { getAllTenders } from "../services/tenderApi";
+import {
+  createChat,
+  getChatDetails,
+  getChats,
+  sendChatMessage,
+} from "../services/chatApi";
 
 function DocumentChat() {
   const [tenders, setTenders] = useState([]);
   const [selectedTenderId, setSelectedTenderId] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [chats, setChats] = useState([]);
+  const [activeChatId, setActiveChatId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
   const questions = [
     "What are the concrete specifications for the foundation work?",
@@ -22,6 +33,101 @@ function DocumentChat() {
     "BOQ pricing discussion",
     "MEP scope clarification",
   ];
+
+  const handleSendMessage = async () => {
+    const trimmedMessage = message.trim();
+    if (!trimmedMessage || !selectedTenderId) {
+      return;
+    }
+
+    setSending(true);
+    setError("");
+
+    try {
+      let chatId = activeChatId;
+
+      if (!chatId) {
+        const createResponse = await createChat(
+          selectedTenderId,
+          selectedTender?.title
+            ? `Chat for ${selectedTender.title}`
+            : "Document Chat",
+        );
+        chatId = createResponse.data.id;
+        setActiveChatId(chatId);
+        await loadChats(selectedTenderId);
+      }
+
+      const sendResponse = await sendChatMessage(chatId, trimmedMessage);
+      const assistantAnswer = sendResponse.data.answer || "";
+
+      setMessages((current) => [
+        ...current,
+        { id: `user-${Date.now()}`, role: "user", content: trimmedMessage },
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: assistantAnswer,
+        },
+      ]);
+      setMessage("");
+    } catch (err) {
+      console.error("Send message error:", err.response?.data || err);
+      setError("Unable to send message. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSelectChat = (chatId) => {
+    setActiveChatId(chatId);
+  };
+
+  const selectedTender = useMemo(() => {
+    return tenders.find((tender) => String(tender.id) === selectedTenderId);
+  }, [tenders, selectedTenderId]);
+
+  const loadChats = async (tenderId) => {
+    setError("");
+
+    try {
+      const response = await getChats(tenderId);
+      const list = Array.isArray(response.data)
+        ? response.data
+        : response.data.tenders || response.data.results || [];
+      setChats(list);
+
+      if (list.length > 0) {
+        setActiveChatId(list[0].id);
+      } else {
+        setActiveChatId(null);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error("Load chats error:", err.response?.data || err);
+      setError("Unable to load chat history.");
+    }
+  };
+
+  const loadChatMessages = async (chatId) => {
+    if (!chatId) {
+      setMessages([]);
+      return;
+    }
+
+    setLoadingMessages(true);
+    setError("");
+
+    try {
+      const response = await getChatDetails(chatId);
+      setMessages(response.data.messages || []);
+    } catch (err) {
+      console.error("Load messages error:", err.response?.data || err);
+      setError("Unable to load chat messages.");
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
 
   useEffect(() => {
     getAllTenders()
@@ -41,9 +147,17 @@ function DocumentChat() {
       });
   }, []);
 
-  const selectedTender = useMemo(() => {
-    return tenders.find((tender) => String(tender.id) === selectedTenderId);
-  }, [tenders, selectedTenderId]);
+  useEffect(() => {
+    if (selectedTenderId) {
+      loadChats(selectedTenderId);
+    }
+  }, [selectedTenderId]);
+
+  useEffect(() => {
+    if (activeChatId) {
+      loadChatMessages(activeChatId);
+    }
+  }, [activeChatId]);
 
   return (
     <ContractorLayout activePage="document-chat">
@@ -103,22 +217,29 @@ function DocumentChat() {
           <div className="history-section">
             <h6>CHAT HISTORY</h6>
 
-            {chatHistory.map((item) => (
-              <button key={item}>
-                <i className="bi bi-clock-history"></i>
-                {item}
-              </button>
-            ))}
+            {chats.length === 0 ? (
+              <p className="chat-empty-text">
+                No chat history yet. Start a new conversation.
+              </p>
+            ) : (
+              chats.map((item) => (
+                <button
+                  key={item.id}
+                  className={item.id === activeChatId ? "active" : ""}
+                  onClick={() => handleSelectChat(item.id)}
+                >
+                  <i className="bi bi-clock-history"></i>
+                  {item.title || `Chat ${item.id}`}
+                </button>
+              ))
+            )}
           </div>
 
           <div className="suggested-section">
             <h6>SUGGESTED QUESTIONS</h6>
 
             {questions.map((question) => (
-              <button
-                key={question}
-                onClick={() => setMessage(question)}
-              >
+              <button key={question} onClick={() => setMessage(question)}>
                 {question}
               </button>
             ))}
@@ -127,6 +248,8 @@ function DocumentChat() {
 
         <main className="chat-area">
           <div className="chat-messages">
+            {error && <div className="chat-error">{error}</div>}
+
             <div className="chat-message-row">
               <div className="ai-chat-icon">
                 <i className="bi bi-stars"></i>
@@ -134,7 +257,8 @@ function DocumentChat() {
 
               <div className="chat-bubble">
                 <p>
-                  Hello! I'm your BuildTender AI assistant. Ask me anything about{" "}
+                  Hello! I'm your BuildTender AI assistant. Ask me anything
+                  about{" "}
                   <strong>{selectedTender?.title || "this tender"}</strong>.
                 </p>
 
@@ -143,24 +267,38 @@ function DocumentChat() {
                   specifications, compliance requirements, and contractor
                   requirements.
                 </p>
-
-                <div className="chat-actions">
-                  <div>
-                    <button>
-                      <i className="bi bi-hand-thumbs-up"></i>
-                    </button>
-                    <button>
-                      <i className="bi bi-hand-thumbs-down"></i>
-                    </button>
-                    <button>
-                      <i className="bi bi-copy"></i>
-                    </button>
-                  </div>
-
-                  <span>09:40 AM</span>
-                </div>
               </div>
             </div>
+
+            {loadingMessages ? (
+              <div className="chat-loading">Loading messages...</div>
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`chat-message-row ${msg.role === "assistant" ? "assistant" : "user"}`}
+                >
+                  <div className={`chat-icon ${msg.role}`}>
+                    <i
+                      className={
+                        msg.role === "assistant"
+                          ? "bi bi-robot"
+                          : "bi bi-person"
+                      }
+                    ></i>
+                  </div>
+
+                  <div className="chat-bubble">
+                    <p>{msg.content}</p>
+                    <div className="chat-meta">
+                      <span>
+                        {msg.role === "assistant" ? "BuildTender AI" : "You"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <div className="chat-bottom">
@@ -171,6 +309,12 @@ function DocumentChat() {
                     placeholder="Ask anything about this tender's documents..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
                   />
 
                   <div className="chat-input-footer">
@@ -184,8 +328,12 @@ function DocumentChat() {
                 </p>
               </div>
 
-              <button className="send-chat-btn">
-                <i className="bi bi-send"></i>
+              <button
+                className="send-chat-btn"
+                onClick={handleSendMessage}
+                disabled={sending || !message.trim()}
+              >
+                {sending ? "Sending..." : <i className="bi bi-send"></i>}
               </button>
             </div>
           </div>

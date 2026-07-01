@@ -6,6 +6,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from account.models import ContractorProfiles
+from api.models import TenderSubmissions
+from api.serializers import TenderSubmissionsSerializer
 from .serializers import (
     ContractorProfileSerializer,
     EmailTokenObtainPairSerializer,
@@ -51,4 +53,25 @@ class ContractorProfileAPIView(APIView):
             raise NotFound("Contractor profile not found.")
 
         serializer = ContractorProfileSerializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ContractorSubmissionsAPIView(APIView):
+    """Get all submissions for a specific contractor (accessible to any authenticated user)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, contractor_id):
+        contractor = ContractorProfiles.objects.filter(pk=contractor_id).first()
+        if contractor is None:
+            raise NotFound("Contractor profile not found.")
+
+        submissions = TenderSubmissions.objects.filter(
+            contractor_id=contractor_id
+        ).select_related("tender", "tender__owner", "contractor")
+        
+        serializer = TenderSubmissionsSerializer(
+            submissions,
+            many=True,
+            context={"request": request},
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
