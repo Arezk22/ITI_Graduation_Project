@@ -112,7 +112,9 @@ Treat them as the same certificate.
 11.When there is reasonable evidence that two items refer to the same thing, prefer matching instead of reporting them as missing.
 12.The summary must briefly justify why the contractor passed or failed the mandatory compliance review.
 13.Never include an item in the missing lists if an equivalent item exists in the submission.
-
+14.If the proposal has already been officially submitted through the procurement platform  (system submission),
+treat the official submission itself as satisfying the requirement
+for an official submission letter unless the tender explicitly requires a separately uploaded signed cover letter.
 Tender Requirements:
 {tender_reqs}
 
@@ -202,22 +204,22 @@ If there is insufficient evidence, state that clearly.
 OUTPUT
 --------------------------------------------------
 
-Return the following information:
+Return ONLY valid JSON.
 
 - risk_score
 - overall_risk
 - summary
-- top_risks
+- top_risks 
 
 --------------------------------------------------
 SCORING GUIDELINES
 --------------------------------------------------
 
-0 - 20     Very Low Risk
-21 - 40    Low Risk
-41 - 60    Moderate Risk
-61 - 80    High Risk
-81 - 100   Critical Risk
+0 - 20     Very Low 
+21 - 40    Low 
+41 - 60    Moderate 
+61 - 80    High 
+81 - 100   Critical 
 
 Higher scores indicate higher execution risk.
 
@@ -238,20 +240,53 @@ IMPORTANT RULES
 - List only the most significant risks.
 - If no significant risks are found, return an empty list for top_risks.
 - Return structured output only.
+- overall_risk MUST be EXACTLY one of the following values:
+   - "Very Low"
+   - "Low"
+   - "Moderate"
+   - "High"
+   - "Critical"
+
+- Do NOT return values like:
+   - "Critical Risk"
+   - "High Risk"
+   - "Low Risk"
+   - "Moderate Risk"
+
+- top_risks MUST be an array of object with risk_type , description
+
+Example:
+{{
+  "risk_score": 85,
+  "overall_risk": "Critical",
+  "summary": "...",
+  "top_risks": [
+    {{
+      "risk_type": "Compliance Risk",
+      "description": "Missing ISO certificates."
+    }},
+    {{
+      "risk_type": "Financial Risk",
+      "description": "Bid price is unusually low."
+    }}
+  ]
+}}
+
+
 ======================
 Tender Requirements:
 ======================
-{{tender_reqs}}
+{tender_reqs}
 
 ======================
 Contractor Proposal:
 ======================
-{{submission}} 
+{submission} 
 
 ======================
 Validation Results:
 ======================
-{{validation_result}}
+{validation_result}
 
 """
 
@@ -481,18 +516,18 @@ Return JSON only.
 ==========================
 tender summary
 ==========================
-{{tender_summary}}
+{tender_summary}
 
 
 ==========================
 Ranking
 ==========================
-{{ranking}}
+{ranking}
 
 ==========================
 Submissions summaries
 ==========================
-{{submission_summaries}}
+{submission_summaries}
 
 
 """
@@ -622,12 +657,12 @@ Use only the provided comparison results.
 ==========================
 tender summary
 ==========================
-{{tender_summary}}
+{tender_summary}
 
 ==========================
 comparison result
 ==========================
-{{comparison_result}}
+{comparison_result}
 
 
 

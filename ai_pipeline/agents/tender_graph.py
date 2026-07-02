@@ -77,7 +77,7 @@ def prepare_risk_data(sub):
     "certificates": proposal['certificates'],
     "licenses": proposal['licenses'],
 
-    "technical_capabilities": proposal['technical_capabilities'],
+    "technical_capabilities": proposal['technical_offer'],
 
     "staff_count": proposal['staff_count'],
     "key_personnel": proposal['key_personnel'],
@@ -183,19 +183,22 @@ class EvaluationWorkflow:
 
     # --- دوال مساعدة لاستدعاء الـ LLM ---
     def _run_agent(self, prompt_template, input_data , output_model=None):
-        prompt = ChatPromptTemplate.from_template(prompt_template)
+        
         
         if output_model:
             parser=PydanticOutputParser(pydantic_object=output_model)
+            prompt = ChatPromptTemplate.from_template(prompt_template + "\n\n{format_instructions}")
+            input_data["format_instructions"] = parser.get_format_instructions()
         else:
             parser = JsonOutputParser()
+            prompt = ChatPromptTemplate.from_template(prompt_template)
             
         chain = prompt | self.llm | parser
         try:
             return chain.invoke(input_data)
         except Exception as e:
             print(f"Agent Error: {e}")
-            return {}
+            return None
 
     # --- عقدة الـ Validation ---
     def validation_node(self, state: TenderState):
@@ -204,6 +207,7 @@ class EvaluationWorkflow:
         validation_results = {}
         submissions=TenderSubmissions.objects.filter(id__in=state["submission_ids"])
         for sub in submissions:
+            sub.structured_data["submission_letter"] = "System Submission"
             result = self._run_agent(VALIDATION_AGENT_PROMPT, {
                 "tender_reqs": json.dumps(tender_reqs),
                 "submission_data": json.dumps(sub.structured_data)
@@ -213,16 +217,17 @@ class EvaluationWorkflow:
             print(f"Submission {sub.id}")
             print(result)
             print("=" * 40)
-            if not result.mandatory_passed:
-                sub.recommendation="Disqualified"
-                sub.justification="Failed mandatory requirements"
-                sub.save(update_fields=["recommendation", "justification"])
-                state["submission_ids"].remove(sub.id)
-                notify.delay({
-                    "event":"Disqualified",
-                    "sub":sub.id,
-                })
-        print(state["submission_ids"])
+        #     if not result.mandatory_passed:
+        #         sub.recommendation="Disqualified"
+        #         sub.justification="Failed mandatory requirements"
+        #         sub.save(update_fields=["recommendation", "justification"])
+        #         state["submission_ids"].remove(sub.id)
+        #         notify.delay({
+        #             "event":"Disqualified",
+        #             "sub":sub.id,
+        #         })
+        # print(state["submission_ids"])
+            print(type(validation_results[sub.id]))
         return {"validation_results": validation_results,
                 "submission_ids": state["submission_ids"],}
 
@@ -236,9 +241,11 @@ class EvaluationWorkflow:
         risk_result = {}
         tender_reqs=get_tender_requirements(state["tender_id"])
         validation_results=state["validation_results"]
+        
         submissions=TenderSubmissions.objects.filter(id__in=state["submission_ids"])
         for sub in submissions:
             print(f"⭕risk ai for sub {sub.id}")
+            print(type(validation_results[sub.id]))
             risk_payload=prepare_risk_data(sub)
             result = self._run_agent(RISK_AGENT_PROMPT, {
                 # "historical_prices": json.dumps(hist_prices),
@@ -247,6 +254,7 @@ class EvaluationWorkflow:
                 "submission":json.dumps(risk_payload)
         },RiskAssessment)
             risk_result[sub.id]=result
+            print(result)
             if result.overall_risk in ["High", "Critical"]:
                 notify.delay({
                     "event":"risk",
@@ -309,7 +317,7 @@ class EvaluationWorkflow:
         required_exp=tender_data["minimum_experience_years"]
         rules={
             rule.rule_name:rule.rule_value 
-            for rule in EvaluationRules.objects.filter(id=state["tender_id"])
+            for rule in EvaluationRules.objects.filter(tender_id=state["tender_id"])
         }
         tech_weight=rules["Technical"]
         fin_weight=rules["Price"]
@@ -318,53 +326,53 @@ class EvaluationWorkflow:
         final_score=[]
         for sub in submissions:  
             print(f"⭕final score for sub {sub.id}")          
-            if not state["validation_results"][sub.id]["mandatory_passed"]:
-                overall_score=0
-                sub.status="rejected"
-                sub.save()
-                final_score.append({
-                    "submission_id":sub.id,
-                    "overall_score": overall_score,
-                    "status":"rejected",
-                    "breakdown":{}
-                })
+            # if not state["validation_results"][sub.id]["mandatory_passed"]:
+            #     overall_score=0
+            #     sub.status="rejected"
+            #     sub.save()
+            #     final_score.append({
+            #         "submission_id":sub.id,
+            #         "overall_score": overall_score,
+            #         "status":"rejected",
+            #         "breakdown":{}
+            #     })
+            # else:
+            tech_score=tech_scores[sub.id].model_dump()["technical_score"]
+            fin_score=fin_scores[sub.id].model_dump()["financial_score"]
+            compilance_score=compilance_scores[sub.id].model_dump()["compliance_score"]
+            act_exp=sub.stractured_data["experience_years"]
+            if required_exp:
+                exp_score=min(act_exp/required_exp , 1)*100
             else:
-                tech_score=tech_scores[sub.id]["technical_score"]
-                fin_score=fin_scores[sub.id]["financial_score"]
-                compilance_score=compilance_scores[sub.id]["compliance_score"]
-                act_exp=sub.stractured_data["experience_years"]
-                if required_exp:
-                    exp_score=min(act_exp/required_exp , 1)*100
-                else:
-                    exp_score=100
-                overall_score=tech_score*tech_weight+fin_score*fin_weight+compilance_score*compilance_weight+exp_score*exp_weight
-                final_score.append({
-                            "submission_id":sub.id,
-                            "contractor":sub.contractor.company_name,
-                          "overall_score": overall_score,
-                          "breakdown": {
-                            "technical": {
-                              "score": tech_score,
-                              "weight": tech_weight,
-                              "contribution": tech_score*tech_weight
-                            },
-                            "financial": {
-                              "score": fin_score,
-                              "weight": fin_weight,
-                              "contribution": fin_score*fin_weight
-                            },
-                            "compliance": {
-                              "score": compilance_score,
-                              "weight": compilance_weight,
-                              "contribution": compilance_score*compilance_weight
-                            },
-                            "experience": {
-                              "score": exp_score,
-                              "weight": exp_weight,
-                              "contribution": exp_score*exp_weight
-                            }
-                          }
-                        })
+                exp_score=100
+            overall_score=tech_score*tech_weight+fin_score*fin_weight+compilance_score*compilance_weight+exp_score*exp_weight
+            final_score.append({
+                        "submission_id":sub.id,
+                        "contractor":sub.contractor.company_name,
+                        "overall_score": overall_score,
+                        "breakdown": {
+                        "technical": {
+                            "score": tech_score,
+                            "weight": tech_weight,
+                            "contribution": tech_score*tech_weight
+                        },
+                        "financial": {
+                            "score": fin_score,
+                            "weight": fin_weight,
+                            "contribution": fin_score*fin_weight
+                        },
+                        "compliance": {
+                            "score": compilance_score,
+                            "weight": compilance_weight,
+                            "contribution": compilance_score*compilance_weight
+                        },
+                        "experience": {
+                            "score": exp_score,
+                            "weight": exp_weight,
+                            "contribution": exp_score*exp_weight
+                        }
+                        }
+                    })
 
         ranked_submissions = sorted(
             final_score, 
@@ -405,10 +413,10 @@ class EvaluationWorkflow:
         for sub_id in state["submission_ids"]:
             comparison_data.append({
                 "submission_id": sub_id,
-                "technical_summary": state["technical_evaluation"][sub_id]["summary"],
-                "financial_summary": state["financial_evaluation"][sub_id]["summary"],
-                "validation_summary": state["validation_results"][sub_id]["summary"],
-                "risk_summary": state["risk_result"][sub_id]["summary"],
+                "technical_summary": state["technical_evaluation"][sub_id].model_dump()["summary"],
+                "financial_summary": state["financial_evaluation"][sub_id].model_dump()["summary"],
+                "validation_summary": state["validation_results"][sub_id].model_dump()["summary"],
+                "risk_summary": state["risk_result"][sub_id].model_dump()["summary"],
                     })
         result = self._run_agent(COMPARISON_AGENT_PROMPT, {
                 "tender_summary":json.dumps(tender_summary),
@@ -451,17 +459,17 @@ class EvaluationWorkflow:
             for s in final_ranking
         }
         for sub in submissions:
-            sub.technical_score=technical_evaluation[sub.id]["technical_score"]
-            sub.financial_score=financial_evaluation[sub.id]["financial_score"]
-            sub.risk_score =risk_result[sub.id]["risk_score"]
+            sub.technical_score=technical_evaluation[sub.id].model_dump()["technical_score"]
+            sub.financial_score=financial_evaluation[sub.id].model_dump()["financial_score"]
+            sub.risk_score =risk_result[sub.id].model_dump()["risk_score"]
             sub.final_score=ranking[sub.id]["overall_score"]
             sub.rank =ranking[sub.id]["rank"]
-            sub.recommendation =recommendations[sub.id]["recommendation_level"]
-            sub.justification=recommendations[sub.id]["justification"]
-            sub.validation_result=validation_results[sub.id]
-            sub.risk_result=risk_result[sub.id]
-            sub.technical_result=technical_evaluation[sub.id]
-            sub.financial_result=financial_evaluation[sub.id]
+            sub.recommendation =recommendations[sub.id].model_dump()["recommendation_level"]
+            sub.justification=recommendations[sub.id].model_dump()["justification"]
+            sub.validation_result=validation_results[sub.id].model_dump()
+            sub.risk_result=risk_result[sub.id].model_dump()
+            sub.technical_result=technical_evaluation[sub.id].model_dump()
+            sub.financial_result=financial_evaluation[sub.id].model_dump()
             sub.save()
         tender.comparison_result=comparison_result.model_dump()
         tender.recommendation_result=recommendation_result.model_dump()

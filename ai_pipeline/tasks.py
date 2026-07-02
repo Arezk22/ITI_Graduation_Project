@@ -90,10 +90,10 @@ def run_tender_analysis(tender_id):
         
 @shared_task
 def notify(info):
-    event=info.event
-    if info.payload:
-        payload=info.payload
-    sub=TenderSubmissions.objects.get(id=info.sub_id)  
+    event=info["event"]
+    if info.get("payload"):
+        payload=info["payload"]
+    sub=TenderSubmissions.objects.get(id=info["sub"])  
     
     if  event == 'Disqualified':
         subject="Proposal Disqualified - Missing Mandatory Requirements"
