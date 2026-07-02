@@ -21,9 +21,14 @@ def get_tender_requirements(tender_id:int):
     tender_data=Tenders.objects.get(id=tender_id).structured_data
     return {
         "required_certificates": tender_data["required_certificates"],
-        "required_documents": tender_data["required_documents"],
-        "required_licenses": tender_data["required_licenses"],
-        "technical_requirements":tender_data["technical_requirements"],
+        "mandatory_documents": tender_data["mandatory_documents"],
+        "preferred_documents": tender_data["preferred_documents"],
+        "mandatory_licenses": tender_data["mandatory_licenses"],
+        "preferred_licenses": tender_data["preferred_licenses"],
+        "mandatory_technical_requirements":tender_data["mandatory_technical_requirements"],
+        "preferred_technical_requirements":tender_data["preferred_technical_requirements"],
+        "mandatory_certificates":tender_data["mandatory_certificates"],
+        "preferred_certificates":tender_data["preferred_certificates"],
         "custom_requirements": tender_data["custom_requirements"],
     }
 
@@ -38,14 +43,13 @@ def get_tender_technical(tender_id:int):
 
     "minimum_experience_years": tender_data['minimum_experience_years'],
 
-    "required_certificates": tender_data['required_certificates'],
-
-    "required_licenses": tender_data['required_licenses'],
-
-    "technical_requirements": tender_data['technical_requirements'],
-
+    "mandatory_licenses": tender_data["mandatory_licenses"],
+    "preferred_licenses": tender_data["preferred_licenses"],
+    "mandatory_technical_requirements":tender_data["mandatory_technical_requirements"],
+    "preferred_technical_requirements":tender_data["preferred_technical_requirements"],
+    "mandatory_certificates":tender_data["mandatory_certificates"],
+    "preferred_certificates":tender_data["preferred_certificates"],
     "evaluation_criteria": tender_data['evaluation_criteria'],
-
     "custom_requirements": tender_data['custom_requirements']
     }
 
@@ -227,7 +231,6 @@ class EvaluationWorkflow:
         #             "sub":sub.id,
         #         })
         # print(state["submission_ids"])
-            print(type(validation_results[sub.id]))
         return {"validation_results": validation_results,
                 "submission_ids": state["submission_ids"],}
 
@@ -245,12 +248,11 @@ class EvaluationWorkflow:
         submissions=TenderSubmissions.objects.filter(id__in=state["submission_ids"])
         for sub in submissions:
             print(f"⭕risk ai for sub {sub.id}")
-            print(type(validation_results[sub.id]))
             risk_payload=prepare_risk_data(sub)
             result = self._run_agent(RISK_AGENT_PROMPT, {
                 # "historical_prices": json.dumps(hist_prices),
                 "tender_reqs":json.dumps(tender_reqs),
-                "validation_result":json.dumps(validation_results[sub.id]),
+                "validation_result":validation_results[sub.id].model_dump_json(),
                 "submission":json.dumps(risk_payload)
         },RiskAssessment)
             risk_result[sub.id]=result
@@ -279,10 +281,11 @@ class EvaluationWorkflow:
             tech_payload=prepare_technical_data(sub)
             result = self._run_agent(TECHNICAL_AGENT_PROMPT, {
                 "tender_reqs":json.dumps(tender_reqs),
-                "validation_result":json.dumps(validation_results[sub.id]),
+                "validation_result": validation_results[sub.id].model_dump_json(),
                 "submission":json.dumps(tech_payload)
         },TechnicalEvaluation)
-            tech_result[sub.id]=result            
+            tech_result[sub.id]=result     
+            print(result)       
         return {"technical_evaluation": tech_result}
     
     
@@ -298,7 +301,8 @@ class EvaluationWorkflow:
                 "tender_reqs":json.dumps(tender_reqs),
                 "submission":json.dumps(financail_payload)
         },FinancialEvaluation)
-            financial_result[sub.id]=result            
+            financial_result[sub.id]=result 
+            print(result)           
         return {"financial_evaluation": financial_result}
     
     
@@ -319,10 +323,10 @@ class EvaluationWorkflow:
             rule.rule_name:rule.rule_value 
             for rule in EvaluationRules.objects.filter(tender_id=state["tender_id"])
         }
-        tech_weight=rules["Technical"]
-        fin_weight=rules["Price"]
-        compilance_weight=rules["Compliance"]
-        exp_weight=rules["Experience"]
+        tech_weight=float(rules["Technical"])/100
+        fin_weight=float(rules["Price"])/100
+        compilance_weight=float(rules["Compliance"])/100
+        exp_weight=float(rules["Experience"])/100
         final_score=[]
         for sub in submissions:  
             print(f"⭕final score for sub {sub.id}")          
@@ -340,7 +344,7 @@ class EvaluationWorkflow:
             tech_score=tech_scores[sub.id].model_dump()["technical_score"]
             fin_score=fin_scores[sub.id].model_dump()["financial_score"]
             compilance_score=compilance_scores[sub.id].model_dump()["compliance_score"]
-            act_exp=sub.stractured_data["experience_years"]
+            act_exp=sub.structured_data["experience_years"]
             if required_exp:
                 exp_score=min(act_exp/required_exp , 1)*100
             else:
@@ -382,7 +386,7 @@ class EvaluationWorkflow:
         
         for rank, submission in enumerate(ranked_submissions, start=1):
             submission["rank"] = rank
-            
+        print(ranked_submissions)
         return {"final_score":final_score,
                 "final_ranking":ranked_submissions}
        
@@ -424,7 +428,7 @@ class EvaluationWorkflow:
                 "submission_summaries": json.dumps(comparison_data)
         },ComparisonResult)
         
-            
+        print(result)  
         return {"comparison_result": result}
 
     # --- عقدة التوصية الفردية ---
@@ -433,47 +437,59 @@ class EvaluationWorkflow:
         tender_summary=get_tender_summary(state["tender_id"])
         result = self._run_agent(RECOMMENDATION_AGENT_PROMPT, {
                 "tender_summary":json.dumps(tender_summary),
-                "comparison_result":json.dumps(state["comparison_result"])
+                "comparison_result":state["comparison_result"].model_dump_json()
         },RecommendationResult)
-        
+        print(result)
         return {"recommendatin_result": result}
     
     
     @transaction.atomic
     def save_to_db(self,state:TenderState):
-        tender=Tenders.objects.get(id=state["tender_id"])
+        print("📁.. Saving into db ..")
         validation_results=state["validation_results"]
         risk_result=state["risk_result"]
         technical_evaluation=state["technical_evaluation"]
         financial_evaluation=state["financial_evaluation"]
-        final_ranking   =state["final_ranking"]     
+        final_ranking =state["final_ranking"]     
         comparison_result=state["comparison_result"]
         recommendation_result=state["recommendatin_result"]
         submissions=TenderSubmissions.objects.filter(id__in=state["submission_ids"])
         recommendations = {
-                            r["submission_id"]: r
-                            for r in recommendation_result["recommendations"]
+                            r.submission_id: r
+                            for r in recommendation_result.recommendations
                         }
         ranking={
             s["submission_id"]:s 
             for s in final_ranking
         }
         for sub in submissions:
-            sub.technical_score=technical_evaluation[sub.id].model_dump()["technical_score"]
-            sub.financial_score=financial_evaluation[sub.id].model_dump()["financial_score"]
-            sub.risk_score =risk_result[sub.id].model_dump()["risk_score"]
-            sub.final_score=ranking[sub.id]["overall_score"]
-            sub.rank =ranking[sub.id]["rank"]
-            sub.recommendation =recommendations[sub.id].model_dump()["recommendation_level"]
-            sub.justification=recommendations[sub.id].model_dump()["justification"]
-            sub.validation_result=validation_results[sub.id].model_dump()
-            sub.risk_result=risk_result[sub.id].model_dump()
-            sub.technical_result=technical_evaluation[sub.id].model_dump()
-            sub.financial_result=financial_evaluation[sub.id].model_dump()
+            tech = technical_evaluation[sub.id]
+            fin = financial_evaluation[sub.id]
+            risk = risk_result[sub.id]
+            validation = validation_results[sub.id]
+            rec = recommendations[sub.id]
+            rank = ranking[sub.id]
+
+            sub.technical_score = tech.technical_score
+            sub.financial_score = fin.financial_score
+            sub.risk_score = risk.risk_score
+
+            sub.final_score = rank["overall_score"]
+            sub.rank = rank["rank"]
+
+            sub.recommendation = rec.recommendation_level
+            sub.justification = rec.justification
+
+            sub.validation_result = validation.model_dump()
+            sub.risk_result = risk.model_dump()
+            sub.technical_result = tech.model_dump()
+            sub.financial_result = fin.model_dump()
             sub.save()
-        tender.comparison_result=comparison_result.model_dump()
-        tender.recommendation_result=recommendation_result.model_dump()
-        tender.save()
+        Tenders.objects.filter(id=state["tender_id"]).update(
+            comparison_result=comparison_result.model_dump(),
+            recommendation_result=recommendation_result.model_dump(),
+        )
+        print("📁.. Saving into db Successfully .. ✅")
         
     def run(self, initial_state: dict):
         return self.app.invoke(initial_state)

@@ -206,25 +206,48 @@ class UnifiedStructuredTender(BaseModel):
         description="Minimum years of contractor experience required"
     )
 
-    required_certificates: List[str] = Field(
+    mandatory_certificates: List[str] = Field(
+    default_factory=list,
+    description="Certificates explicitly marked as mandatory or required."
+)
+
+    preferred_certificates: List[str] = Field(
         default_factory=list,
-        description="Required certificates such as ISO 9001, ISO 45001, safety or quality certificates, etc."
+        description="Certificates explicitly marked as preferred, optional, recommended or desirable."
+    )
+    
+    mandatory_documents: List[str] = Field(
+    default_factory=list,
+    description="Documents explicitly marked as mandatory or required such as tax card, commercial register, financial statements, etc.."
+)
+
+    preferred_documents: List[str] = Field(
+        default_factory=list,
+        description="Documents explicitly marked as preferred, optional, recommended or desirable."
+    )
+    
+    mandatory_licenses: List[str] = Field(
+    default_factory=list,
+    description="contractor licenses or classification grades explicitly marked as mandatory or required"
+)
+
+    preferred_licenses: List[str] = Field(
+        default_factory=list,
+        description="contractor licenses or classification grades explicitly marked as preferred, optional, recommended or desirable."
     )
 
-    required_documents: List[str] = Field(
+    
+    mandatory_technical_requirements: List[str]= Field(
         default_factory=list,
-        description="Mandatory submission documents such as tax card, commercial register, financial statements, etc."
+        description="Technical requirements explicitly marked as mandatory or required mentioned in the tender"
     )
+    
 
-    required_licenses: List[str] = Field(
+    preferred_technical_requirements: List[str]= Field(
         default_factory=list,
-        description="Required contractor licenses or classification grades"
+        description="Technical requirements explicitly marked as preferred, optional, recommended or desirable. mentioned in the tender"
     )
-
-    technical_requirements: List[str] = Field(
-        default_factory=list,
-        description="Technical requirements explicitly mentioned in the tender"
-    )
+    
 
     custom_requirements: List[str] = Field(
         default_factory=list,
@@ -350,122 +373,282 @@ class DocumentIntakeProcessor:
 
     def _extract_scanned_pdf_via_vision(self, file_path):
         """دالة مساعدة لتحويل صفحات الـ Scanned PDF لصور وتمريرها للـ Vision LLM"""
-        prompt="""You are an OCR engine specialized in construction documents.
+        prompt="""You are an expert OCR engine specialized in construction, engineering, procurement, tender, BOQ, technical proposal, financial proposal, and contractor qualification documents.
 
-        Extract all visible text from this file.
+Your ONLY job is to extract every piece of visible information exactly as it appears.
 
-        After extraction, evaluate the quality of the extracted result.
+==========================
+PRIMARY OBJECTIVE
+==========================
 
-        Consider:
-        - Text clarity
-        - Readability
-        - Missing text
-        - Blurry areas
-        - Table quality
-        - OCR certainty
+Your highest priority is MAXIMUM RECALL.
 
-        Process EVERY PAGE independently.
+Missing information is considered a critical failure.
 
-        For EACH page create EXACTLY ONE object inside the "pages" array.
+Never summarize.
+Never simplify.
+Never shorten.
+Never ignore information because it appears unimportant.
 
-        Rules:
-        - Do not merge pages.
-        - Do not skip pages.
-        - Preserve the original page order.
-        - The number in "page" MUST match the original PDF page number.
-        - If the PDF has 10 pages, the "pages" array MUST contain exactly 10 objects.
-        - If any important part is unreadable, set needs_human_review to true.
-        - If confidence is below 80, set needs_human_review to true.
-        - Do not invent missing text.
-        - Preserve numbers exactly.
-        - Preserve the original language.
-        If tables exist:
-        - Extract each table separately.
-        - Preserve all rows and columns exactly as they appear.
-        - Do not merge table content into the normal text.
-        - Return tables inside the "tables" field.
-        Table Rules:
-        - "header" contains only the first row (column names).
-        - "rows" contains every remaining row.
-        - Always return "header" and "rows".
-        - Never return a table as a raw list.
-        - Never omit the "header" key.
-        - Never change this schema. 
-        - Every table MUST follow exactly this schema:
+If text exists anywhere on the page, extract it.
 
+==========================
+OCR EXTRACTION RULES
+==========================
+
+Perform two internal OCR passes before producing the final JSON.
+
+Pass 1:
+Extract every visible text region.
+
+Pass 2:
+Review the entire page again looking only for information that may have been missed in pass 1.
+
+The final output must include the union of both passes.
+
+Extract ALL visible text from the document.
+This includes text appearing inside:
+
+- paragraphs
+- tables
+- headers
+- footers
+- side notes
+- stamps
+- signatures
+- company logos
+- scanned certificates
+- licenses
+- appendices
+- attachments
+- handwritten notes (when readable)
+- engineering drawings
+- title blocks
+- callout boxes
+- watermarks (if readable)
+
+Never ignore text because of its location.
+
+False positives are acceptable.
+
+False negatives are not acceptable.
+
+When uncertain whether text exists,
+prefer extracting it rather than omitting it.
+==========================
+DO NOT OMIT
+==========================
+
+Pay special attention to extracting ALL occurrences of:
+
+- contractor names
+- client names
+- project names
+- certificate names
+- license names
+- document names
+- company registration numbers
+- ISO certificates
+- contractor classifications
+- financial values
+- quantities
+- units
+- dates
+- percentages
+- BOQ items
+- equipment names
+- personnel names
+- project references
+- material specifications
+- technical specifications
+- standards
+- compliance requirements
+
+Never keep only the "important" ones.
+
+Extract ALL of them.
+
+==========================
+NUMBERS
+==========================
+
+Numbers are extremely important.
+
+Never modify numbers.
+
+Never round values.
+
+Never calculate totals.
+
+Never convert currencies.
+
+Preserve exactly:
+
+585000
+
+17,367,200
+
+17.367.200
+
+17 367 200
+
+SAR 350,000
+
+25%
+
+10 m²
+
+150 mm
+
+etc.
+
+==========================
+TABLE EXTRACTION
+==========================
+
+Tables are critical.
+
+Never summarize a table.
+
+Never convert a table into normal text.
+
+Never merge tables together.
+
+Every table must be extracted independently.
+
+Preserve:
+
+- row order
+- column order
+- merged cells (best effort)
+- empty cells
+- duplicated rows
+
+Return tables exactly as:
+
+{
+    "header":[...],
+    "rows":[...]
+}
+
+Never change this schema.
+
+==========================
+MULTI PAGE RULES
+==========================
+
+Process EVERY page independently.
+
+Never merge pages.
+
+Never skip pages.
+
+Never reorder pages.
+
+If the PDF has N pages,
+the output MUST contain exactly N page objects.
+
+==========================
+QUALITY ASSESSMENT
+==========================
+
+For every page evaluate:
+
+- OCR confidence
+- blur
+- cut text
+- unreadable areas
+- missing regions
+- damaged scans
+- rotated text
+- table readability
+
+If important information is unreadable:
+
+needs_human_review = true
+
+If confidence < 80:
+
+needs_human_review = true
+
+Never invent missing text.
+
+==========================
+LANGUAGE
+==========================
+
+Preserve the original language.
+
+Do NOT translate.
+
+Do NOT normalize.
+
+Keep Arabic exactly as Arabic.
+
+Keep English exactly as English.
+
+==========================
+SPECIAL RULES
+==========================
+
+If the same certificate appears multiple times,
+extract every occurrence.
+
+If the same document appears on different pages,
+extract every occurrence.
+
+If text is uncertain,
+extract your best reading.
+
+Do NOT delete uncertain text.
+
+Mention uncertainty inside:
+
+unclear_sections    
+
+==========================
+OUTPUT FORMAT
+==========================
+
+Return ONLY valid JSON.
+
+Do not return markdown.
+
+Do not return explanations.
+
+Do not return comments.
+
+Return exactly:
+
+{
+  "pages":[
+    {
+      "page":1,
+      "type":"scanned",
+      "extraction_metadata":{
+        "confidence_score":95,
+        "needs_human_review":false,
+        "review_reason":"",
+        "unclear_sections":[]
+      },
+      "content":"...",
+      "tables":[
         {
-            "header": [
-                "column1",
-                "column2",
-                "column3"
-            ],
-            "rows": [
-                ["value11", "value12", "value13"],
-                ["value21", "value22", "value23"]
+          "header":[
+            "Column1",
+            "Column2"
+          ],
+          "rows":[
+            [
+              "A",
+              "B"
             ]
+          ]
         }
-        Return ONLY valid JSON.
-
-        {
-            "pages":[
-                {
-                "page":page number,
-                "type":"scanned",
-                "extraction_metadata":{
-                    "confidence_score": 0-100,
-                    "needs_human_review": true/false,
-                    "review_reason": "",
-                    "unclear_sections": [],
-                },
-                "content":"...",
-                "tables":[
-                            {
-                                "header": [],
-                                "rows": []
-                            }
-                        ]
-                }
-            ]
-        }
-        The output JSON must strictly follow the schema above.
-        Do not invent alternative structures.
-        Do not replace objects with arrays.
-        
-        Example:
-        If the input PDF has 2 pages, the output should be:
-
-        {
-        "pages": [
-            {
-            "page":1,
-            "type":"scanned",
-            "extraction_metadata":{
-                "confidence_score":95,
-                "needs_human_review":false,
-                "review_reason":"",
-                "unclear_sections":[]
-            },
-            "content":"...",
-            "tables":[
-                {
-                    "header":[
-                        "Item",
-                        "Description",
-                        "Qty"
-                    ],
-                    "rows":[
-                        ["1","Excavation","25"],
-                        ["2","Concrete","10"]
-                    ]
-                }
-            ]
-        },
-            {
-            "page": 2,
-            ...
-            }
-        ]
-        }"""
+      ]
+    }
+  ]
+}"""
         try:
             
         # # ITI_GATEWAY
@@ -634,35 +817,337 @@ class DocumentIntakeProcessor:
         )
         if type == "tender":
             parser = JsonOutputParser(pydantic_object=UnifiedStructuredTender)
-            doc_context = """
-            - Focus on finding the client/owner requirements, project scope, technical specifications, and the empty/blank Bill of Quantities (BOQ) tables.
-            - Extract any rules, deadlines, or general compliance conditions set by the owner.
+            doc_context = """Focus on extracting EVERY owner requirement.
+
+Pay special attention to:
+
+- mandatory certificates
+- preferred certificates
+- mandatory documents
+- preferred documents
+- mandatory licenses
+- preferred licenses
+- mandatory technical requirements
+- preferred technical requirements
+- evaluation criteria and weights
+- project duration
+- experience requirements
+- project description
+- budget
+- complete BOQ tables
+
+Do not summarize requirements.
+
+Extract every individual requirement separately.
+Do not extract only mandatory requirements.
+
+Extract ALL owner requirements.
+
+Later classify them into:
+
+- mandatory
+- preferred
+
+based on the wording used in the tender.
+
+If no wording indicates that a requirement is preferred,
+assume it is mandatory.
             """
         elif type == "submission":
             parser = JsonOutputParser(pydantic_object=UnifiedStructuredProposal)
-            doc_context = """
-            - Carefully find the contractor name, total experience years, financial bids, pricing parameters, delivery timeframe, and the priced Bill of Quantities (BOQ) tables.
-            - Normalize pricing and bidding figures strictly to numbers.
-            """
+            doc_context = """Focus on extracting EVERY contractor capability.
+
+Pay special attention to:
+
+- contractor name
+- company information
+- experience
+- previous projects
+- financial capacity
+- certificates
+- licenses
+- submitted documents
+- technical offer
+- implementation methodology
+- equipment
+- key personnel
+- warranty
+- support services
+- deviations
+- exclusions
+- complete priced BOQ tables
+
+Do not summarize lists.
+
+Extract every item individually.
+
+Never ignore certificates, licenses, or documents even if they appear only once.
+Extract every capability the contractor claims.
+
+Even if the capability is mentioned inside:
+
+- certificates
+- project references
+- CVs
+- methodology
+- appendices
+- cover letters
+
+it must still appear in the appropriate schema field."""
             
-        prompt = f"""You are an expert construction data standardization specialist. Your job is to take the raw extracted content and convert it strictly into the required unified JSON schema.
-        
-        Extraction Strategy:
-        {doc_context}
-        - Maintain data integrity; ensure item numbers, quantities, and text metrics align perfectly.
-        - Ignore irrelevant conversational or layout filler text.
-        Raw Content Notes:
-        - Each object represents one uploaded file.
-        - file_category indicates the purpose of the file.
-        - Information may be distributed across multiple files.
-        - Merge all available information into one final unified schema.
-        - Do not create multiple outputs.
-        - Produce a single complete JSON object.
-        Format Instructions:
-        {parser.get_format_instructions()}
-        
-        Raw Content:
-        {raw_content_text[:40000]}
+        prompt = f"""You are an expert construction, procurement, and tender document analysis specialist.
+
+Your task is to convert raw OCR text into ONE structured JSON object that strictly follows the provided schema.
+
+==========================
+PRIMARY OBJECTIVE
+==========================
+
+Your highest priority is MAXIMUM RECALL.
+
+Never omit information.
+
+Never summarize unless the schema explicitly requires a summary.
+
+Every relevant piece of information found in the raw text must appear somewhere in the output schema.
+
+Missing information is considered a critical failure.
+
+==========================
+GENERAL EXTRACTION RULES
+==========================
+
+- Read the ENTIRE raw content before producing the JSON.
+- Information may be spread across multiple pages and multiple uploaded files.
+- Merge duplicated information.
+- Never discard additional information.
+- If two files contain complementary information, combine them.
+- Preserve factual accuracy.
+- Never invent values.
+- Never infer information that is not explicitly stated.
+- If a field is not mentioned, leave it empty instead of guessing.
+- Preserve the original meaning even if wording differs.
+-   If the same information appears multiple times,
+    merge duplicates instead of removing information.
+    Never lose information because it appeared more than once.
+- If information could reasonably belong to more than one schema field,
+    prefer storing it in multiple relevant fields rather than omitting it.
+
+==========================
+DOCUMENT TYPE
+==========================
+
+{doc_context}
+
+
+==========================
+SEMANTIC MATCHING
+==========================
+
+Do NOT rely on exact wording.
+
+Treat equivalent names as the same entity.
+
+Examples:
+
+ISO9001
+ISO 9001
+ISO-9001
+ISO9001:2015
+
+are the same certificate.
+
+Commercial Register
+Commercial Registration
+السجل التجاري
+
+represent the same document.
+
+VAT Registration
+VAT Certificate
+ضريبة القيمة المضافة
+
+represent the same document.
+
+==========================
+DO NOT IGNORE
+==========================
+
+Pay special attention to extracting ALL occurrences of:
+
+• certificates
+• licenses
+• submitted documents
+• contractor classifications
+• evaluation criteria
+• technical specifications
+• mandatory requirements
+• preferred requirements
+• project duration
+• experience requirements
+• company capabilities
+• equipment
+• methodology
+• support services
+• deviations
+• exclusions
+• key personnel
+• previous projects
+• BOQ items
+• financial values
+• quantities
+• units
+• percentages
+• currencies
+• dates
+
+Every occurrence matters.
+
+==========================
+TABLES
+==========================
+
+Information inside tables is often more important than normal paragraphs.
+
+Inspect every table carefully.
+
+Never ignore table rows.
+
+Many BOQ items, certificates, personnel, equipment,
+pricing, and project references exist only inside tables.
+
+==========================
+MULTIPLE OCCURRENCES
+==========================
+
+If multiple certificates exist:
+
+Extract ALL of them.
+
+If multiple licenses exist:
+
+Extract ALL of them.
+
+If multiple previous projects exist:
+
+Extract ALL of them.
+
+If multiple equipment items exist:
+
+Extract ALL of them.
+
+Do NOT keep only representative examples.
+
+==========================
+NUMBERS
+==========================
+
+Never modify numbers.
+
+Never calculate totals.
+
+Never round values.
+
+Preserve:
+
+- prices
+- quantities
+- percentages
+- years
+- durations
+- budgets
+
+exactly as stated.
+
+==========================
+CLASSIFICATION RULES
+==========================
+
+Mandatory and preferred requirements must never be mixed.
+
+If the tender explicitly says:
+
+must
+mandatory
+required
+shall
+يجب
+يلتزم
+شرط أساسي
+
+→ classify as Mandatory.
+
+If the tender says:
+
+preferred
+recommended
+optional
+desirable
+يفضل
+يُفضل
+من المستحسن
+
+→ classify as Preferred.
+
+Never promote preferred requirements into mandatory ones.
+
+
+==========================
+FIELD MAPPING
+==========================
+
+Always try to map extracted information into the most appropriate schema field.
+
+Only use notes or custom_information when absolutely no dedicated field exists.
+
+Never move certificates, documents, licenses, technical requirements, BOQ items, personnel, equipment, methodology, support services, evaluation criteria, pricing information, or project information into notes.
+==========================
+COMPLETENESS CHECK
+==========================
+
+Before generating the JSON, perform an internal review.
+
+Verify that:
+
+✓ every certificate has been extracted
+
+✓ every submitted document has been extracted
+
+✓ every license has been extracted
+
+✓ every BOQ item has been extracted
+
+✓ every project reference has been extracted
+
+✓ every equipment item has been extracted
+
+✓ every key person has been extracted
+
+✓ every financial value has been extracted
+
+✓ every technical requirement has been extracted
+
+Only after this review produce the final JSON.
+
+==========================
+OUTPUT RULES
+==========================
+
+- Produce ONE JSON object only.
+- The output MUST strictly follow the provided schema.
+- Never invent fields.
+- Never remove fields.
+- Never output Markdown.
+- Never output explanations.
+- Return ONLY valid JSON.
+
+Format Instructions:
+
+{parser.get_format_instructions()}
+
+Raw Content:
+
+{raw_content_text[:50000]}
         """
         
         try:

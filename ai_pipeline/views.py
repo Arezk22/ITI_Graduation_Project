@@ -14,7 +14,6 @@ from api.models import TenderSubmissions, Tenders
 from api.serializers import TenderSubmissionsSerializer, TendersSerializer
 from ai_pipeline.main_pipeline import run_tender_evaluation_job
 from ai_pipeline.vector_store import search_documents
-from langchain_openai import ChatOpenAI
 from .services.rag import RagAgent
 from rest_framework.decorators import action
 from .services.chat_memory import ChatMemoryService

@@ -83,6 +83,7 @@ class FinancialEvaluation(BaseModel):
     observations: List[str]
 
 class SubmissionAnalysis(BaseModel):
+    Submission_id : int
     contractor: str
     strengths: list[str]
     weaknesses: list[str]

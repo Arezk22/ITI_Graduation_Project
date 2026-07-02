@@ -1,4 +1,3 @@
-from langchain_openai import ChatOpenAI
 import os
 from dotenv import load_dotenv
 from ai_pipeline.vector_store import search_documents
