@@ -14,20 +14,19 @@ tender_files_uploaded = django.dispatch.Signal()
 submission_files_uploaded = django.dispatch.Signal()
 
 
-def _index_files(files):
+def _index_files(files_ids,files_type):
     # importing it lazy so that app doesn't need to stack it in the first of the app
     # Please remove return true when implementing the func. :)
-    return True
-    from ai_agent.pipeline import index_files_for_rag
+    from ai_pipeline.tasks import index_files_task
 
-    index_files_for_rag(files)
+    index_files_task.delay(files_ids,files_type)
 
 
 @receiver(tender_files_uploaded)
-def index_tender_files_for_rag(sender, files, **kwargs):
-    _index_files(files)
+def index_tender_files_for_rag(sender, files_ids, files_type, **kwargs):
+    _index_files(files_ids,files_type)
 
 
 @receiver(submission_files_uploaded)
-def index_submission_files_for_rag(sender, files, **kwargs):
-    _index_files(files)
+def index_submission_files_for_rag(sender, files_ids,files_type, **kwargs):
+    _index_files(files_ids,files_type)

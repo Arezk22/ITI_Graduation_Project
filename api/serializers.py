@@ -98,7 +98,7 @@ class TenderFilesSerializer(serializers.ModelSerializer):
         # with a one-row QuerySet so indexing happens here too.
         files_qs = TenderFiles.objects.filter(id=instance.id)
         transaction.on_commit(
-            lambda: tender_files_uploaded.send(sender=Tenders, files=files_qs)
+            lambda: tender_files_uploaded.send(sender=Tenders, files_ids=[instance.id])
         )
         return instance
 
@@ -169,19 +169,20 @@ class SubmissionFilesSerializer(serializers.ModelSerializer):
 class TenderSubmissionsSerializer(serializers.ModelSerializer):
     tender = TenderMinimalSerializer(read_only=True)
     contractor_company_name = serializers.SerializerMethodField()
+    contractor_email = serializers.EmailField(source='contractor.user.email', read_only=True)
     files = SubmissionFilesSerializer(many=True, read_only=True)
 
     class Meta:
         model = TenderSubmissions
         fields = [
-            'id', 'tender', 'contractor', 'contractor_company_name', 'status',
+            'id', 'tender', 'contractor', 'contractor_company_name', 'contractor_email', 'status',
             'technical_score', 'financial_score', 'risk_score', 'final_score',
             'rank', 'recommendation', 'structured_data', 'justification',
             'validation_result', 'risk_result', 'technical_result', 'financial_result',
             'submitted_at', 'files',
         ]
         read_only_fields = [
-            'tender', 'contractor', 'contractor_company_name', 'files',
+            'tender', 'contractor', 'contractor_company_name', 'contractor_email', 'files',
             'technical_score', 'financial_score', 'risk_score', 'final_score',
             'rank', 'recommendation', 'structured_data', 'justification',
             'validation_result', 'risk_result', 'technical_result', 'financial_result',
@@ -301,7 +302,7 @@ class CreateTenderSerializer(serializers.ModelSerializer):
         if created_ids:
             files_qs = TenderFiles.objects.filter(id__in=created_ids)
             transaction.on_commit(
-                lambda: tender_files_uploaded.send(sender=Tenders, files=files_qs)
+                lambda: tender_files_uploaded.send(sender=Tenders, files_ids=created_ids ,files_type="tender")
             )
         return tender
 
@@ -351,7 +352,7 @@ class CreateSubmissionSerializer(serializers.ModelSerializer):
             files_qs = SubmissionFiles.objects.filter(id__in=created_ids)
             transaction.on_commit(
                 lambda: submission_files_uploaded.send(
-                    sender=TenderSubmissions, files=files_qs
+                    sender=TenderSubmissions, files_ids=created_ids,files_type="submission"
                 )
             )
         return submission

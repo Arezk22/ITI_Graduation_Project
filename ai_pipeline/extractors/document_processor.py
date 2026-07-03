@@ -19,7 +19,6 @@ from django.shortcuts import get_object_or_404
 from ai_pipeline.iti_llm import chat , vision_chat
 load_dotenv()
 
-# تعريف الهيكل الموحد المرجو من الـ Structuring Agent باستخدام Pydantic
 class ProposalBOQItem(BaseModel):
     item_name: str = Field(
         description="BOQ item name"
@@ -47,7 +46,6 @@ class ProposalBOQItem(BaseModel):
         default=None,
         description="Total line item amount"
     )
-
 
 
 class UnifiedStructuredProposal(BaseModel):
@@ -178,6 +176,9 @@ class TenderBOQItem(BaseModel):
         description="Required quantity"
     )
     
+class EvaluationRule(BaseModel):
+    name: str = Field(description="Evaluation criterion name")
+    weight: float = Field(description="Weight of this criterion")
     
 class UnifiedStructuredTender(BaseModel):
     title: str = Field(
@@ -230,7 +231,7 @@ class UnifiedStructuredTender(BaseModel):
         description="Any special requirements not covered by predefined fields"
     )
 
-    evaluation_criteria: List[dict] = Field(
+    evaluation_criteria: List[EvaluationRule] = Field(
         default_factory=list,
         description="Tender evaluation criteria and their corresponding weights"
     )
@@ -253,9 +254,9 @@ class DocumentIntakeProcessor:
     # 1. Intake Agent: تحديد نوع الملف وتوجيهه للمسار الصحيح
     def intake_and_route(self, file) -> str:
         """وظيفة الـ Routing ومعرفة نوع الملف بالضبط"""
-        file_path=file.file_url
+        file_path=file.file.path
         category=file.file_category
-        
+        print(f"🔺from intake .. {category} file")
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found at: {file_path}")
         
@@ -310,9 +311,9 @@ class DocumentIntakeProcessor:
             return full_text
             
         elif file_type == "pdf":
-            with pdfplumber.open(file_path) as pdf:
-                full_text = []
-                for page_num, page in enumerate(pdf.pages,start=1):
+            # with pdfplumber.open(file_path) as pdf:
+            #     full_text = []
+            #     for page_num, page in enumerate(pdf.pages,start=1):
                     # text=page.extract_text()
                     # tables=page.extract_tables()
                     # if len(text.strip())>50 or tables:
@@ -323,64 +324,148 @@ class DocumentIntakeProcessor:
                     #     "tables":tables
                     # })
                     # else:
-                        poppler_path=os.getenv("POPPLER_PATH")
-                        page_image=convert_from_path(file_path,first_page=page_num,last_page=page_num,poppler_path=poppler_path)[0]
-                        ocr_data=self._extract_scanned_pdf_via_vision(page_image)
-                        full_text.append({
-                            "page":page_num,
-                            "type":"scanned",
-                            "extraction_metadata":{
-                                "confidence_score": ocr_data["confidence_score"],
-                                "needs_human_review": ocr_data["needs_human_review"],
-                                "review_reason": ocr_data["review_reason"],
-                                "unclear_sections": ocr_data["unclear_sections"],
-                            },
-                            "content":ocr_data["extracted_text"],
-                            "tables":ocr_data["tables"]
-                        })
-                return full_text
+                #         poppler_path=os.getenv("POPPLER_PATH")
+                #         page_image=convert_from_path(file_path,first_page=page_num,last_page=page_num,poppler_path=poppler_path)[0]
+                #         ocr_data=self._extract_scanned_pdf_via_vision(page_image)
+                #         full_text.append({
+                #             "page":page_num,
+                #             "type":"scanned",
+                #             "extraction_metadata":{
+                #                 "confidence_score": ocr_data["confidence_score"],
+                #                 "needs_human_review": ocr_data["needs_human_review"],
+                #                 "review_reason": ocr_data["review_reason"],
+                #                 "unclear_sections": ocr_data["unclear_sections"],
+                #             },
+                #             "content":ocr_data["extracted_text"],
+                #             "tables":ocr_data["tables"]
+                #         })
+                # return full_text
+            
+                
+            # sending all file to vision
+            ocr_data=self._extract_scanned_pdf_via_vision(file_path)
+            return ocr_data
         else:
             return "Unsupported file content format."
 
-    def _extract_scanned_pdf_via_vision(self, img):
+    def _extract_scanned_pdf_via_vision(self, file_path):
         """دالة مساعدة لتحويل صفحات الـ Scanned PDF لصور وتمريرها للـ Vision LLM"""
         prompt="""You are an OCR engine specialized in construction documents.
 
-        Extract all visible text from this image.
+        Extract all visible text from this file.
 
         After extraction, evaluate the quality of the extracted result.
 
         Consider:
-        - Image clarity
+        - Text clarity
         - Readability
         - Missing text
         - Blurry areas
         - Table quality
         - OCR certainty
 
-        Return JSON file only without any text except shown below:
+        Process EVERY PAGE independently.
 
-        {
-            "confidence_score": 0-100,
-            "needs_human_review": true/false,
-            "review_reason": "",
-            "unclear_sections": [],
-            "extracted_text": "",
-            "tables":[]
-        }
+        For EACH page create EXACTLY ONE object inside the "pages" array.
 
         Rules:
+        - Do not merge pages.
+        - Do not skip pages.
+        - Preserve the original page order.
+        - The number in "page" MUST match the original PDF page number.
+        - If the PDF has 10 pages, the "pages" array MUST contain exactly 10 objects.
         - If any important part is unreadable, set needs_human_review to true.
         - If confidence is below 80, set needs_human_review to true.
         - Do not invent missing text.
         - Preserve numbers exactly.
         - Preserve the original language.
-        -If tables exist:
-            - Extract them separately.
-            - Preserve rows and columns.
-            - Do not merge table data into normal text.
-            - Return tables inside the "tables" field.
-            - Each table should be represented as a list of rows."""
+        If tables exist:
+        - Extract each table separately.
+        - Preserve all rows and columns exactly as they appear.
+        - Do not merge table content into the normal text.
+        - Return tables inside the "tables" field.
+        Table Rules:
+        - "header" contains only the first row (column names).
+        - "rows" contains every remaining row.
+        - Always return "header" and "rows".
+        - Never return a table as a raw list.
+        - Never omit the "header" key.
+        - Never change this schema. 
+        - Every table MUST follow exactly this schema:
+
+        {
+            "header": [
+                "column1",
+                "column2",
+                "column3"
+            ],
+            "rows": [
+                ["value11", "value12", "value13"],
+                ["value21", "value22", "value23"]
+            ]
+        }
+        Return ONLY valid JSON.
+
+        {
+            "pages":[
+                {
+                "page":page number,
+                "type":"scanned",
+                "extraction_metadata":{
+                    "confidence_score": 0-100,
+                    "needs_human_review": true/false,
+                    "review_reason": "",
+                    "unclear_sections": [],
+                },
+                "content":"...",
+                "tables":[
+                            {
+                                "header": [],
+                                "rows": []
+                            }
+                        ]
+                }
+            ]
+        }
+        The output JSON must strictly follow the schema above.
+        Do not invent alternative structures.
+        Do not replace objects with arrays.
+        
+        Example:
+        If the input PDF has 2 pages, the output should be:
+
+        {
+        "pages": [
+            {
+            "page":1,
+            "type":"scanned",
+            "extraction_metadata":{
+                "confidence_score":95,
+                "needs_human_review":false,
+                "review_reason":"",
+                "unclear_sections":[]
+            },
+            "content":"...",
+            "tables":[
+                {
+                    "header":[
+                        "Item",
+                        "Description",
+                        "Qty"
+                    ],
+                    "rows":[
+                        ["1","Excavation","25"],
+                        ["2","Concrete","10"]
+                    ]
+                }
+            ]
+        },
+            {
+            "page": 2,
+            ...
+            }
+        ]
+        }"""
         try:
             
         # # ITI_GATEWAY
@@ -398,18 +483,22 @@ class DocumentIntakeProcessor:
         # return ocr_data   
             
             
-        # in gemini model   
+        # in gemini model 
+            uploaded_file=self.ai_client.files.upload(
+                file=file_path
+            )
             vision_response = self.ai_client.models.generate_content(
             model='gemini-2.5-flash',
             contents=[
-                img, 
+                uploaded_file, 
                 prompt
             ]
         )
             response_text = vision_response.text
             clean_json = response_text.replace("```json", "").replace("```", "").strip()
             ocr_data = json.loads(clean_json)
-            return ocr_data
+            self.ai_client.files.delete(name=uploaded_file.name)
+            return ocr_data["pages"]
             
             # in openai model
         # buffered = BytesIO()
@@ -437,14 +526,20 @@ class DocumentIntakeProcessor:
         
         except Exception as e:
             print(f"❌ Error during Vision PDF extraction: {e}")
-            return {
-            "confidence_score": 0,
-            "needs_human_review": True,
-            "review_reason": "Didnot extract successfully",
-            "unclear_sections": [],
-            "extracted_text": "",
-            "tables":[]
+            return [
+                {
+                "page":"all pages",
+                "type":"scanned",
+                "extraction_metadata":{
+                    "confidence_score": 0,
+                    "needs_human_review": True ,
+                    "review_reason": "Didnot extract successfully",
+                    "unclear_sections": [],
+                },
+                "content":"",
+                "tables":[]
                 }
+            ]
         
     def analyze_extraction_quality(self,extracted_pages):
 
@@ -499,7 +594,7 @@ class DocumentIntakeProcessor:
                 file_type = self.intake_and_route(file)
                 if not file_type=="drawing file": # edit to suit model
                     raw_data = self.extract_content(
-                        file.file_url,
+                        file.file.path,
                         file_type
                     )
 
@@ -543,7 +638,7 @@ class DocumentIntakeProcessor:
             - Focus on finding the client/owner requirements, project scope, technical specifications, and the empty/blank Bill of Quantities (BOQ) tables.
             - Extract any rules, deadlines, or general compliance conditions set by the owner.
             """
-        elif type == "Submission":
+        elif type == "submission":
             parser = JsonOutputParser(pydantic_object=UnifiedStructuredProposal)
             doc_context = """
             - Carefully find the contractor name, total experience years, financial bids, pricing parameters, delivery timeframe, and the priced Bill of Quantities (BOQ) tables.
@@ -619,24 +714,40 @@ class DocumentIntakeProcessor:
                         tender=submission.tender,
                         item_name=item["item_name"]
                     ).first()
+                
+                if boq_item is None:
+                    print(f"BOQ item not found: {item['item_name']}")
+                    continue
+                
                 BoqPrice.objects.create(
                     submission=submission,
                     boq_item=boq_item,
                     unit_price=item["unit_rate"],
                 )
     
-    # used in vector store            
-    def table_to_text(self,table: list) -> str:
+    # used in vector store 
+    @staticmethod           
+    def table_to_text(table: list) -> str:
     
         if not table:
             return ""
 
-        headers = table[0]
+        # الشكل الجديد
+        if isinstance(table, dict):
+            headers = table.get("header", [])
+            rows = table.get("rows", [])
+
+        # الشكل القديم
+        elif isinstance(table, list):
+            headers = table[0]
+            rows = table[1:]
+
+        else:
+            return ""
 
         lines = []
 
-        for row in table[1:]:
-
+        for row in rows:
             row_parts = []
 
             for header, value in zip(headers, row):

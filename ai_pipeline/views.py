@@ -10,15 +10,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from ITI_Graduation_Project.api.models import TenderSubmissions, Tenders
-from ITI_Graduation_Project.api.serializers import TenderSubmissionsSerializer, TendersSerializer
+from api.models import TenderSubmissions, Tenders
+from api.serializers import TenderSubmissionsSerializer, TendersSerializer
 from ai_pipeline.main_pipeline import run_tender_evaluation_job
 from ai_pipeline.vector_store import search_documents
 from langchain_openai import ChatOpenAI
 from .services.rag import RagAgent
 from rest_framework.decorators import action
 from .services.chat_memory import ChatMemoryService
-from api.permissions import IsTenderOwner
+from api.permissions import IsContractor, IsTenderOwner
 rag=RagAgent()
 memory=ChatMemoryService()
 
@@ -152,11 +152,12 @@ class ChatViewSet(viewsets.ViewSet):
         GET    /api/v1/chats/{id}/            — retrieve a chat
                                                        with its full message history
         DELETE /api/v1/chats/{id}/            — delete a chat
+        POST /api/v1/chats/{id}/messages/     — send a message
     """
-    permission_classes=[IsAuthenticated]
+    permission_classes=[IsAuthenticated,IsContractor]
     
     def list(self, request):
-        tender_id = request.data.get('tender_id')
+        tender_id = request.query_params.get('tender_id')
         chats = memory.list_chats(request.user, tender=tender_id)
         return Response(_serialize_chats(chats))
     

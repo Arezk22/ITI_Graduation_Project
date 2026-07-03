@@ -81,6 +81,7 @@ class ActiveProposalSerializer(serializers.Serializer):
 
 class ContractorProfileSerializer(serializers.ModelSerializer):
     ai_avg_rate = serializers.FloatField(source="average_rating", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
     win_rate = serializers.SerializerMethodField()
     active_proposals_count = serializers.SerializerMethodField()
     active_proposals = serializers.SerializerMethodField()
@@ -90,6 +91,7 @@ class ContractorProfileSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "company_name",
+            "email",
             "experience_years",
             "total_tenders",
             "total_wins",

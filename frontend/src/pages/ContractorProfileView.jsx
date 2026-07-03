@@ -1,5 +1,3 @@
-
-
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import OwnerLayout from "../components/OwnerLayout";
@@ -14,62 +12,38 @@ function ContractorProfileView() {
   const [loading, setLoading] = useState(true);
   const [hoveredYear, setHoveredYear] = useState(null);
 
-useEffect(() => {
-  const loadProfile = async () => {
-    if (!contractorId) return;
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!contractorId) return;
 
-    try {
-      const profileResponse = await api.get(`/contractor/${contractorId}/`);
-      setProfile(profileResponse.data);
+      try {
+        const profileResponse = await api.get(`/contractor/${contractorId}/`);
+        setProfile(profileResponse.data);
 
-      const tendersResponse = await api.get("/tenders");
+        const submissionsResponse = await api.get(
+          `/contractor/${contractorId}/submissions/`
+        );
 
-      const tendersList = Array.isArray(tendersResponse.data)
-        ? tendersResponse.data
-        : tendersResponse.data.tenders || tendersResponse.data.results || [];
+        const list = Array.isArray(submissionsResponse.data)
+          ? submissionsResponse.data
+          : submissionsResponse.data.submissions || submissionsResponse.data.results || [];
 
-      const submissionsResponses = await Promise.all(
-        tendersList.map((tender) =>
-          api
-            .get(`/tenders/${tender.id}/submissions`)
-            .then((response) => {
-              const list = Array.isArray(response.data)
-                ? response.data
-                : response.data.submissions || response.data.results || [];
+        setSubmissions(list);
+      } catch (error) {
+        console.error(
+          "Load contractor profile error:",
+          error.response?.data || error,
+        );
 
-              return list;
-            })
-            .catch(() => [])
-        )
-      );
+        setProfile(null);
+        setSubmissions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      const allSubmissions = submissionsResponses.flat();
-
-      const contractorSubmissions = allSubmissions.filter((submission) => {
-        const submissionContractorId =
-          submission.contractor?.id ||
-          submission.contractor_id ||
-          submission.contractor;
-
-        return String(submissionContractorId) === String(contractorId);
-      });
-
-      setSubmissions(contractorSubmissions);
-    } catch (error) {
-      console.error(
-        "Load contractor profile error:",
-        error.response?.data || error
-      );
-
-      setProfile(null);
-      setSubmissions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  loadProfile();
-}, [contractorId]);
+    loadProfile();
+  }, [contractorId]);
 
   const awardedSubmissions = useMemo(() => {
     return submissions.filter((submission) => isAwardedSubmission(submission));
@@ -95,6 +69,15 @@ useEffect(() => {
     return Math.round((awardedSubmissions.length / submissions.length) * 100);
   }, [submissions, awardedSubmissions]);
 
+  const averageDeliveryScore = useMemo(() => {
+    if (!awardedSubmissions.length) return 0;
+    const validScores = awardedSubmissions
+      .map((s) => s.final_score)
+      .filter((score) => score !== null && score !== undefined && !Number.isNaN(score));
+    if (!validScores.length) return 0;
+    return Math.round((validScores.reduce((a, b) => a + b, 0) / validScores.length) * 100) / 100;
+  }, [awardedSubmissions]);
+
   const annualAwardData = useMemo(() => {
     const years = [2022, 2023, 2024, 2025, 2026];
 
@@ -117,24 +100,19 @@ useEffect(() => {
     });
   }, [awardedSubmissions]);
 
-const companyName =
-  profile?.company_name ||
-  submissions[0]?.contractor_company_name || "Company Name";
+  const companyName =
+    profile?.company_name ||
+    submissions[0]?.contractor_company_name ||
+    "Company Name";
 
-    const contractorEmail =
-  profile?.email ||
-  profile?.user?.email ||
-  profile?.user_email ||
-  "No email provided";
+  const contractorEmail = profile?.email || "No email provided";
 
   return (
     <OwnerLayout activePage="evaluation">
       <section className="contractor-profile-content">
         <div className="contractor-hero-card">
           <div className="contractor-main-info">
-            <div className="contractor-avatar">
-              {getInitial(companyName)}
-            </div>
+            <div className="contractor-avatar">{getInitial(companyName)}</div>
 
             <div>
               <h2>{companyName}</h2>
@@ -177,7 +155,7 @@ const companyName =
             </div>
 
             <div>
-              <h3>91/100</h3>
+              <h3>{averageDeliveryScore}/100</h3>
               <p>Avg Delivery Score</p>
             </div>
           </div>
@@ -241,16 +219,18 @@ const companyName =
           <div className="card-header-clean">
             <h5>Awarded Projects</h5>
 
-{awardedSubmissions.length > 0 && (
-  <button
-    className="view-all-link"
-    onClick={() =>
-      navigate(`/owner/contractor-profile/${contractorId}/awarded-projects`)
-    }
-  >
-    View all
-  </button>
-)}
+            {awardedSubmissions.length > 0 && (
+              <button
+                className="view-all-link"
+                onClick={() =>
+                  navigate(
+                    `/owner/contractor-profile/${contractorId}/awarded-projects`,
+                  )
+                }
+              >
+                View all
+              </button>
+            )}
           </div>
 
           <div className="profile-projects-list">
@@ -282,7 +262,7 @@ const companyName =
                       {formatDate(
                         submission.accepted_at ||
                           submission.tender?.awarded_at ||
-                          submission.submitted_at
+                          submission.submitted_at,
                       )}
                     </p>
                   </div>
@@ -320,7 +300,7 @@ const companyName =
                       style={{
                         height: `${Math.max(
                           (item.count / 12) * 100,
-                          item.count ? 6 : 2
+                          item.count ? 6 : 2,
                         )}%`,
                       }}
                     ></span>
@@ -397,15 +377,6 @@ function isAwardedSubmission(submission) {
 
 function getInitial(name) {
   return name?.trim()?.charAt(0)?.toUpperCase() || "C";
-}
-
-function getContractorEmail(profile) {
-  return (
-    profile?.email ||
-    profile?.user?.email ||
-    profile?.user_email ||
-    "No email provided"
-  );
 }
 
 function formatDate(value) {
