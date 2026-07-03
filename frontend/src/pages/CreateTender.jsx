@@ -55,8 +55,14 @@ const closeToast = () => {
 
   function handleChange(e) {
     const { name, value } = e.target;
+    const normalizedValue =
+      name === "Project_Duration"
+        ? value === ""
+          ? ""
+          : Math.max(0, Number(value))
+        : value;
 
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: normalizedValue }));
 
     setErrors((prev) => ({
       ...prev,

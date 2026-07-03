@@ -13,6 +13,7 @@ export const getChatDetails = (chatId) => {
 };
 
 export const deleteChat = (chatId) => {
+  console.log("Deleting chat with ID:", chatId);
   return api.delete(`/chats/${chatId}/`);
 };
 

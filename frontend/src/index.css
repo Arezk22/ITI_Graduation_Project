@@ -376,7 +376,6 @@ body {
   }
 }
 
-
 .legal-hero {
   background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
   padding: 80px 20px;
@@ -785,6 +784,295 @@ body {
 
 .auth-back-link:hover {
   color: #1f49c6;
+}
+/* -------------------------------------------contractor Documentchat ------------------------------------------ */
+
+/* الحاوية الأساسية للشاشة بالكامل */
+.gpt-chat-container {
+  display: flex;
+  height: calc(100vh - 60px);
+  background-color: #ffffff; /* خلفية بيضاء نقية */
+  color: #2d2d2d; /* نصوص داكنة مريحة للعين */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* القائمة الجانبية (رمادي فاتح جداً هادئ) */
+.gpt-sidebar {
+  width: 260px;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border-right: 1px solid #e5e5e5;
+}
+
+/* زر شات جديد */
+.gpt-new-chat-btn {
+  background: #ffffff;
+  color: #2d2d2d;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  padding: 10px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+  text-align: left;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.gpt-new-chat-btn:hover {
+  background-color: #f4f4f4;
+  border-color: #c5c5c5;
+}
+
+.sidebar-dropdown-area {
+  margin-top: 20px;
+  margin-bottom: 15px;
+}
+.sidebar-label {
+  font-size: 0.75rem;
+  color: #8e8ea0;
+  margin-bottom: 5px;
+  display: block;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* سجل المحادثات داخل السايدبار */
+.gpt-history-section {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+.history-title {
+  font-size: 0.75rem;
+  color: #b4b4b4;
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+.gpt-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 3px;
+  font-size: 0.85rem;
+  color: #4d4d4d;
+  transition: background 0.2s;
+}
+.gpt-history-item:hover {
+  background-color: #ececec;
+  color: #000;
+}
+.gpt-history-item.active {
+  background-color: #e2e2e2;
+  color: #000;
+  font-weight: 500;
+}
+.gpt-item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.gpt-delete-btn {
+  background: transparent;
+  border: none;
+  color: #999;
+  display: none;
+}
+.gpt-history-item:hover .gpt-delete-btn {
+  display: block;
+}
+.gpt-delete-btn:hover {
+  color: #ff4d4d;
+}
+
+/* منطقة الشات الرئيسية */
+.gpt-main-chat {
+  flex-grow: 1;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.gpt-chat-header {
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #8e8ea0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* منطقة الرسائل بالتمركز المتناسق */
+.gpt-messages-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 180px;
+}
+.gpt-row {
+  display: flex;
+  padding: 24px calc((100% - 720px) / 2);
+  gap: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.user-row {
+  background-color: #ffffff; /* شات المستخدم بخلفية بيضاء صريحة */
+}
+.assistant-row {
+  background-color: #f7f7f8; /* ردود الـ AI بخلفية رمادية خفيفة جداً للتمييز الفاخر */
+}
+
+/* الأفاتار (الرموز الشخصية) */
+.gpt-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.user-avatar {
+  background-color: #e2f7ed;
+  color: #19c37d; /* اخضر مريح */
+}
+.assistant-avatar {
+  background-color: #e7f1ff;
+  color: #0d6efd; /* أزرق براند البناء */
+}
+
+.gpt-content h5 {
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+  color: #6f6f7f;
+  font-weight: 600;
+}
+.gpt-content p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 8px;
+  color: #374151;
+}
+
+/* منطقة الإدخال العائمة بالأسفل وتأثير التلاشي الفاتح */
+.gpt-footer-area {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(transparent, #ffffff 30%);
+  padding: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+.gpt-footer-wrapper {
+  width: 720px;
+  max-width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* كروت الأسئلة المقترحة (Light Style) */
+.gpt-suggestions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.gpt-suggestion-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: left;
+  color: #404040;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+.gpt-suggestion-card:hover {
+  background-color: #f7f7f8;
+  border-color: #d1d1d6;
+}
+.card-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-icon {
+  font-size: 1.2rem;
+  color: #b4b4b4;
+}
+
+/* صندوق الكتابة الأبيض المستدير المحاكي تماماً لـ ChatGPT الحالي */
+.gpt-input-container {
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+.gpt-input-container textarea {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  color: #2d2d2d;
+  resize: none;
+  outline: none;
+  font-size: 0.95rem;
+}
+.gpt-input-container textarea::placeholder {
+  color: #8e8ea0;
+}
+.gpt-send-btn {
+  background: transparent;
+  border: none;
+  color: #19c37d; /* زر السهم الأخضر الخاص بـ ChatGPT */
+  font-size: 1.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  transition:
+    transform 0.1s,
+    color 0.2s;
+}
+.gpt-send-btn:disabled {
+  color: #e5e5e5;
+  cursor: not-allowed;
+}
+.gpt-send-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.gpt-disclaimer {
+  font-size: 0.7rem;
+  color: #8e8ea0;
+  text-align: center;
+  margin: 0;
 }
 
 /* --------------------------------------------------------- owner dashboard -----------------------------------------------------------*/
@@ -1389,8 +1677,6 @@ body {
   margin-left: -4px;
 }
 
-
-
 @media (max-width: 768px) {
   .topbar-brand-center {
     position: static;
@@ -1407,8 +1693,6 @@ body {
   }
 }
 /* ===================added code================= */
-
-
 
 .real-chart {
   position: relative;
@@ -4053,8 +4337,6 @@ body {
   }
 }
 
-
-
 /* ------------------------------------------------------------------- Contractor Profile ---------------------------------------------------- */
 .contractor-profile-content {
   padding: 34px 28px 60px;
@@ -4779,7 +5061,6 @@ body {
   z-index: 10;
 }
 
-
 .status-indicator.closed {
   color: #dc2626;
   background: #fee2e2 !important;
@@ -4804,7 +5085,6 @@ body {
   cursor: pointer;
   min-width: 320px;
 }
-
 
 .tender-title-dropdown:hover {
   color: #2563eb;
@@ -4860,7 +5140,6 @@ body {
   padding: 0;
 }
 
-
 /* ==============================================================================Contractor Styles ======================================================================= */
 /* ==============================================================================Contractor Dashboard  ======================================================================= */
 .contractor-dashboard-content {
@@ -4876,15 +5155,13 @@ body {
 
 .contractor-dashboard-header h6 {
   font-weight: 400;
-      font-size: 15px;
-
+  font-size: 15px;
 }
 
 .contractor-dashboard-header p {
   color: black;
-    font-weight: 800;
-    font-size: 28px;
-
+  font-weight: 800;
+  font-size: 28px;
 }
 
 .my-profile-btn {
@@ -4972,7 +5249,6 @@ body {
   border-bottom: 1px solid #e5e7eb;
 }
 
-
 .proposal-row {
   display: flex;
   align-items: center;
@@ -4980,8 +5256,7 @@ body {
   width: 100%;
   padding: 16px 20px;
   border-bottom: 1px solid #e9edf5;
-} 
-
+}
 
 .proposal-main-info h6 {
   margin: 0 0 6px;
@@ -5257,7 +5532,7 @@ body {
 }
 
 .submit-bid-btn:disabled {
-  background: #2563eb;
+  background: #94a3b8;
   opacity: 0.9;
   cursor: not-allowed;
 }
@@ -5522,7 +5797,6 @@ body {
   display: block;
 }
 /* ================================================== contractor all proposals ====================================== */
-
 
 .contractor-proposal-row {
   display: flex !important;
@@ -6216,7 +6490,6 @@ body {
   overflow-y: auto;
 }
 
-
 .custom-modal {
   width: 100%;
   max-width: 520px;
@@ -6232,7 +6505,6 @@ body {
 .custom-modal.large {
   max-width: 900px;
 }
-
 
 .custom-modal-header {
   flex-shrink: 0;
@@ -6396,7 +6668,7 @@ body {
 
 /* ================================================== Contractor Tender Details ============================================ */
 
- .contractor-tender-details-content {
+.contractor-tender-details-content {
   padding: 28px;
 }
 
@@ -6454,7 +6726,7 @@ body {
 }
 
 .contractor-tender-details-content .submit-bid-btn:disabled {
-  background: #2563eb;
+  background: #64748b;
   opacity: 0.85;
   cursor: not-allowed;
 }
@@ -6644,7 +6916,6 @@ body {
   background: #dbeafe;
   color: #1d4ed8;
 }
-
 
 /* ========================================================================= response================================================= */
 
@@ -6873,7 +7144,7 @@ select {
   .trust-chart-area {
     min-width: 600px;
   }
-} 
+}
 /* ============================= */
 /* Responsive Sidebar */
 /* ============================= */
@@ -7045,4 +7316,4 @@ select {
     width: 42px;
     height: 42px;
   }
-} 
+}
