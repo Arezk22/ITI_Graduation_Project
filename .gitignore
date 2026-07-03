@@ -30,3 +30,8 @@ build/
 dist/
 
 *.log
+
+
+# Celery Beat schedule
+celerybeat-schedule
+celerybeat-schedule.*
