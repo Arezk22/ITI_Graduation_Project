@@ -3,6 +3,7 @@ import ContractorLayout from "../components/ContractorLayout";
 import { getAllTenders } from "../services/tenderApi";
 import {
   createChat,
+  deleteChat,
   getChatDetails,
   getChats,
   sendChatMessage,
@@ -23,15 +24,6 @@ function DocumentChat() {
   const questions = [
     "What are the concrete specifications for the foundation work?",
     "Summarize the MEP scope of work",
-    "What certifications are contractors required to have?",
-    "What is the penalty clause for delays?",
-    "Compare the BOQ for structural steel across all submissions",
-  ];
-
-  const chatHistory = [
-    "Foundation material questions",
-    "BOQ pricing discussion",
-    "MEP scope clarification",
   ];
 
   const handleSendMessage = async () => {
@@ -39,7 +31,11 @@ function DocumentChat() {
     if (!trimmedMessage || !selectedTenderId) {
       return;
     }
-
+    setMessages((prev) => [
+      ...prev,
+      { id: `user-${Date.now()}`, role: "user", content: trimmedMessage },
+    ]);
+    setMessage("");
     setSending(true);
     setError("");
 
@@ -83,13 +79,45 @@ function DocumentChat() {
     setActiveChatId(chatId);
   };
 
+  const handleAddNewChat = () => {
+    setActiveChatId(null);
+    setMessages([]);
+    setMessage("");
+  };
+
+  const handleDeleteChat = async (e, chatId) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this chat?")) {
+      try {
+        console.log("Attempting to delete chat:", chatId);
+        const response = await deleteChat(chatId);
+        console.log("Delete response:", response);
+        
+        // Update state to remove the chat
+        const updatedChats = chats.filter((c) => c.id !== chatId);
+        console.log("Updated chats list:", updatedChats);
+        setChats(updatedChats);
+        
+        if (activeChatId === chatId) {
+          console.log("Deleted chat was active, clearing active chat");
+          setActiveChatId(null);
+          setMessages([]);
+        }
+        setError(""); // Clear any previous errors
+      } catch (err) {
+        const errorMsg = err.response?.data?.error || err.message || err.toString();
+        console.error("Delete chat error:", errorMsg);
+        setError("Unable to delete chat. " + errorMsg);
+      }
+    }
+  };
+
   const selectedTender = useMemo(() => {
     return tenders.find((tender) => String(tender.id) === selectedTenderId);
   }, [tenders, selectedTenderId]);
 
   const loadChats = async (tenderId) => {
     setError("");
-
     try {
       const response = await getChats(tenderId);
       const list = Array.isArray(response.data)
@@ -114,10 +142,8 @@ function DocumentChat() {
       setMessages([]);
       return;
     }
-
     setLoadingMessages(true);
     setError("");
-
     try {
       const response = await getChatDetails(chatId);
       setMessages(response.data.messages || []);
@@ -135,9 +161,7 @@ function DocumentChat() {
         const list = Array.isArray(response.data)
           ? response.data
           : response.data.tenders || response.data.results || [];
-
         setTenders(list);
-
         if (list.length > 0) {
           setSelectedTenderId(String(list[0].id));
         }
@@ -161,14 +185,18 @@ function DocumentChat() {
 
   return (
     <ContractorLayout activePage="document-chat">
-      <section className="document-chat-page">
-        <aside className="document-panel">
-          <div className="document-title">
-            <h4>
-              <i className="bi bi-cpu text-primary"></i>
-              Document Chat
-            </h4>
+      <section className="gpt-chat-container">
+        {/* القائمة الجانبية الداكنة - كـ ChatGPT Sidebar */}
+        <aside className="gpt-sidebar">
+          <div className="sidebar-top">
+            <button className="gpt-new-chat-btn" onClick={handleAddNewChat}>
+              <i className="bi bi-plus-lg"></i>
+              <span>New chat</span>
+            </button>
+          </div>
 
+          <div className="sidebar-dropdown-area">
+            <label className="sidebar-label">Active Tender</label>
             <div className="chat-tender-dropdown-wrap">
               <button
                 type="button"
@@ -177,13 +205,9 @@ function DocumentChat() {
               >
                 <div>
                   <strong>{selectedTender?.title || "Select tender"}</strong>
-                  <span>Choose tender documents</span>
                 </div>
-
                 <i
-                  className={`bi ${
-                    dropdownOpen ? "bi-chevron-up" : "bi-chevron-down"
-                  }`}
+                  className={`bi ${dropdownOpen ? "bi-chevron-up" : "bi-chevron-down"}`}
                 ></i>
               </button>
 
@@ -205,7 +229,6 @@ function DocumentChat() {
                         }}
                       >
                         <strong>{tender.title || `Tender ${tender.id}`}</strong>
-                        <span>{tender.location || "N/A"}</span>
                       </button>
                     ))
                   )}
@@ -214,127 +237,138 @@ function DocumentChat() {
             </div>
           </div>
 
-          <div className="history-section">
-            <h6>CHAT HISTORY</h6>
-
-            {chats.length === 0 ? (
-              <p className="chat-empty-text">
-                No chat history yet. Start a new conversation.
-              </p>
-            ) : (
-              chats.map((item) => (
-                <button
+          <div className="gpt-history-section">
+            <span className="history-title">Recent Chats</span>
+            <div className="gpt-history-list">
+              {chats.map((item) => (
+                <div
                   key={item.id}
-                  className={item.id === activeChatId ? "active" : ""}
+                  className={`gpt-history-item ${item.id === activeChatId ? "active" : ""}`}
                   onClick={() => handleSelectChat(item.id)}
                 >
-                  <i className="bi bi-clock-history"></i>
-                  {item.title || `Chat ${item.id}`}
-                </button>
-              ))
-            )}
-          </div>
-
-          <div className="suggested-section">
-            <h6>SUGGESTED QUESTIONS</h6>
-
-            {questions.map((question) => (
-              <button key={question} onClick={() => setMessage(question)}>
-                {question}
-              </button>
-            ))}
+                  <div className="gpt-item-title">
+                    <i className="bi bi-chat-left-text"></i>
+                    <span>{item.title || `Chat ${item.id}`}</span>
+                  </div>
+                  <button
+                    className="gpt-delete-btn"
+                    onClick={(e) => handleDeleteChat(e, item.id)}
+                  >
+                    <i className="bi bi-trash"></i>
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </aside>
 
-        <main className="chat-area">
-          <div className="chat-messages">
-            {error && <div className="chat-error">{error}</div>}
+        {/* منطقة المحادثة الرئيسية الواسعة */}
+        <main className="gpt-main-chat">
+          <header className="gpt-chat-header">
+            <span>BuildTender AI v2.0</span>
+          </header>
 
-            <div className="chat-message-row">
-              <div className="ai-chat-icon">
-                <i className="bi bi-stars"></i>
+          <div className="gpt-messages-container">
+            {error && <div className="gpt-alert-error">{error}</div>}
+
+            {/* رسالة الترحيب الافتراضية بنظام كتل ChatGPT */}
+            <div className="gpt-row assistant-row">
+              <div className="gpt-avatar assistant-avatar">
+                <i className="bi bi-robot"></i>
               </div>
-
-              <div className="chat-bubble">
+              <div className="gpt-content">
+                <h5>BuildTender Assistant</h5>
                 <p>
-                  Hello! I'm your BuildTender AI assistant. Ask me anything
-                  about{" "}
+                  Hello! I'm your AI assistant grounded in your tender
+                  documents. Ask me anything about{" "}
                   <strong>{selectedTender?.title || "this tender"}</strong>.
                 </p>
-
                 <p>
-                  I can help with scope of work, pricing details, material
-                  specifications, compliance requirements, and contractor
-                  requirements.
+                  I can analyze the scope of work, Bill of Quantities (BOQ), and
+                  penalty clauses efficiently.
                 </p>
               </div>
             </div>
 
             {loadingMessages ? (
-              <div className="chat-loading">Loading messages...</div>
+              <div className="gpt-loading">
+                <span className="spinner-border spinner-border-sm me-2"></span>
+                Loading conversation...
+              </div>
             ) : (
               messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`chat-message-row ${msg.role === "assistant" ? "assistant" : "user"}`}
+                  className={`gpt-row ${msg.role === "assistant" ? "assistant-row" : "user-row"}`}
                 >
-                  <div className={`chat-icon ${msg.role}`}>
+                  <div
+                    className={`gpt-avatar ${msg.role === "assistant" ? "assistant-avatar" : "user-avatar"}`}
+                  >
                     <i
                       className={
                         msg.role === "assistant"
                           ? "bi bi-robot"
-                          : "bi bi-person"
+                          : "bi bi-person-fill"
                       }
                     ></i>
                   </div>
-
-                  <div className="chat-bubble">
+                  <div className="gpt-content">
+                    <h5>
+                      {msg.role === "assistant" ? "BuildTender AI" : "You"}
+                    </h5>
                     <p>{msg.content}</p>
-                    <div className="chat-meta">
-                      <span>
-                        {msg.role === "assistant" ? "BuildTender AI" : "You"}
-                      </span>
-                    </div>
                   </div>
                 </div>
               ))
             )}
           </div>
 
-          <div className="chat-bottom">
-            <div className="chat-input-area">
-              <div className="chat-input-column">
-                <div className="chat-input-box">
-                  <textarea
-                    placeholder="Ask anything about this tender's documents..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                  />
-
-                  <div className="chat-input-footer">
-                    <span>Shift+Enter for new line</span>
-                  </div>
-                </div>
-
-                <p className="chat-note">
-                  AI answers are grounded in tender documents. Always verify
-                  critical information.
-                </p>
+          {/* الجزء السفلي العائم للأسئلة والمستطيل الاحترافي */}
+          <div className="gpt-footer-area">
+            <div className="gpt-footer-wrapper">
+              {/* الأسئلة المقترحة كبطاقات فوق حقل الكتابة مباشرة */}
+              <div className="gpt-suggestions-grid">
+                {questions.map((question) => (
+                  <button
+                    key={question}
+                    className="gpt-suggestion-card"
+                    onClick={() => setMessage(question)}
+                  >
+                    <span className="card-text">{question}</span>
+                    <i className="bi bi-arrow-up-short card-icon"></i>
+                  </button>
+                ))}
               </div>
 
-              <button
-                className="send-chat-btn"
-                onClick={handleSendMessage}
-                disabled={sending || !message.trim()}
-              >
-                {sending ? "Sending..." : <i className="bi bi-send"></i>}
-              </button>
+              {/* صندوق المدخلات مثل ChatGPT تماماً */}
+              <div className="gpt-input-container">
+                <textarea
+                  placeholder="Message BuildTender AI..."
+                  rows="1"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                <button
+                  className="gpt-send-btn"
+                  onClick={handleSendMessage}
+                  disabled={sending || !message.trim()}
+                >
+                  {sending ? (
+                    <span className="spinner-border spinner-border-sm"></span>
+                  ) : (
+                    <i className="bi bi-arrow-up-circle-fill"></i>
+                  )}
+                </button>
+              </div>
+              <p className="gpt-disclaimer">
+                AI can make mistakes. Verify critical tender specifications.
+              </p>
             </div>
           </div>
         </main>

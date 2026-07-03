@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { mapRegisterErrors, register } from "../services/authApi";
+import { mapRegisterErrors, register, saveTokens } from "../services/authApi";
 
 function ContractorSignUp() {
   const navigate = useNavigate();
@@ -70,19 +70,24 @@ function ContractorSignUp() {
     setIsLoading(true);
 
     try {
-await register({
-  first_name: formData.fullName.trim(),
-  username: formData.email.trim(),
-  company_name: formData.companyName.trim(),
-  email: formData.email.trim(),
-  password: formData.password,
-  role: "contractor",
-});
+      const response = await register({
+        first_name: formData.fullName.trim(),
+        username: formData.email.trim(),
+        company_name: formData.companyName.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        role: "contractor",
+      });
+      const { access, refresh, first_name, company_name } = response.data;
+      saveTokens(access, refresh);
+      localStorage.setItem("userRole", "contractor");
+      localStorage.setItem("userEmail", formData.email.trim());
+      localStorage.setItem("userName", first_name || "User");
+      localStorage.setItem("companyName", company_name || "");
+      localStorage.setItem("pendingRole", "contractor");
+      localStorage.setItem("pendingEmail", formData.email.trim());
 
-localStorage.setItem("pendingRole", "contractor");
-localStorage.setItem("pendingEmail", formData.email.trim());
-
-navigate("/signin");
+      navigate("/contractor/dashboard");
     } catch (error) {
       setErrors(mapRegisterErrors(error));
     } finally {
@@ -138,7 +143,8 @@ navigate("/signin");
       </div>
 
       <div className="auth-right">
-        <div className="auth-form">
+        {/* تم تحويل الـ div هنا إلى form ودعم حدث onSubmit */}
+        <form onSubmit={handleCreateAccount} className="auth-form">
           <Link to="/signup" className="auth-back-link">
             <i className="bi bi-chevron-left"></i> Back
           </Link>
@@ -237,8 +243,9 @@ navigate("/signin");
             <div className="alert alert-danger py-2 mb-3">{errors.form}</div>
           )}
 
+          {/* تم تعديل الزرار ليصبح type="submit" وحذف الـ onClick منه */}
           <button
-            onClick={handleCreateAccount}
+            type="submit"
             className="btn auth-submit w-100"
             disabled={isLoading}
           >
@@ -257,7 +264,7 @@ navigate("/signin");
           <p className="signup-text">
             Already registered? <Link to="/signin">Sign in</Link>
           </p>
-        </div>
+        </form>
       </div>
     </div>
   );

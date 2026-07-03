@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ContractorLayout from "../components/ContractorLayout";
@@ -49,7 +47,7 @@ function ContractorDashboard() {
       .catch((error) => {
         console.error(
           "Load available tenders error:",
-          error.response?.data || error
+          error.response?.data || error,
         );
         setTenders([]);
       })
@@ -68,7 +66,10 @@ function ContractorDashboard() {
         setProposals(list);
       })
       .catch((error) => {
-        console.error("Load my proposals error:", error.response?.data || error);
+        console.error(
+          "Load my proposals error:",
+          error.response?.data || error,
+        );
         setProposals([]);
       })
       .finally(() => {
@@ -91,15 +92,15 @@ function ContractorDashboard() {
   const submittedTenderIds = new Set(
     proposals
       .map((proposal) => proposal.tender?.id || proposal.tender_id)
-      .filter((id) => id != null)
+      .filter((id) => id != null),
   );
 
   const awardedProposals = proposals.filter((proposal) =>
-    isAwardedProposal(proposal)
+    isAwardedProposal(proposal),
   );
 
   const activeProposals = proposals.filter(
-    (proposal) => !isAwardedProposal(proposal)
+    (proposal) => !isAwardedProposal(proposal),
   );
 
   const visibleProposals = proposals.slice(0, 5);
@@ -375,10 +376,7 @@ function TenderRow({ tender, isAlreadySubmitted = false, onOpen }) {
   const daysLeft = getDaysLeft(tender.deadline_at);
 
   return (
-    <div
-      className="available-tender-row clickable-tender-row"
-      onClick={onOpen}
-    >
+    <div className="available-tender-row clickable-tender-row" onClick={onOpen}>
       <div className="tender-row-left">
         <h6>
           {tender.title}
@@ -415,20 +413,26 @@ function TenderRow({ tender, isAlreadySubmitted = false, onOpen }) {
         >
           Owner Profile
         </button>
-
         <button
-          className="submit-bid-btn"
+          className="submit-bid-btn btn d-inline-flex align-items-center justify-content-center text-nowrap"
+          style={{
+            width: "160px",
+            height: "45px",
+            // لو تم التقديم يخلى الخلفية رمادي باهت، ولو لسه يخليها لونها الأصلي (أو شيليه عشان ياخد كلاس البوتستراب)
+            backgroundColor: isAlreadySubmitted ? "#6c757d" : "",
+            color: isAlreadySubmitted ? "#fff" : "",
+            opacity: isAlreadySubmitted ? "0.65" : "1",
+            borderColor: isAlreadySubmitted ? "#6c757d" : "",
+          }}
           disabled={isAlreadySubmitted}
           onClick={(e) => {
             e.stopPropagation();
-
             if (isAlreadySubmitted) return;
-
             navigate(`/contractor/submit-proposal/${tender.id}`);
           }}
         >
           {isAlreadySubmitted ? "Submitted" : "Submit Bid"}
-          {!isAlreadySubmitted && <i className="bi bi-chevron-right"></i>}
+          {!isAlreadySubmitted && <i className="bi bi-chevron-right ms-2"></i>}
         </button>
       </div>
     </div>
@@ -458,7 +462,7 @@ function getWinRate(proposals) {
   if (!proposals.length) return "0%";
 
   const awarded = proposals.filter((proposal) =>
-    isAwardedProposal(proposal)
+    isAwardedProposal(proposal),
   ).length;
 
   return `${Math.round((awarded / proposals.length) * 100)}%`;

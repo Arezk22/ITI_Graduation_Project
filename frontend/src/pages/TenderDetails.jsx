@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import OwnerLayout from "../components/OwnerLayout";
@@ -87,7 +86,7 @@ function TenderDetails() {
         showToast(
           "error",
           "Failed to load projects",
-          "Please login again or try later."
+          "Please login again or try later.",
         );
       });
 
@@ -109,11 +108,13 @@ function TenderDetails() {
         setTender(data);
 
         setTenders((prev) => {
-          const exists = prev.some((item) => String(item.id) === String(data.id));
+          const exists = prev.some(
+            (item) => String(item.id) === String(data.id),
+          );
 
           if (exists) {
             return prev.map((item) =>
-              String(item.id) === String(data.id) ? { ...item, ...data } : item
+              String(item.id) === String(data.id) ? { ...item, ...data } : item,
             );
           }
 
@@ -133,9 +134,16 @@ function TenderDetails() {
         });
       })
       .catch((error) => {
-        console.error("Load tender details error:", error.response?.data || error);
+        console.error(
+          "Load tender details error:",
+          error.response?.data || error,
+        );
         setTender(null);
-        showToast("error", "Failed to load tender", "Unable to fetch tender details.");
+        showToast(
+          "error",
+          "Failed to load tender",
+          "Unable to fetch tender details.",
+        );
       })
       .finally(() => {
         if (!cancelled) {
@@ -169,7 +177,10 @@ function TenderDetails() {
         setSubmissions(list);
       })
       .catch((error) => {
-        console.error("Load tender submissions error:", error.response?.data || error);
+        console.error(
+          "Load tender submissions error:",
+          error.response?.data || error,
+        );
 
         if (!cancelled) {
           setSubmissions([]);
@@ -269,12 +280,16 @@ function TenderDetails() {
                 deadline_at: updatedData.deadline_at || payload.deadline_at,
                 status: updatedData.status || payload.status,
               }
-            : item
-        )
+            : item,
+        ),
       );
 
       setShowEditModal(false);
-      showToast("success", "Tender updated", "Project details updated successfully.");
+      showToast(
+        "success",
+        "Tender updated",
+        "Project details updated successfully.",
+      );
     } catch (error) {
       console.error("Update tender error:", error.response?.data || error);
       showToast("error", "Update failed", "Unable to update tender.");
@@ -292,7 +307,11 @@ function TenderDetails() {
       await deleteTender(tender.id);
 
       setShowDeleteModal(false);
-      showToast("success", "Tender deleted", "The tender has been deleted successfully.");
+      showToast(
+        "success",
+        "Tender deleted",
+        "The tender has been deleted successfully.",
+      );
 
       setTimeout(() => {
         navigate("/owner/tender-details", { replace: true });
@@ -325,7 +344,10 @@ function TenderDetails() {
 
         <section className="tender-details-content">
           <div className="details-card text-center py-5">
-            <div className="spinner-border text-primary mb-3" role="status"></div>
+            <div
+              className="spinner-border text-primary mb-3"
+              role="status"
+            ></div>
             <p className="mb-0">Loading tender details...</p>
           </div>
         </section>
@@ -420,13 +442,13 @@ function TenderDetails() {
           </div>
 
           <div className="tender-header-actions">
-            <button
+            {/* <button
               className="btn ask-ai-btn"
               onClick={() => navigate("/owner/document-chat")}
             >
               <i className="bi bi-cpu"></i>
               Ask AI
-            </button>
+            </button> */}
 
             <button
               className="btn view-eval-btn"
@@ -471,12 +493,14 @@ function TenderDetails() {
                   </span>
                 </h5>
 
-<button
-  className="btn btn-link text-decoration-none p-0"
-  onClick={() => navigate(`/owner/tender-details/${tender.id}/submissions`)}
->
-  Compare all <i className="bi bi-chevron-right"></i>
-</button>
+                <button
+                  className="btn btn-link text-decoration-none p-0"
+                  onClick={() =>
+                    navigate(`/owner/tender-details/${tender.id}/submissions`)
+                  }
+                >
+                  Compare all <i className="bi bi-chevron-right"></i>
+                </button>
               </div>
 
               <SubmissionsTable
@@ -502,13 +526,15 @@ function TenderDetails() {
                       type={(doc.file_type || "file").toUpperCase()}
                       name={getFileNameFromUrl(doc.file_url)}
                       meta={`${formatCategory(doc.file_category)} · ${formatDate(
-                        doc.uploaded_at
+                        doc.uploaded_at,
                       )}`}
                       fileUrl={doc.file_url}
                     />
                   ))
                 ) : (
-                  <p className="empty-documents mb-0">No documents uploaded yet.</p>
+                  <p className="empty-documents mb-0">
+                    No documents uploaded yet.
+                  </p>
                 )}
               </div>
             </div>
@@ -518,11 +544,26 @@ function TenderDetails() {
             <div className="details-card">
               <h6 className="side-card-title">PROJECT DETAILS</h6>
 
-              <InfoRow label="Category" value={formatCategory(tender.project_category)} />
-              <InfoRow label="Project Value" value={formatMoney(tender.budget)} />
-              <InfoRow label="Duration" value={`${tender.duration_months || 0} months`} />
-              <InfoRow label="Start Date" value={formatDate(tender.start_date)} />
-              <InfoRow label="Submissions Received" value={String(submissionsCount)} />
+              <InfoRow
+                label="Category"
+                value={formatCategory(tender.project_category)}
+              />
+              <InfoRow
+                label="Project Value"
+                value={formatMoney(tender.budget)}
+              />
+              <InfoRow
+                label="Duration"
+                value={`${tender.duration_months || 0} months`}
+              />
+              <InfoRow
+                label="Start Date"
+                value={formatDate(tender.start_date)}
+              />
+              <InfoRow
+                label="Submissions Received"
+                value={String(submissionsCount)}
+              />
               <InfoRow label="Days to Deadline" value={daysToDeadline} danger />
             </div>
 
@@ -543,7 +584,10 @@ function TenderDetails() {
                 text="Technical and financial proposals due"
               />
 
-              <TimelineItem title="AI Evaluation" date="After submission deadline" />
+              <TimelineItem
+                title="AI Evaluation"
+                date="After submission deadline"
+              />
               <TimelineItem title="Contract Award" date="To be scheduled" />
             </div>
 
@@ -582,7 +626,10 @@ function TenderDetails() {
               </button>
             </div>
 
-            <form className="custom-modal-body-form" onSubmit={handleUpdateTender}>
+            <form
+              className="custom-modal-body-form"
+              onSubmit={handleUpdateTender}
+            >
               <div className="modal-form-grid">
                 <div className="modal-field full">
                   <label>Project Title</label>
@@ -770,13 +817,17 @@ function TenderDetails() {
           </div>
         </div>
       )}
-
-
     </OwnerLayout>
   );
 }
 
-function SubmissionsTable({ submissions, loading, tenderId, navigate, emptyText }) {
+function SubmissionsTable({
+  submissions,
+  loading,
+  tenderId,
+  navigate,
+  emptyText,
+}) {
   return (
     <div className="table-responsive">
       <table className="table tender-submissions-table align-middle mb-0">
@@ -804,7 +855,9 @@ function SubmissionsTable({ submissions, loading, tenderId, navigate, emptyText 
               <tr
                 key={submission.id || index}
                 onClick={() =>
-                  navigate(`/owner/proposal-details/${tenderId}/${submission.id}`)
+                  navigate(
+                    `/owner/proposal-details/${tenderId}/${submission.id}`,
+                  )
                 }
                 style={{ cursor: "pointer" }}
               >
@@ -820,7 +873,7 @@ function SubmissionsTable({ submissions, loading, tenderId, navigate, emptyText 
                 <td>
                   <span
                     className={`badge ${getSubmissionStatusBadgeClass(
-                      submission.status
+                      submission.status,
                     )}`}
                   >
                     {formatSubmissionStatus(submission.status)}
@@ -850,7 +903,9 @@ function InfoRow({ label, value, danger }) {
   return (
     <div className="info-row">
       <span>{label}</span>
-      <b className={danger ? "text-danger danger-highlight" : ""}>{value || "—"}</b>
+      <b className={danger ? "text-danger danger-highlight" : ""}>
+        {value || "—"}
+      </b>
     </div>
   );
 }
@@ -880,7 +935,9 @@ function DocumentItem({ type, name, meta, fileUrl }) {
 
 function TimelineItem({ done, active, title, date, text }) {
   return (
-    <div className={`timeline-item ${done ? "done" : ""} ${active ? "active" : ""}`}>
+    <div
+      className={`timeline-item ${done ? "done" : ""} ${active ? "active" : ""}`}
+    >
       <span className="timeline-dot"></span>
 
       <div className="timeline-body-content">

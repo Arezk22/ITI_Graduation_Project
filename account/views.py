@@ -3,6 +3,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from account.models import ContractorProfiles
@@ -22,10 +23,20 @@ class RegisterAPIView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            refresh = RefreshToken.for_user(user)
+            company_name = (
+                user.contractor_profile.company_name
+                if user.role == "contractor"
+                else user.last_name
+            )
             return Response(
                 {
                     "message": "User created successfully",
                     "role": user.role,
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                    "first_name": user.first_name,
+                    "company_name": company_name,
                 },
                 status=status.HTTP_201_CREATED,
             )
