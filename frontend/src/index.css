@@ -4337,6 +4337,472 @@ body {
   }
 }
 
+/* ------------------------------------------------------------------- Tender Evaluation Report ---------------------------------------------- */
+.report-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  margin-bottom: 20px;
+}
+
+.report-toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.report-ai-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-size: 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  flex-shrink: 0;
+}
+
+.report-toolbar-info h5 {
+  font-weight: 800;
+  margin: 0 0 2px;
+}
+
+.report-toolbar-info p {
+  color: #64748b;
+  font-size: 13px;
+  margin: 0;
+}
+
+.download-main-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.report-state-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 18px;
+  border: 1px solid transparent;
+}
+
+.report-state-banner i {
+  font-size: 18px;
+}
+
+.report-state-banner.loading,
+.report-state-banner.pending,
+.report-state-banner.processing {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.report-state-banner.warning {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.report-state-banner.error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.spin {
+  animation: rp-spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes rp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Printable document ------------------------------------------------- */
+.report-print {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 34px;
+  color: #0f172a;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.rp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  border-bottom: 3px solid #0f172a;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.rp-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6366f1;
+}
+
+.rp-header h1 {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 8px 0 4px;
+}
+
+.rp-sub {
+  color: #64748b;
+  font-weight: 600;
+  margin: 0;
+}
+
+.rp-header-meta {
+  display: flex;
+  gap: 22px;
+  text-align: right;
+}
+
+.rp-header-meta div {
+  display: flex;
+  flex-direction: column;
+}
+
+.rp-header-meta span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.rp-header-meta strong {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.rp-recommendation {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: linear-gradient(135deg, #ecfdf5, #f0fdfa);
+  border: 1px solid #a7f3d0;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+
+.rp-rec-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #059669;
+  color: #ffffff;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.rp-rec-label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #047857;
+}
+
+.rp-recommendation h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 2px 0 6px;
+}
+
+.rp-recommendation p {
+  margin: 0;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rp-section {
+  margin-bottom: 28px;
+}
+
+.rp-section-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.rp-table thead th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  font-weight: 800;
+  padding: 10px 10px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.rp-table tbody td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.rp-row-top {
+  background: #f8fbff;
+}
+
+.rp-contractor-cell {
+  font-weight: 700;
+}
+
+.rp-rank {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.rp-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.rp-pill.good {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.rp-pill.mid {
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.rp-pill.bad {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.rp-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.rp-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.rp-card-rank {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.rp-card-title {
+  flex: 1;
+}
+
+.rp-card-title h4 {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.rp-card-title span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rp-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.rp-metric {
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+}
+
+.rp-metric.good {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.rp-metric.mid {
+  background: #fefce8;
+  border-color: #fef08a;
+}
+
+.rp-metric.bad {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.rp-metric-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.rp-metric-value {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.rp-metric-hint {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.rp-proscons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.rp-proscons h5 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.rp-pros h5 {
+  color: #15803d;
+}
+
+.rp-cons h5 {
+  color: #b91c1c;
+}
+
+.rp-proscons ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.rp-proscons li {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.rp-empty {
+  font-size: 13px;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0;
+}
+
+.rp-justification {
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px dashed #e5e7eb;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #475569;
+}
+
+.rp-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  .report-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rp-header,
+  .rp-header-meta {
+    flex-direction: column;
+    text-align: left;
+    gap: 12px;
+  }
+
+  .rp-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .rp-proscons {
+    grid-template-columns: 1fr;
+  }
+
+  .report-print {
+    padding: 20px;
+  }
+}
+
 /* ------------------------------------------------------------------- Contractor Profile ---------------------------------------------------- */
 .contractor-profile-content {
   padding: 34px 28px 60px;
