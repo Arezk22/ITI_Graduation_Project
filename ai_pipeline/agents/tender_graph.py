@@ -20,7 +20,6 @@ from .prompts import (
 def get_tender_requirements(tender_id:int):
     tender_data=Tenders.objects.get(id=tender_id).structured_data
     return {
-        "required_certificates": tender_data["required_certificates"],
         "mandatory_documents": tender_data["mandatory_documents"],
         "preferred_documents": tender_data["preferred_documents"],
         "mandatory_licenses": tender_data["mandatory_licenses"],

@@ -275,7 +275,7 @@ OUTPUT
 
 Return ONLY valid JSON matching exactly:
 
-{
+{{
   "mandatory_passed": true,
   "compliance_score": 100,
   "missing_documents": [],
@@ -284,7 +284,7 @@ Return ONLY valid JSON matching exactly:
   "technical_gaps": [],
   "warnings": [],
   "summary": ""
-}"""
+}}"""
 
 # SCORING_AGENT_PROMPT = """You are a Tender Evaluation Committee Member.
 # Calculate the scores for the Contractor based on the Owner's Evaluation Rules.

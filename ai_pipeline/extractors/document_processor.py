@@ -34,12 +34,14 @@ class ProposalBOQItem(BaseModel):
         description="Measurement unit"
     )
 
-    quantity: float = Field(
-        description="Proposed quantity"
+    quantity: Optional[float] = Field(
+        description="Proposed quantity",
+        default=None
     )
 
-    unit_rate: float = Field(
-        description="Price per unit"
+    unit_rate: Optional[float] = Field(
+        description="Price per unit",
+        default=None,
     )
 
     total_amount: Optional[float] = Field(
@@ -168,11 +170,13 @@ class TenderBOQItem(BaseModel):
         description="Work description"
     )
 
-    unit: str = Field(
+    unit: Optional[str] = Field(
+        default=None,
         description="Measurement unit"
     )
 
-    quantity: float = Field(
+    quantity: Optional[float] = Field(
+        default=None,
         description="Required quantity"
     )
     
@@ -829,6 +833,7 @@ Pay special attention to:
 - preferred licenses
 - mandatory technical requirements
 - preferred technical requirements
+- custom requirements
 - evaluation criteria and weights
 - project duration
 - experience requirements
@@ -842,7 +847,10 @@ Extract every individual requirement separately.
 Do not extract only mandatory requirements.
 
 Extract ALL owner requirements.
+If an important statement does not belong to any field above,
+place it in custom_requirements.
 
+Never leave important requirements unclassified.
 Later classify them into:
 
 - mandatory
@@ -1091,7 +1099,46 @@ desirable
 
 Never promote preferred requirements into mandatory ones.
 
+==========================
+CUSTOM REQUIREMENTS
+==========================
 
+If you find any important owner requirement that cannot be classified as:
+
+- mandatory certificate
+- preferred certificate
+- mandatory document
+- preferred document
+- mandatory license
+- preferred license
+- mandatory technical requirement
+- preferred technical requirement
+- evaluation criterion
+- BOQ item
+
+then DO NOT ignore it.
+
+Store it inside:
+
+custom_requirements
+
+Examples include:
+
+- contractual conditions
+- legal conditions
+- owner reservations
+- award conditions
+- payment conditions
+- acceptance conditions
+- submission conditions
+- general obligations
+- penalties
+- guarantees
+- insurance obligations
+- execution constraints
+- special instructions
+
+Never discard important requirements simply because no predefined field exists.
 ==========================
 FIELD MAPPING
 ==========================
