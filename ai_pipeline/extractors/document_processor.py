@@ -713,20 +713,21 @@ Return exactly:
         
         except Exception as e:
             print(f"❌ Error during Vision PDF extraction: {e}")
-            return [
-                {
-                "page":"all pages",
-                "type":"scanned",
-                "extraction_metadata":{
-                    "confidence_score": 0,
-                    "needs_human_review": True ,
-                    "review_reason": "Didnot extract successfully",
-                    "unclear_sections": [],
-                },
-                "content":"",
-                "tables":[]
-                }
-            ]
+            raise
+            # return [
+            #     {
+            #     "page":"all pages",
+            #     "type":"scanned",
+            #     "extraction_metadata":{
+            #         "confidence_score": 0,
+            #         "needs_human_review": True ,
+            #         "review_reason": "Didnot extract successfully",
+            #         "unclear_sections": [],
+            #     },
+            #     "content":"",
+            #     "tables":[]
+            #     }
+            # ]
         
     def analyze_extraction_quality(self,extracted_pages):
 

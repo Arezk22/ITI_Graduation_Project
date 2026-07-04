@@ -2,15 +2,13 @@ from celery import shared_task
 import time
 from django.utils import timezone
 from django.core.mail import send_mail
+from openai import max_retries
 from api.models import TenderSubmissions, Tenders
 from django.conf import settings
-# @shared_task
-# def send_upload_complete_signal(user_id):
-#     from django.dispatch import Signal
+from openai import (RateLimitError,APITimeoutError,APIConnectionError,APIStatusError)
+from google.genai import errors
+from celery.exceptions import MaxRetriesExceededError , Retry
 
-#     upload_complete = Signal()
-
-#     upload_complete.send(sender=None, user_id=user_id)
 
 @shared_task
 def hello():
@@ -25,8 +23,8 @@ def long_task():
     print("Finished")
     return "Done"
 
-@shared_task
-def index_files_task(files_ids,files_type):
+@shared_task(bind=True,max_retries=3)
+def index_files_task(self,files_ids,files_type):
     from ai_pipeline.main_pipeline import index_files_for_rag
     from api.models import TenderFiles,SubmissionFiles
     if files_type == "tender":
@@ -35,11 +33,17 @@ def index_files_task(files_ids,files_type):
         files=SubmissionFiles.objects.filter(id__in=files_ids)
     else:
         raise ValueError(f"Unknown files_type: {files_type}")
-
-    index_files_for_rag(files,files_type)
-
-
-
+    try:
+        index_files_for_rag(files,files_type)
+    except (errors.ClientError,errors.ServerError) as e:
+        if e.code in (429, 500, 502, 503, 504):
+            try:
+                raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+            except MaxRetriesExceededError:
+                print((f"Giving up indexing files {files_ids} after {self.max_retries} retries"))
+            raise
+        else:
+            raise
 
 
 @shared_task
@@ -71,8 +75,8 @@ def check_due_tenders():
         
         
         
-@shared_task
-def run_tender_analysis(tender_id):
+@shared_task(bind=True,max_retries=3)
+def run_tender_analysis(self,tender_id):
     from .main_pipeline import run_tender_evaluation_job
 
     Tenders.objects.filter(id=tender_id).update(status="closed")
@@ -86,10 +90,27 @@ def run_tender_analysis(tender_id):
             analyzed_at=timezone.now(),
         )
 
+    except (RateLimitError, APITimeoutError, APIConnectionError) as e:
+        try:
+            raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+        except MaxRetriesExceededError:
+            print(f"Giving up Run tender analysis {tender_id} after {self.max_retries} retries")
+            Tenders.objects.filter(id=tender_id).update(analysis_status="failed")
+            raise
+
+    except APIStatusError as e:
+        if e.status_code >= 500 or e.status_code in (408, 429):
+            try:
+                raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+            except MaxRetriesExceededError:
+                print(f"Giving up Run tender analysis {tender_id} after {self.max_retries} retries")
+                Tenders.objects.filter(id=tender_id).update(analysis_status="failed")
+                raise
+        else:
+            raise
+
     except Exception:
-        Tenders.objects.filter(id=tender_id).update(
-                        analysis_status="failed"
-                    )
+        Tenders.objects.filter(id=tender_id).update(analysis_status="failed")
         raise
         
         

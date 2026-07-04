@@ -201,7 +201,7 @@ class EvaluationWorkflow:
             return chain.invoke(input_data)
         except Exception as e:
             print(f"Agent Error: {e}")
-            return None
+            raise
 
     # --- عقدة الـ Validation ---
     def validation_node(self, state: TenderState):
@@ -220,16 +220,16 @@ class EvaluationWorkflow:
             print(f"Submission {sub.id}")
             print(result)
             print("=" * 40)
-        #     if not result.mandatory_passed:
-        #         sub.recommendation="Disqualified"
-        #         sub.justification="Failed mandatory requirements"
-        #         sub.save(update_fields=["recommendation", "justification"])
-        #         state["submission_ids"].remove(sub.id)
-        #         notify.delay({
-        #             "event":"Disqualified",
-        #             "sub":sub.id,
-        #         })
-        # print(state["submission_ids"])
+            if not result.mandatory_passed:
+                sub.recommendation="Disqualified"
+                sub.justification="Missing mandatory requirements"
+                sub.save(update_fields=["recommendation", "justification"])
+                state["submission_ids"].remove(sub.id)
+                notify.delay({
+                    "event":"Disqualified",
+                    "sub":sub.id,
+                })
+        print(state["submission_ids"])
         return {"validation_results": validation_results,
                 "submission_ids": state["submission_ids"],}
 
@@ -329,53 +329,53 @@ class EvaluationWorkflow:
         final_score=[]
         for sub in submissions:  
             print(f"⭕final score for sub {sub.id}")          
-            # if not state["validation_results"][sub.id]["mandatory_passed"]:
-            #     overall_score=0
-            #     sub.status="rejected"
-            #     sub.save()
-            #     final_score.append({
-            #         "submission_id":sub.id,
-            #         "overall_score": overall_score,
-            #         "status":"rejected",
-            #         "breakdown":{}
-            #     })
-            # else:
-            tech_score=tech_scores[sub.id].model_dump()["technical_score"]
-            fin_score=fin_scores[sub.id].model_dump()["financial_score"]
-            compilance_score=compilance_scores[sub.id].model_dump()["compliance_score"]
-            act_exp=sub.structured_data["experience_years"]
-            if required_exp:
-                exp_score=min(act_exp/required_exp , 1)*100
+            if not state["validation_results"][sub.id]["mandatory_passed"]:
+                overall_score=0
+                sub.status="rejected"
+                sub.save()
+                final_score.append({
+                    "submission_id":sub.id,
+                    "overall_score": overall_score,
+                    "status":"rejected",
+                    "breakdown":{}
+                })
             else:
-                exp_score=100
-            overall_score=tech_score*tech_weight+fin_score*fin_weight+compilance_score*compilance_weight+exp_score*exp_weight
-            final_score.append({
-                        "submission_id":sub.id,
-                        "contractor":sub.contractor.company_name,
-                        "overall_score": overall_score,
-                        "breakdown": {
-                        "technical": {
-                            "score": tech_score,
-                            "weight": tech_weight,
-                            "contribution": tech_score*tech_weight
-                        },
-                        "financial": {
-                            "score": fin_score,
-                            "weight": fin_weight,
-                            "contribution": fin_score*fin_weight
-                        },
-                        "compliance": {
-                            "score": compilance_score,
-                            "weight": compilance_weight,
-                            "contribution": compilance_score*compilance_weight
-                        },
-                        "experience": {
-                            "score": exp_score,
-                            "weight": exp_weight,
-                            "contribution": exp_score*exp_weight
-                        }
-                        }
-                    })
+                tech_score=tech_scores[sub.id].model_dump()["technical_score"]
+                fin_score=fin_scores[sub.id].model_dump()["financial_score"]
+                compilance_score=compilance_scores[sub.id].model_dump()["compliance_score"]
+                act_exp=sub.structured_data["experience_years"]
+                if required_exp:
+                    exp_score=min(act_exp/required_exp , 1)*100
+                else:
+                    exp_score=100
+                overall_score=tech_score*tech_weight+fin_score*fin_weight+compilance_score*compilance_weight+exp_score*exp_weight
+                final_score.append({
+                            "submission_id":sub.id,
+                            "contractor":sub.contractor.company_name,
+                            "overall_score": overall_score,
+                            "breakdown": {
+                            "technical": {
+                                "score": tech_score,
+                                "weight": tech_weight,
+                                "contribution": tech_score*tech_weight
+                            },
+                            "financial": {
+                                "score": fin_score,
+                                "weight": fin_weight,
+                                "contribution": fin_score*fin_weight
+                            },
+                            "compliance": {
+                                "score": compilance_score,
+                                "weight": compilance_weight,
+                                "contribution": compilance_score*compilance_weight
+                            },
+                            "experience": {
+                                "score": exp_score,
+                                "weight": exp_weight,
+                                "contribution": exp_score*exp_weight
+                            }
+                            }
+                        })
 
         ranked_submissions = sorted(
             final_score, 
