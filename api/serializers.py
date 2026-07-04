@@ -50,9 +50,9 @@ class TendersSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'owner', 'owner_company_name', 'owner_email', 'title', 'description',
             'project_category', 'location', 'budget', 'start_date', 'duration_months',
-            'deadline_at', 'status', 'total_submissions', 'created_at',
+            'deadline_at', 'status', 'is_active', 'total_submissions', 'created_at',
         ]
-        read_only_fields = ['owner', 'created_at']
+        read_only_fields = ['owner', 'created_at', 'is_active']
 
     def get_total_submissions(self, obj):
         # Use the annotated value when available (list view) to avoid N+1 counts.

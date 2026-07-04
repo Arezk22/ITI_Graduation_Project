@@ -51,7 +51,7 @@ class TendersListView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        tenders = Tenders.objects.all().annotate(submissions_count=Count('submissions'))
+        tenders = Tenders.objects.filter(is_active=True).annotate(submissions_count=Count('submissions'))
         serializer = TendersSerializer(tenders, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

@@ -53,6 +53,10 @@ class Tenders(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
 
+    # implement is active field to make tenders hidden untill ai analyze fiels 
+    # visible to their owners to see tender state.
+    is_active = models.BooleanField(default=False)
+
     # AI-generated outputs for the tender.
     analysis_status = models.CharField(
         max_length=20,
