@@ -64,11 +64,15 @@ def index_files_for_rag(files,type):
         if type=="tender":
             files[0].tender.analysis_status="invalid_documents"
             files[0].tender.save(update_fields=["analysis_status"])
+            # close the tender
         elif type == "submission":
             files[0].submission.need_review=True
             files[0].submission.save(update_fields=["need_review"])
+            # take it out from analysis 
         return
     
+    
+    # tender is active
     if type=="tender":
             id = files[0].tender.id
     elif type == "submission":
