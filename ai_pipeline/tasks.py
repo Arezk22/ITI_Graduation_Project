@@ -60,7 +60,14 @@ def check_due_tenders():
     print(f"Found {due_tenders.count()} due tenders")
     for tender in due_tenders:
         print(f"Running analysis for tender {tender.id}")
-        run_tender_analysis.delay(tender.id)
+        updated = Tenders.objects.filter(
+        id=tender.id,
+        analysis_status="pending").update(analysis_status="processing")
+        print("Updated:", updated)
+        if updated:
+            run_tender_analysis.delay(tender.id)
+        else:
+            print("Tender already processing")
         
         
         
@@ -68,32 +75,30 @@ def check_due_tenders():
 def run_tender_analysis(tender_id):
     from .main_pipeline import run_tender_evaluation_job
 
-    tender = Tenders.objects.get(id=tender_id)
-
-    tender.analysis_status = "processing"
-    tender.status="closed"
-    tender.save()
+    Tenders.objects.filter(id=tender_id).update(status="closed")
 
     try:
+        tender=Tenders.objects.get(id=tender_id)
         run_tender_evaluation_job(tender)
 
-        tender.analysis_status = "completed"
-        tender.analyzed_at=timezone.now()
+        Tenders.objects.filter(id=tender_id).update(
+            analysis_status="completed",
+            analyzed_at=timezone.now(),
+        )
 
     except Exception:
-        tender.analysis_status = "failed"
+        Tenders.objects.filter(id=tender_id).update(
+                        analysis_status="failed"
+                    )
         raise
-
-    finally:
-        tender.save()
         
         
 @shared_task
 def notify(info):
-    event=info.event
-    if info.payload:
-        payload=info.payload
-    sub=TenderSubmissions.objects.get(id=info.sub_id)  
+    event=info["event"]
+    if info.get("payload"):
+        payload=info["payload"]
+    sub=TenderSubmissions.objects.get(id=info["sub"])  
     
     if  event == 'Disqualified':
         subject="Proposal Disqualified - Missing Mandatory Requirements"
@@ -102,8 +107,8 @@ def notify(info):
 The AI evaluation has determined that a submitted proposal has been disqualified because it did not satisfy one or more mandatory tender requirements.
 
 Summary:
-* Contractor: {sub.contractor.name}
-* Tender: {sub.tender.title}
+* Contractor: {sub.contractor.company_name.capitalize()}
+* Tender: {sub.tender.title.capitalize()}
 * Status: Disqualified
 * Reason: Missing or unmet mandatory requirements.
 
@@ -120,8 +125,8 @@ The AI risk assessment has identified a proposal with a High Risk rating.
 
 Summary:
 
-* Contractor: {sub.contractor.name}
-* Tender: {sub.tender.title}
+* Contractor: {sub.contractor.company_name.capitalize()}
+* Tender: {sub.tender.title.capitalize()}
 * Risk Level: {payload["level"].capitalize()}
 * Risk Score: {payload["score"]}
 
@@ -140,7 +145,7 @@ The AI evaluation process for your tender has been completed successfully.
 
 Summary:
 
-Tender: {sub.tender.title}
+Tender: {sub.tender.title.capitalize()}
 Total Proposals: {sub.tender.submissions.count()}
 Qualified Proposals: {sub.tender.submissions.exclude(recommendation ='Disqualified').count()}
 Disqualified Proposals: {sub.tender.submissions.filter(recommendation='Disqualified').count()}

@@ -204,15 +204,15 @@ class RiskItem(models.Model):
 class BoqItems(models.Model):
     tender = models.ForeignKey(Tenders, on_delete=models.CASCADE,related_name="boq_items")
     item_name = models.CharField(max_length=255)
-    quantity = models.FloatField()
-    unit = models.CharField(max_length=50)
+    quantity = models.FloatField(null=True,blank=True)
+    unit = models.CharField(max_length=50,null=True,blank=True)
     
 class BoqPrice(models.Model):
     submission = models.ForeignKey(
         TenderSubmissions, on_delete=models.CASCADE, related_name="boq_prices"
     )
     boq_item = models.ForeignKey(BoqItems, on_delete=models.CASCADE, related_name="prices")
-    unit_price = models.DecimalField(max_digits=14, decimal_places=2)
+    unit_price = models.DecimalField(max_digits=14, decimal_places=2,null=True,blank=True)
     
 class HumanReview(models.Model):
     DICISION_CHOICES = (

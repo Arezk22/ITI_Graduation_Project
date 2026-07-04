@@ -31,7 +31,8 @@ dist/
 
 *.log
 
-
-# Celery Beat schedule
+# Celery Beat schedule files
 celerybeat-schedule
-celerybeat-schedule.*
+celerybeat-schedule.dat
+celerybeat-schedule.bak
+celerybeat-schedule.dir

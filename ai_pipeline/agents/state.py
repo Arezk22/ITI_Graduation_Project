@@ -33,6 +33,11 @@ class ValidationResult(BaseModel):
         default_factory=""
     )
 
+
+class RiskItem(BaseModel):
+    risk_type: str
+    description: str
+
 class RiskAssessment(BaseModel):
     risk_score: int = Field(ge=0, le=100)
 
@@ -49,7 +54,7 @@ class RiskAssessment(BaseModel):
         default_factory=""
     )
 
-    top_risks: List[str]
+    top_risks: List[RiskItem]
     
 class TechnicalEvaluation(BaseModel):
     technical_score: int = Field(ge=0, le=100)
@@ -78,6 +83,7 @@ class FinancialEvaluation(BaseModel):
     observations: List[str]
 
 class SubmissionAnalysis(BaseModel):
+    Submission_id : int
     contractor: str
     strengths: list[str]
     weaknesses: list[str]
