@@ -64,46 +64,227 @@
 
 VALIDATION_AGENT_PROMPT = """You are a Senior Procurement Compliance Officer.
 
-Your responsibility is to evaluate whether the contractor satisfies the tender's mandatory compliance requirements.
+Your task is to determine whether the contractor satisfies ALL mandatory tender requirements.
 
-Instructions:
+You must reason semantically, not by exact wording.
 
-1. Carefully compare the Tender Requirements with the Contractor's submitted data.
-2. Check ONLY mandatory compliance requirements.
-3. If any mandatory document, certificate, license, or required technical requirement is missing, set:
-   - "mandatory_passed": false
-4. If all mandatory requirements are satisfied:
-   - "mandatory_passed": true
-5. Calculate a compliance_score between 0 and 100.
-   - 100 = Fully compliant.
-   - Deduct points only for non-mandatory or optional deficiencies.
-   - If mandatory_passed is false, compliance_score should still reflect the degree of compliance (it should NOT automatically be zero).
-6. Never invent documents or certificates.
-7. Explain every missing requirement.
+==================================================
+GENERAL RULES
+==================================================
+
+1. NEVER use literal string matching.
+
+Evaluate meaning.
+
+Equivalent names represent the same requirement.
+
+Examples:
+
+السجل التجاري
+صورة السجل التجاري
+Commercial Register
+Commercial Registration
+
+→ Same document
+
+شهادة التسجيل بضريبة القيمة المضافة
+شهادة ضريبة القيمة المضافة
+VAT Registration
+VAT Certificate
+
+→ Same document
+
+شهادة تصنيف المقاولين
+شهادة التصنيف
+
+→ Same license
+
+ISO9001
+ISO 9001
+ISO-9001
+ISO 9001:2015
+
+→ Same certificate
+
+Never report an item as missing when an equivalent item exists.
+
+
+
+2. The tender requirements already distinguish between mandatory and preferred requirements.
+
+Use ONLY:
+- required_certificates
+- required_documents
+- required_licenses
+- technical_requirements
+
+Ignore:
+- preferred_certificates
+- preferred_documents
+- preferred_licenses
+- preferred_technical_requirements
+when determining mandatory_passed.
+==================================================
+MANDATORY VS PREFERRED
+==================================================
+
+Tender requirements contain two categories:
+
+Mandatory Requirements
+Preferred Requirements
+
+ONLY Mandatory Requirements affect:
+
+- mandatory_passed
+- compliance_score
+- missing lists
+
+Preferred requirements:
+
+- MUST NOT cause failure.
+- MUST NOT appear in missing_* lists.
+- MAY generate warnings only.
+
+==================================================
+MANDATORY CHECK
+==================================================
+
+Check ALL mandatory:
+
+• certificates
+
+• documents
+
+• licenses
+
+• technical requirements
+
+A single missing mandatory requirement means:
+
+mandatory_passed = false
+
+==================================================
+TECHNICAL REQUIREMENTS
+==================================================
+
+Technical requirements represent engineering capabilities.
+
+Do NOT compare wording.
+
+Compare engineering meaning.
+
+Examples:
+
+"Concrete pump"
+
+≈
+
+"Concrete pumping equipment"
+
+==================================================
+OFFICIAL SUBMISSION LETTER
+==================================================
+
+If the proposal was officially submitted through the procurement platform,
+
+treat the submission itself as satisfying the submission letter requirement,
+
+UNLESS the tender explicitly requires
+
+a separately signed cover letter.
+
+==================================================
+SCORING
+==================================================
+
+Start from 100.
+
+Deduct points ONLY for missing mandatory requirements.
+
+Do NOT deduct for:
+
+- wording differences
+- formatting differences
+- preferred requirements
+
+If mandatory_passed == false,
+
+the score should still reflect overall compliance.
+
+Never automatically return zero.
+
+==================================================
+WARNINGS
+==================================================
+
+Warnings are ONLY for:
+
+- preferred requirements not provided
+- minor observations
+- recommendations
+
+Do NOT duplicate missing mandatory items inside warnings.
+
+==================================================
+MISSING LISTS
+==================================================
+
+Only include items that are truly missing.
+
+Never include:
+
+- equivalent documents
+- equivalent certificates
+- equivalent licenses
+
+==================================================
+SUMMARY
+==================================================
+
+Write a concise explanation that clearly states:
+
+- whether the contractor passed or failed
+- the main reason
+
+==================================================
+DO NOT
+==================================================
+
+- Never invent requirements.
+- Never invent documents.
+- Never invent certificates.
+- Never invent licenses.
+- Never penalize wording differences.
+- Never mix preferred requirements with mandatory ones.
+
+==================================================
+INPUT
+==================================================
 
 Tender Requirements:
+
 {tender_reqs}
 
 Contractor Structured Data:
+
 {submission_data}
 
-Return ONLY valid JSON matching this schema.
-{
-    "mandatory_passed": true/false,
+==================================================
+OUTPUT
+==================================================
 
-    "compliance_score": 0-100 ,
+Return ONLY valid JSON matching exactly:
 
-    "missing_documents": [],
-
-    "missing_certificates": [],
-
-    "missing_licenses": [],
-
-    "technical_gaps": [],
-
-    "warnings": [],
-    "summary": ""
-  }"""
+{{
+  "mandatory_passed": true,
+  "compliance_score": 100,
+  "missing_documents": [],
+  "missing_certificates": [],
+  "missing_licenses": [],
+  "technical_gaps": [],
+  "warnings": [],
+  "summary": ""
+}}"""
 
 # SCORING_AGENT_PROMPT = """You are a Tender Evaluation Committee Member.
 # Calculate the scores for the Contractor based on the Owner's Evaluation Rules.
@@ -170,22 +351,22 @@ If there is insufficient evidence, state that clearly.
 OUTPUT
 --------------------------------------------------
 
-Return the following information:
+Return ONLY valid JSON.
 
 - risk_score
 - overall_risk
 - summary
-- top_risks
+- top_risks 
 
 --------------------------------------------------
 SCORING GUIDELINES
 --------------------------------------------------
 
-0 - 20     Very Low Risk
-21 - 40    Low Risk
-41 - 60    Moderate Risk
-61 - 80    High Risk
-81 - 100   Critical Risk
+0 - 20     Very Low 
+21 - 40    Low 
+41 - 60    Moderate 
+61 - 80    High 
+81 - 100   Critical 
 
 Higher scores indicate higher execution risk.
 
@@ -206,20 +387,53 @@ IMPORTANT RULES
 - List only the most significant risks.
 - If no significant risks are found, return an empty list for top_risks.
 - Return structured output only.
+- overall_risk MUST be EXACTLY one of the following values:
+   - "Very Low"
+   - "Low"
+   - "Moderate"
+   - "High"
+   - "Critical"
+
+- Do NOT return values like:
+   - "Critical Risk"
+   - "High Risk"
+   - "Low Risk"
+   - "Moderate Risk"
+
+- top_risks MUST be an array of object with risk_type , description
+
+Example:
+{{
+  "risk_score": 85,
+  "overall_risk": "Critical",
+  "summary": "...",
+  "top_risks": [
+    {{
+      "risk_type": "Compliance Risk",
+      "description": "Missing ISO certificates."
+    }},
+    {{
+      "risk_type": "Financial Risk",
+      "description": "Bid price is unusually low."
+    }}
+  ]
+}}
+
+
 ======================
 Tender Requirements:
 ======================
-{{tender_reqs}}
+{tender_reqs}
 
 ======================
 Contractor Proposal:
 ======================
-{{submission}} 
+{submission} 
 
 ======================
 Validation Results:
 ======================
-{{validation_result}}
+{validation_result}
 
 """
 
@@ -406,7 +620,8 @@ IMPORTANT RULES
 - Base every conclusion only on the provided data.
 - Do not hallucinate missing values.
 - Keep the summary concise.
-
+- total_bid_price MUST be a single numeric value.
+- NEVER return mathematical expressions.
 --------------------------------------------------
 Tender Financial Information
 --------------------------------------------------
@@ -431,7 +646,12 @@ Instructions:
 - Do not recommend a winner.
 - Do not invent facts.
 - Use summaries provided to know the context.
+- Each submission already has a unique submission_id.
+- You MUST preserve the exact submission_id.
+- Never generate new IDs.
+- Never renumber submissions.
 
+Every output that references a submission MUST use the provided submission_id.
 For each submission identify:
 - Key strengths.
 - Key weaknesses.
@@ -449,18 +669,18 @@ Return JSON only.
 ==========================
 tender summary
 ==========================
-{{tender_summary}}
+{tender_summary}
 
 
 ==========================
 Ranking
 ==========================
-{{ranking}}
+{ranking}
 
 ==========================
 Submissions summaries
 ==========================
-{{submission_summaries}}
+{submission_summaries}
 
 
 """
@@ -590,12 +810,12 @@ Use only the provided comparison results.
 ==========================
 tender summary
 ==========================
-{{tender_summary}}
+{tender_summary}
 
 ==========================
 comparison result
 ==========================
-{{comparison_result}}
+{comparison_result}
 
 
 

@@ -102,8 +102,7 @@ def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     """
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small", 
-        api_key=os.getenv("OPENROUTER_API_KEY"),
-        openai_api_base=os.getenv("OPENAI_API_BASE")
+        api_key=os.getenv("OPEN_AI_KEY")
     )
 
     # تهيئة الاتصال بقاعدة بيانات PostgreSQL بملحق pgvector

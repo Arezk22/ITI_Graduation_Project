@@ -1,4 +1,3 @@
-
 // import { useEffect, useMemo, useState } from "react";
 // import { useNavigate, useParams } from "react-router-dom";
 // import ContractorLayout from "../components/ContractorLayout";
@@ -187,7 +186,7 @@
 //           </div>
 
 //           <div className="contractor-details-actions">
- 
+
 //             <button
 //   className="submit-bid-btn"
 //   disabled={
@@ -441,7 +440,7 @@ function ContractorTenderDetails() {
       .catch((error) => {
         console.error(
           "Load contractor tender details error:",
-          error.response?.data || error
+          error.response?.data || error,
         );
 
         if (!cancelled) {
@@ -477,7 +476,9 @@ function ContractorTenderDetails() {
   const displayStatus = tender ? getTenderDisplayStatus(tender) : "Active";
 
   const isSubmitDisabled =
-    isAlreadySubmitted || displayStatus === "Closed" || displayStatus === "Awarded";
+    isAlreadySubmitted ||
+    displayStatus === "Closed" ||
+    displayStatus === "Awarded";
 
   const daysToDeadline = useMemo(() => {
     if (!tender?.deadline_at) return "—";
@@ -612,7 +613,6 @@ function ContractorTenderDetails() {
 
         <div className="contractor-tender-grid">
           <div className="contractor-tender-main">
-
             <div className="details-card mt-4">
               <h5>
                 <i className="bi bi-file-earmark-text text-primary me-2"></i>
@@ -627,7 +627,7 @@ function ContractorTenderDetails() {
                       type={(doc.file_type || "file").toUpperCase()}
                       name={getFileNameFromUrl(doc.file_url)}
                       meta={`${formatCategory(doc.file_category)} · ${formatDate(
-                        doc.uploaded_at
+                        doc.uploaded_at,
                       )}`}
                       fileUrl={doc.file_url}
                     />
@@ -655,7 +655,10 @@ function ContractorTenderDetails() {
                 value={`${tender.duration_months || 0} months`}
               />
 
-              <InfoRow label="Start Date" value={formatDate(tender.start_date)} />
+              <InfoRow
+                label="Start Date"
+                value={formatDate(tender.start_date)}
+              />
 
               <InfoRow
                 label="Submission Deadline"

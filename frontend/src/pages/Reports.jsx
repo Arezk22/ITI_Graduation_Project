@@ -1,14 +1,33 @@
-
-
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useReactToPrint } from "react-to-print";
 import OwnerLayout from "../components/OwnerLayout";
 import { getAllTenders } from "../services/tenderApi";
+import {
+  fetchTenderReport,
+  contractorName,
+  recommendationText,
+  formatScore,
+  formatMoney,
+  formatDate,
+  scoreTone,
+  riskTone,
+  recommendationTone,
+  formatTenderId,
+  formatCategory,
+} from "../services/reportService";
 
 function Reports() {
   const [tenders, setTenders] = useState([]);
   const [selectedTenderId, setSelectedTenderId] = useState("");
   const [tenderDropdownOpen, setTenderDropdownOpen] = useState(false);
   const [loadingTenders, setLoadingTenders] = useState(true);
+
+  // Shaped report for the currently selected tender (from reportService).
+  const [report, setReport] = useState(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+  const [reportError, setReportError] = useState("");
+
+  const reportRef = useRef(null);
 
   useEffect(() => {
     getAllTenders()
@@ -32,54 +51,54 @@ function Reports() {
       });
   }, []);
 
+  // Fetch + shape the report whenever the selected tender changes.
+  useEffect(() => {
+    if (!selectedTenderId) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      setLoadingReport(true);
+      setReportError("");
+      try {
+        const shaped = await fetchTenderReport(selectedTenderId);
+        if (!cancelled) setReport(shaped);
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Load report error:", error.response?.data || error);
+          setReport(null);
+          setReportError(
+            error.response?.data?.message ||
+              "Could not load the evaluation for this tender.",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingReport(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTenderId]);
+
   const selectedTender = useMemo(() => {
     return tenders.find((tender) => String(tender.id) === selectedTenderId);
   }, [tenders, selectedTenderId]);
 
-  const selectedTenderTitle = selectedTender?.title || "Select Tender";
+  const selectedTenderTitle =
+    report?.tender?.title || selectedTender?.title || "Select Tender";
 
-  const reports = [
-    {
-      icon: "bi-file-earmark-text",
-      title: "Tender Evaluation Report",
-      type: "PDF",
-      color: "red",
-      desc: "Complete contractor comparison with AI scores, risk analysis, and final rankings",
-      meta: "18 pages · 2.4 MB · Jun 10, 2026",
-    },
-    {
-      icon: "bi-table",
-      title: "BOQ Comparison Matrix",
-      type: "Excel",
-      color: "green",
-      desc: "Side-by-side comparison of all contractor BOQ pricing across 247 line items",
-      meta: "12 sheets · 1.8 MB · Jun 10, 2026",
-    },
-    {
-      icon: "bi-cpu",
-      title: "AI Risk Analysis Report",
-      type: "PDF",
-      color: "purple",
-      desc: "Detailed risk assessment, anomaly detection results, and compliance checklist",
-      meta: "9 pages · 1.1 MB · Jun 10, 2026",
-    },
-    {
-      icon: "bi-stars",
-      title: "Executive Summary",
-      type: "PDF",
-      color: "orange",
-      desc: "AI-generated 2-page brief for stakeholders: top recommendation, key findings, next steps",
-      meta: "2 pages · 0.5 MB · Jun 10, 2026",
-    },
-    {
-      icon: "bi-grid",
-      title: "Contractor Tracking Sheet",
-      type: "Excel",
-      color: "blue",
-      desc: "All contractor submission statuses, scores, contact info, and document checklist",
-      meta: "4 sheets · 0.9 MB · Jun 10, 2026",
-    },
-  ];
+  const isCompleted = report?.isCompleted || false;
+  const submissions = report?.submissions || [];
+
+  const handleExport = useReactToPrint({
+    contentRef: reportRef,
+    documentTitle: `Tender-Report-${selectedTender ? formatTenderId(selectedTender.id) : "export"}`,
+    pageStyle: PRINT_PAGE_STYLE,
+  });
 
   return (
     <OwnerLayout activePage="reports">
@@ -134,136 +153,318 @@ function Reports() {
           </div>
 
           <p>
-            Download AI-generated evaluation reports for{" "}
-            <strong>{selectedTenderTitle}</strong>
+            AI evaluation report for <strong>{selectedTenderTitle}</strong>
           </p>
         </div>
 
-        <div className="executive-report-card">
-          <div className="executive-report-top">
-            <div className="report-title-box">
-              <div className="report-ai-icon">
-                <i className="bi bi-stars"></i>
-              </div>
-
-              <div>
-                <h5>AI-Generated Executive Summary</h5>
-                <p>
-                  BuildTender AI v3.2 · Generated Jun 10, 2026
-                  {selectedTender ? ` · ${formatTenderId(selectedTender.id)}` : ""}
-                </p>
-              </div>
+        {/* Toolbar */}
+        <div className="report-toolbar">
+          <div className="report-toolbar-info">
+            <div className="report-ai-icon">
+              <i className="bi bi-stars"></i>
             </div>
-
-            <button className="download-main-btn">
-              <i className="bi bi-download"></i>
-              Download PDF
-            </button>
-          </div>
-
-          <div className="summary-preview">
-            <h5>Executive Summary — {selectedTenderTitle}</h5>
-            <p>
-              Tender Evaluation Complete | Generated by BuildTender AI | June 10,
-              2026
-            </p>
-
-            <h6>Key Findings</h6>
-            <p>
-              Proposals evaluated across price, technical quality, experience,
-              and compliance criteria.
-            </p>
-
-            <ul>
-              <li>Recommended contractor based on AI evaluation ranking</li>
-              <li>Technical, financial, risk, and compliance scores reviewed</li>
-              <li>Contractor submissions compared against tender requirements</li>
-              <li>Risk indicators and document gaps highlighted for review</li>
-              <li>Final recommendation prepared for owner decision-making</li>
-            </ul>
-
-            <h6>Recommended Next Steps</h6>
-            <ol>
-              <li>Review the top-ranked contractor submission</li>
-              <li>Validate any critical risks or missing documents</li>
-              <li>Confirm budget alignment and technical compliance</li>
-              <li>Proceed with award decision after final approval</li>
-            </ol>
-          </div>
-        </div>
-
-        <h5 className="available-title">Available Reports</h5>
-
-        <div className="reports-list">
-          {reports.map((report) => (
-            <div className="report-row" key={report.title}>
-              <div className={`report-file-icon ${report.color}`}>
-                <i className={`bi ${report.icon}`}></i>
-              </div>
-
-              <div className="report-info">
-                <h5>
-                  {report.title}
-                  <span className={report.color}>{report.type}</span>
-                </h5>
-
-                <p>{report.desc}</p>
-
-                <small>
-                  <i className="bi bi-clock"></i> {report.meta}
-                </small>
-              </div>
-
-              <div className="report-actions">
-                <button className="preview-btn">
-                  <i className="bi bi-eye"></i>
-                </button>
-
-                <button className="download-report-btn">
-                  <i className="bi bi-download"></i>
-                  Download
-                </button>
-              </div>
+            <div>
+              <h5>Tender Evaluation Report</h5>
+              <p>
+                Contractor comparison ranked best to worst · generated{" "}
+                {formatDate(new Date().toISOString())}
+              </p>
             </div>
-          ))}
-        </div>
-
-        <div className="download-all-box">
-          <div>
-            <h5>Download All Reports</h5>
-            <p>All 5 reports bundled as a ZIP file · 6.7 MB total</p>
           </div>
 
-          <button className="download-main-btn">
+          <button
+            className="download-main-btn"
+            onClick={handleExport}
+            disabled={!isCompleted || submissions.length === 0}
+            title={
+              isCompleted
+                ? "Export report as PDF"
+                : "Report available once analysis is completed"
+            }
+          >
             <i className="bi bi-download"></i>
-            Download All (ZIP)
+            Export report
           </button>
         </div>
+
+        {/* State banners */}
+        {loadingReport && (
+          <div className="report-state-banner loading">
+            <i className="bi bi-arrow-repeat spin"></i>
+            Loading evaluation…
+          </div>
+        )}
+
+        {!loadingReport && reportError && (
+          <div className="report-state-banner error">
+            <i className="bi bi-exclamation-octagon"></i>
+            {reportError}
+          </div>
+        )}
+
+        {!loadingReport && !reportError && report?.status && !isCompleted && (
+          <StatusBanner status={report.status} message={report.message} />
+        )}
+
+        {/* Printable report */}
+        {isCompleted && (
+          <div className="report-print" ref={reportRef}>
+            <ReportDocument
+              tender={report.tender}
+              submissions={submissions}
+              winner={report.winner}
+            />
+          </div>
+        )}
       </section>
     </OwnerLayout>
   );
 }
 
-function formatTenderId(id) {
-  return `T-${String(id).padStart(4, "0")}`;
+/* ------------------------------------------------------------------ */
+/* Printable document                                                  */
+/* ------------------------------------------------------------------ */
+
+function ReportDocument({ tender, submissions, winner }) {
+  return (
+    <>
+      <header className="rp-header">
+        <div>
+          <span className="rp-kicker">
+            <i className="bi bi-stars"></i> BuildTender AI · Evaluation Report
+          </span>
+          <h1>{tender.title}</h1>
+          <p className="rp-sub">
+            {formatTenderId(tender.id)} · {formatCategory(tender.project_category)}
+            {tender.location ? ` · ${tender.location}` : ""}
+          </p>
+        </div>
+        <div className="rp-header-meta">
+          <div>
+            <span>Budget</span>
+            <strong>{formatMoney(tender.budget)}</strong>
+          </div>
+          <div>
+            <span>Submissions</span>
+            <strong>{submissions.length}</strong>
+          </div>
+          <div>
+            <span>Generated</span>
+            <strong>{formatDate(new Date().toISOString())}</strong>
+          </div>
+        </div>
+      </header>
+
+      {/* Recommendation */}
+      {winner && (
+        <section className="rp-recommendation">
+          <div className="rp-rec-badge">
+            <i className="bi bi-award"></i>
+          </div>
+          <div>
+            <span className="rp-rec-label">Recommended award</span>
+            <h2>{contractorName(winner)}</h2>
+            <p>
+              Ranked #1 of {submissions.length} with an overall score of{" "}
+              <strong>{formatScore(winner.final_score)}</strong>.{" "}
+              {winner.justification || recommendationText(winner)}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Ranking table */}
+      <section className="rp-section">
+        <h3 className="rp-section-title">Ranking Overview</h3>
+        <table className="rp-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Contractor</th>
+              <th>Overall</th>
+              <th>Technical</th>
+              <th>Financial</th>
+              <th>Risk</th>
+              <th>Bid Price</th>
+              <th>Recommendation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {submissions.map((sub, index) => (
+              <tr key={sub.id} className={index === 0 ? "rp-row-top" : ""}>
+                <td>
+                  <span className="rp-rank">{index + 1}</span>
+                </td>
+                <td className="rp-contractor-cell">{contractorName(sub)}</td>
+                <td>
+                  <strong>{formatScore(sub.final_score)}</strong>
+                </td>
+                <td>{formatScore(sub.technical_score)}</td>
+                <td>{formatScore(sub.financial_score)}</td>
+                <td>
+                  <RiskPill sub={sub} />
+                </td>
+                <td>{formatMoney(sub.financial_result?.total_bid_price)}</td>
+                <td>
+                  <RecommendationPill sub={sub} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      {/* Per-contractor detail */}
+      <section className="rp-section">
+        <h3 className="rp-section-title">Contractor Analysis</h3>
+        {submissions.map((sub, index) => (
+          <article className="rp-card" key={sub.id}>
+            <div className="rp-card-head">
+              <div className="rp-card-rank">{index + 1}</div>
+              <div className="rp-card-title">
+                <h4>{contractorName(sub)}</h4>
+                <span>
+                  Overall {formatScore(sub.final_score)} ·{" "}
+                  {sub.risk_result?.overall_risk || "Risk n/a"}
+                </span>
+              </div>
+              <RecommendationPill sub={sub} />
+            </div>
+
+            <div className="rp-metrics">
+              <Metric label="Technical" value={sub.technical_score} />
+              <Metric label="Financial" value={sub.financial_score} />
+              <Metric
+                label="Risk"
+                value={sub.risk_score}
+                hint={sub.risk_result?.overall_risk}
+                invert
+              />
+              <Metric
+                label="Compliance"
+                value={sub.validation_result?.compliance_score}
+              />
+            </div>
+
+            <div className="rp-proscons">
+              <div className="rp-pros">
+                <h5>
+                  <i className="bi bi-plus-circle"></i> Pros
+                </h5>
+                {sub.pros.length ? (
+                  <ul>
+                    {sub.pros.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="rp-empty">No notable strengths identified.</p>
+                )}
+              </div>
+
+              <div className="rp-cons">
+                <h5>
+                  <i className="bi bi-dash-circle"></i> Cons
+                </h5>
+                {sub.cons.length ? (
+                  <ul>
+                    {sub.cons.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="rp-empty">No significant concerns identified.</p>
+                )}
+              </div>
+            </div>
+
+            {sub.justification && (
+              <p className="rp-justification">
+                <strong>AI justification:</strong> {sub.justification}
+              </p>
+            )}
+          </article>
+        ))}
+      </section>
+
+      <footer className="rp-footer">
+        Generated by BuildTender AI · {formatDate(new Date().toISOString())} ·
+        Confidential — for owner decision-making only
+      </footer>
+    </>
+  );
 }
 
-function formatCategory(category) {
+function Metric({ label, value, hint, invert }) {
+  const score = Number(value);
+  const has = Number.isFinite(score);
+  const tone = has ? scoreTone(score, invert) : "muted";
+  return (
+    <div className={`rp-metric ${tone}`}>
+      <span className="rp-metric-label">{label}</span>
+      <span className="rp-metric-value">{has ? formatScore(value) : "—"}</span>
+      {hint && <span className="rp-metric-hint">{hint}</span>}
+    </div>
+  );
+}
+
+function RiskPill({ sub }) {
+  const level = sub.risk_result?.overall_risk;
+  if (!level) return <span>{formatScore(sub.risk_score)}</span>;
+  return <span className={`rp-pill ${riskTone(level)}`}>{level}</span>;
+}
+
+function RecommendationPill({ sub }) {
+  const level = recommendationText(sub);
+  return <span className={`rp-pill ${recommendationTone(level)}`}>{level}</span>;
+}
+
+function StatusBanner({ status, message }) {
   const map = {
-    construction: "Construction",
-    roads: "Roads & Infrastructure",
-    buildings: "Buildings",
-    electrical: "Electrical",
-    mechanical: "Mechanical",
-    water: "Water & Sewage",
-    it: "IT & Telecom",
-    consulting: "Consulting",
-    supplies: "Supplies & Procurement",
-    maintenance: "Maintenance",
-    other: "Other",
+    pending: {
+      icon: "bi-hourglass",
+      cls: "pending",
+      text: message || "Analysis has not started yet.",
+    },
+    processing: {
+      icon: "bi-arrow-repeat",
+      cls: "processing",
+      text: message || "Analysis is in progress. Check back shortly.",
+    },
+    failed: {
+      icon: "bi-x-octagon",
+      cls: "error",
+      text: message || "Analysis failed for this tender.",
+    },
+    "Invalid Documents": {
+      icon: "bi-file-earmark-break",
+      cls: "warning",
+      text:
+        message ||
+        "One or more uploaded documents had low extraction confidence. Please re-upload clearer files.",
+    },
+  };
+  const cfg = map[status] || {
+    icon: "bi-info-circle",
+    cls: "pending",
+    text: message || "Report is not available yet.",
   };
 
-  return map[category] || category || "Other";
+  return (
+    <div className={`report-state-banner ${cfg.cls}`}>
+      <i className={`bi ${cfg.icon}`}></i>
+      {cfg.text}
+    </div>
+  );
 }
+
+const PRINT_PAGE_STYLE = `
+  @page { size: A4; margin: 14mm; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .rp-card, .rp-recommendation, .rp-table { break-inside: avoid; }
+    .rp-section-title { break-after: avoid; }
+  }
+`;
 
 export default Reports;

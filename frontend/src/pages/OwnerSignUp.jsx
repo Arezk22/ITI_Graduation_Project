@@ -1,8 +1,11 @@
-
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { mapRegisterErrors, register } from "../services/authApi";
+import {
+  mapRegisterErrors,
+  register,
+  login,
+  saveTokens,
+} from "../services/authApi";
 
 function OwnerSignUp() {
   const navigate = useNavigate();
@@ -72,19 +75,24 @@ function OwnerSignUp() {
     setIsLoading(true);
 
     try {
-await register({
-  first_name: formData.fullName.trim(),
-  username: formData.email.trim(),
-  company_name: formData.companyName.trim(),
-  email: formData.email.trim(),
-  password: formData.password,
-  role: "owner",
-});
+      const response = await register({
+        first_name: formData.fullName.trim(),
+        username: formData.email.trim(),
+        company_name: formData.companyName.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        role: "owner",
+      });
+      const { access, refresh, first_name, company_name } = response.data;
+      saveTokens(access, refresh);
+      localStorage.setItem("userRole", "owner");
+      localStorage.setItem("userEmail", formData.email.trim());
+      localStorage.setItem("userName", first_name || "User");
+      localStorage.setItem("companyName", company_name || "");
+      localStorage.setItem("pendingRole", "owner");
+      localStorage.setItem("pendingEmail", formData.email.trim());
 
-localStorage.setItem("pendingRole", "owner");
-localStorage.setItem("pendingEmail", formData.email.trim());
-
-navigate("/signin");
+      navigate("/owner/dashboard");
     } catch (error) {
       setErrors(mapRegisterErrors(error));
     } finally {
@@ -105,8 +113,8 @@ navigate("/signin");
         <div className="auth-content">
           <h1>The intelligent platform for construction procurement</h1>
           <p>
-            AI-powered tender evaluation, contractor scoring, and risk analysis —
-            all in one place.
+            AI-powered tender evaluation, contractor scoring, and risk analysis
+            — all in one place.
           </p>
 
           <div className="auth-feature">
@@ -140,7 +148,8 @@ navigate("/signin");
       </div>
 
       <div className="auth-right">
-        <div className="auth-form">
+        {/* تم تحويله إلى وسم <form> ودعم الـ onSubmit لـ تجربة مستخدم أفضل */}
+        <form onSubmit={handleCreateAccount} className="auth-form">
           <Link to="/signup" className="auth-back-link">
             <i className="bi bi-chevron-left"></i> Back
           </Link>
@@ -162,9 +171,7 @@ navigate("/signin");
             />
 
             {errors.fullName && (
-              <div className="invalid-feedback d-block">
-                {errors.fullName}
-              </div>
+              <div className="invalid-feedback d-block">{errors.fullName}</div>
             )}
           </div>
 
@@ -202,9 +209,7 @@ navigate("/signin");
             />
 
             {errors.email && (
-              <div className="invalid-feedback d-block">
-                {errors.email}
-              </div>
+              <div className="invalid-feedback d-block">{errors.email}</div>
             )}
           </div>
 
@@ -229,17 +234,13 @@ navigate("/signin");
                 onClick={() => setShowPassword(!showPassword)}
               >
                 <i
-                  className={`bi ${
-                    showPassword ? "bi-eye-slash" : "bi-eye"
-                  }`}
+                  className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
                 ></i>
               </button>
             </div>
 
             {errors.password && (
-              <div className="invalid-feedback d-block">
-                {errors.password}
-              </div>
+              <div className="invalid-feedback d-block">{errors.password}</div>
             )}
           </div>
 
@@ -247,8 +248,9 @@ navigate("/signin");
             <div className="alert alert-danger py-2 mb-3">{errors.form}</div>
           )}
 
+          {/* تعديل الزرار ليصبح type="submit" */}
           <button
-            onClick={handleCreateAccount}
+            type="submit"
             className="btn auth-submit w-100"
             disabled={isLoading}
           >
@@ -267,7 +269,7 @@ navigate("/signin");
           <p className="signup-text">
             Already registered? <Link to="/signin">Sign in</Link>
           </p>
-        </div>
+        </form>
       </div>
     </div>
   );

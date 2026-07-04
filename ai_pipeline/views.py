@@ -14,7 +14,6 @@ from api.models import TenderSubmissions, Tenders
 from api.serializers import TenderSubmissionsSerializer, TendersSerializer
 from ai_pipeline.main_pipeline import run_tender_evaluation_job
 from ai_pipeline.vector_store import search_documents
-from langchain_openai import ChatOpenAI
 from .services.rag import RagAgent
 from rest_framework.decorators import action
 from .services.chat_memory import ChatMemoryService
@@ -224,6 +223,13 @@ class ChatViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        # Check if tender exists
+        if not chat.tender:
+            return Response(
+                {"error": "Chat tender not found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         message = (request.data.get("message") or "").strip()
 
         if not message:
@@ -240,10 +246,21 @@ class ChatViewSet(viewsets.ViewSet):
         )
 
         # Run RAG
-        result = rag.run_rag_query(
-            tender_id=chat.tender.id,
-            query=message,
-        )
+        try:
+            result = rag.run_rag_query(
+                tender_id=chat.tender.id,
+                query=message,
+            )
+        except RuntimeError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to process query: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         # Save assistant response
         memory.append_message(
