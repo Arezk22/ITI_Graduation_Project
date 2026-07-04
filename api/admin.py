@@ -35,12 +35,13 @@ class TendersAdmin(admin.ModelAdmin):
         "owner",
         "project_category",
         "status",
+        "is_active",
         "analysis_status",
         "budget",
         "deadline_at",
         "created_at",
     )
-    list_filter = ("status", "analysis_status", "project_category")
+    list_filter = ("status", "is_active", "analysis_status", "project_category")
     search_fields = ("title", "description", "location", "owner__username")
     raw_id_fields = ("owner",)
     date_hierarchy = "created_at"
