@@ -73,3 +73,11 @@ export function mapRegisterErrors(error) {
   return backendErrors;
 }
 
+export const googleAuth = (id_token, role = null) => {
+    return api.post("/google/auth/", {
+        id_token,
+        role,
+    });
+};
+
+

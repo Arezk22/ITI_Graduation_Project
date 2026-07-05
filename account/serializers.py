@@ -11,7 +11,9 @@ Users = get_user_model()
 class GoogleRegisterSerializer(serializers.Serializer):
     id_token = serializers.CharField()
     role = serializers.ChoiceField(
-        choices=["owner", "contractor"]
+        choices=["owner", "contractor"],
+        required=False,
+        allow_null=True,
     )
 
 

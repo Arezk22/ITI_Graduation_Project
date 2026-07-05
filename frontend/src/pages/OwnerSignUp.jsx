@@ -5,9 +5,10 @@ import {
   register,
   login,
   saveTokens,
+  googleAuth,
 } from "../services/authApi";
 import { GoogleLogin } from '@react-oauth/google'
-import axios from "axios";
+
 function OwnerSignUp() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -267,16 +268,17 @@ function OwnerSignUp() {
               onSuccess={
                 async (credentialResponse) => {
                   try {
-                      const response = await axios.post(
-                          "http://127.0.0.1:8000/api/v1/google/register/",
-                          {
-                              id_token: credentialResponse.credential,
-                              role: "owner",
-                          }
-                      );
+                      const response = await googleAuth(
+                              credentialResponse.credential,"owner");
+                      saveTokens(
+                                            response.data.access,
+                                            response.data.refresh
+                                        );
 
-                      console.log(response.data);
-
+                      localStorage.setItem("userRole", response.data.role || "");
+                      localStorage.setItem("userName", response.data.first_name || "User");
+                      localStorage.setItem("companyName", response.data.company_name || "");
+                      navigate("/owner/dashboard")
                   } catch (err) {
     console.log(err);
     console.log(err.message);

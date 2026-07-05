@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { mapRegisterErrors, register, saveTokens } from "../services/authApi";
+import { mapRegisterErrors, register, saveTokens,googleAuth } from "../services/authApi";
 import { GoogleLogin } from '@react-oauth/google'
+
 
 function ContractorSignUp() {
   const navigate = useNavigate();
@@ -259,14 +260,34 @@ function ContractorSignUp() {
 
           <div className="social-buttons d-flex justify-content-center align-content-center">
             <GoogleLogin
-              onSuccess={(credentialResponse)=>{
-                  console.log(credentialResponse.credential)
-              }}
-              size="large"
-              width="250px"
-              theme="filled_blue"   
-              shape="pill"
-              text="signup_with"/>
+                          onSuccess={
+                            async (credentialResponse) => {
+                              try {
+                                  const response = await googleAuth(
+                                          credentialResponse.credential,"contractor");
+                                  saveTokens(
+                                            response.data.access,
+                                            response.data.refresh
+                                        );
+
+                                  localStorage.setItem("userRole", response.data.role || "");
+                                  localStorage.setItem("userName", response.data.first_name || "User");
+                                  localStorage.setItem("companyName", response.data.company_name || "");
+                                  navigate("/contractor/dashboard")
+            
+                              } catch (err) {
+                console.log(err);
+                console.log(err.message);
+                console.log(err.code);
+                console.log(err.config);
+            }
+                }}
+                          size="large"
+                          width="250px"
+                          theme="filled_blue"   
+                          shape="pill"
+                          text="signup_with"/>
+                      
           </div>
 
           <p className="signup-text">
