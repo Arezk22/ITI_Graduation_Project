@@ -125,16 +125,12 @@ function Evaluation() {
   const visibleSubmissions = displaySubmissions.slice(0, 5);
 
   const chartSubmissions = useMemo(() => {
-    return visibleSubmissions.map((submission, index) => ({
-      name: getContractorName(submission, index),
-      price: Number(
-        submission.bid_price ||
-          submission.price ||
-          submission.financial_value ||
-          submission.total_price ||
-          0,
-      ),
-    }));
+    return visibleSubmissions
+      .map((submission, index) => ({
+        name: getContractorName(submission, index),
+        price: Number(submission.financial_result?.total_bid_price || 0),
+      }))
+      .filter((item) => item.price > 0);
   }, [visibleSubmissions]);
 
   return (
@@ -338,19 +334,13 @@ function Evaluation() {
                           "—"}
                       </td>
                       <td>
-                        {submission.compliance_score ??
-                          submission.evaluation?.compliance_score ??
-                          "—"}
+                        {submission.validation_result?.compliance_score ?? "—"}
                       </td>
                       <td>
-                        {submission.trust_score ??
-                          submission.evaluation?.trust_score ??
-                          "—"}
+                        {100 - (submission.risk_score ) ?? "—"}
                       </td>
                       <td>
-                        {submission.risk_score ??
-                          submission.evaluation?.risk_score ??
-                          "—"}
+                        {submission.risk_result?.overall_risk ?? "—"}
                       </td>
                       <td>
                         {submission.final_score ??
@@ -401,8 +391,8 @@ function Evaluation() {
 
               <div className="contractor-score-chart">
                 <div className="score-axis">
-                  {[100, 80, 60, 40, 20, 0].map((value) => (
-                    <span key={value}>{value}</span>
+                  {getPriceAxisLabels(chartSubmissions).map((value, idx) => (
+                    <span key={idx}>{value}</span>
                   ))}
                 </div>
 
@@ -426,6 +416,7 @@ function Evaluation() {
                                 chartSubmissions,
                               )}%`,
                             }}
+                            title={`$${item.price.toLocaleString()}`}
                           ></span>
                         </div>
 
@@ -470,14 +461,7 @@ function getContractorId(submission) {
 }
 
 function formatBidPrice(submission) {
-  const value =
-    submission.bid_price ||
-    submission.price ||
-    submission.financial_value ||
-    submission.total_price;
-
-  if (!value) return "—";
-
+  const value = submission.financial_result?.total_bid_price ?? "-";
   const number = Number(value);
 
   if (Number.isNaN(number)) return value;
@@ -485,7 +469,8 @@ function formatBidPrice(submission) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: 0,
+    notation: "compact",
+    maximumFractionDigits: 1,
   }).format(number);
 }
 
@@ -507,6 +492,38 @@ function shortName(name) {
   if (parts.length === 1) return parts[0];
 
   return parts.slice(0, 2).join(" ");
+}
+
+function getPriceAxisLabels(chartSubmissions) {
+  if (chartSubmissions.length === 0) {
+    return ["$0"];
+  }
+
+  const maxPrice = Math.max(...chartSubmissions.map((item) => item.price));
+
+  if (maxPrice === 0) {
+    return ["$0"];
+  }
+
+  const labels = [];
+  const step = maxPrice / 5;
+
+  for (let i = 5; i >= 0; i--) {
+    const value = Math.round(step * i);
+    labels.push(formatAxisPrice(value));
+  }
+
+  return labels;
+}
+
+function formatAxisPrice(value) {
+  if (value >= 1000000) {
+    return `$${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `$${(value / 1000).toFixed(0)}K`;
+  }
+  return `$${value}`;
 }
 
 export default Evaluation;
