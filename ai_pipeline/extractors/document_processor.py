@@ -653,7 +653,6 @@ Return exactly:
     }
   ]
 }"""
-        try:
             
         # # ITI_GATEWAY
         # buffered = BytesIO()
@@ -669,6 +668,7 @@ Return exactly:
         # print(ocr_data)
         # return ocr_data   
             
+        try:
             
         # in gemini model 
             uploaded_file=self.ai_client.files.upload(
@@ -712,21 +712,24 @@ Return exactly:
     
         
         except Exception as e:
+            print(type(e))
+            print(repr(e))
             print(f"❌ Error during Vision PDF extraction: {e}")
-            return [
-                {
-                "page":"all pages",
-                "type":"scanned",
-                "extraction_metadata":{
-                    "confidence_score": 0,
-                    "needs_human_review": True ,
-                    "review_reason": "Didnot extract successfully",
-                    "unclear_sections": [],
-                },
-                "content":"",
-                "tables":[]
-                }
-            ]
+            raise
+            # return [
+            #     {
+            #     "page":"all pages",
+            #     "type":"scanned",
+            #     "extraction_metadata":{
+            #         "confidence_score": 0,
+            #         "needs_human_review": True ,
+            #         "review_reason": "Didnot extract successfully",
+            #         "unclear_sections": [],
+            #     },
+            #     "content":"",
+            #     "tables":[]
+            #     }
+            # ]
         
     def analyze_extraction_quality(self,extracted_pages):
 
@@ -777,35 +780,32 @@ Return exactly:
     def process_files(self,files):
         all_files_cleaned_data=[]
         for file in files:
-            try:
-                file_type = self.intake_and_route(file)
-                if not file_type=="drawing file": # edit to suit model
-                    raw_data = self.extract_content(
-                        file.file.path,
-                        file_type
-                    )
+            file_type = self.intake_and_route(file)
+            if not file_type=="drawing file": # edit to suit model
+                raw_data = self.extract_content(
+                    file.file.path,
+                    file_type
+                )
 
-                    file_meta_data = self.analyze_extraction_quality(raw_data)
+                file_meta_data = self.analyze_extraction_quality(raw_data)
 
-                    cleaned_data = self.clean_raw_data(raw_data)
+                cleaned_data = self.clean_raw_data(raw_data)
 
-                    file.extracted_data = cleaned_data
-                    file.extracted_meta_data = file_meta_data
-                    file.need_review=file_meta_data["needs_human_review"]
-                    file.save()
-                    if file_meta_data["needs_human_review"]:
-                        return None
-                    all_files_cleaned_data.append({
-                        "file_id": file.id,
-                        "file_category": file.file_category,
-                        "content": cleaned_data
-                    })
-                else:
-                    continue
+                file.extracted_data = cleaned_data
+                file.extracted_meta_data = file_meta_data
+                file.need_review=file_meta_data["needs_human_review"]
+                file.save()
+                if file_meta_data["needs_human_review"]:
+                    return None
+                all_files_cleaned_data.append({
+                    "file_id": file.id,
+                    "file_category": file.file_category,
+                    "content": cleaned_data
+                })
+            else:
+                continue
 
-            except Exception as e:
-                print(f"Error processing file {file.id}: {e}")
-
+           
         return all_files_cleaned_data
     
      # 3. Structuring Agent: تحويل البيانات الخام العشوائية لـ JSON موحد ومتوافق

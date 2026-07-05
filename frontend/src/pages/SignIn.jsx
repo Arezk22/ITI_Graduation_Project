@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login, saveTokens } from "../services/authApi";
+import { login, saveTokens , googleAuth} from "../services/authApi";
+import { GoogleLogin } from '@react-oauth/google'
+
 
 function SignIn() {
   const navigate = useNavigate();
@@ -217,10 +219,43 @@ const handleSubmit = async (e) => {
             <span>or continue with</span>
           </div>
 
-          <div className="social-buttons">
-            <button type="button">Google</button>
-            <button type="button">Microsoft</button>
+          <div className="social-buttons d-flex justify-content-center align-content-center">
+            <GoogleLogin
+                          onSuccess={
+                            async (credentialResponse) => {
+                              try {
+                                  const response = await googleAuth(
+                                          credentialResponse.credential);
+                                  saveTokens(
+                                            response.data.access,
+                                            response.data.refresh
+                                        );
+
+                                  localStorage.setItem("userRole", response.data.role || "");
+                                  localStorage.setItem("userName", response.data.first_name || "User");
+                                  localStorage.setItem("companyName", response.data.company_name || "");
+                                  if (response.data.role === "owner") {
+                                    navigate("/owner/dashboard");
+                                  } else if (response.data.role === "contractor") {
+                                    navigate("/contractor/dashboard");
+                                  }
+            
+                              } catch (err) {
+                console.log(err);
+                console.log(err.message);
+                console.log(err.code);
+                console.log(err.config);
+            }
+                }}
+                          size="large"
+                          width="250px"
+                          theme="filled_blue"   
+                          shape="pill"
+                          text="signup_with"/>
+                      
           </div>
+
+          
 
           <p className="signup-text">
             Don't have an account? <Link to="/signup">Sign up free</Link>

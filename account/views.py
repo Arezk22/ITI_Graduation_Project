@@ -6,15 +6,103 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from account.models import ContractorProfiles
+from account.models import ContractorProfiles ,Users
 from api.models import TenderSubmissions
 from api.serializers import TenderSubmissionsSerializer
 from .serializers import (
     ContractorProfileSerializer,
     EmailTokenObtainPairSerializer,
     RegisterSerializer,
+    GoogleRegisterSerializer
 )
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from django.conf import settings
 
+# POST /api/v1/google/register/
+class GoogleRegisterView(APIView):
+
+    permission_classes=[AllowAny]
+
+    def post(self,request):
+
+        serializer=GoogleRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        google_token = serializer.validated_data["id_token"]
+        role = serializer.validated_data.get("role")
+        info = id_token.verify_oauth2_token(
+                google_token,
+                requests.Request(),
+                settings.GOOGLE_CLIENT_ID
+            )
+        email = info["email"]
+        name = info.get("name", "")
+        email_verified = info.get("email_verified", False)
+        
+        if not email_verified:
+            return Response(
+                {"error": "Google account email is not verified."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+            
+        user = Users.objects.filter(email=email).first()
+        if user:
+            refresh = RefreshToken.for_user(user)
+            response = {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "role": user.role,
+                "first_name": user.first_name,
+                "is_new_user": False,
+            }
+
+            if user.role == "contractor" and hasattr(user, "contractor_profile"):
+                response["company_name"] = user.contractor_profile.company_name
+            elif user.role == "owner":
+                response["company_name"] = user.last_name
+            else:
+                response["company_name"] = ""
+
+            return Response(response)
+            
+        if not role:
+            return Response(    
+                            {"error": "Role is required for first-time registration."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+        from uuid import uuid4
+        username = f"{email.split('@')[0]}_{uuid4().hex[:8]}"
+        user = Users.objects.create(
+                            username=username,
+                            email=email,
+                            role=role,
+                            first_name=name
+                        )
+        user.set_unusable_password()
+        user.save()
+        
+        if role == "contractor":
+            ContractorProfiles.objects.create(
+                user=user,
+                company_name=name
+            )
+        refresh = RefreshToken.for_user(user)
+        response = {
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "role": user.role,
+            "first_name": user.first_name,
+            "is_new_user": True,
+        }
+
+        if user.role == "contractor" and hasattr(user, "contractor_profile"):
+            response["company_name"] = user.contractor_profile.company_name
+        elif user.role == "owner":
+            response["company_name"] = user.last_name
+        else:
+            response["company_name"] = ""
+
+        return Response(response)
 
 class RegisterAPIView(APIView):
     permission_classes = [AllowAny]
