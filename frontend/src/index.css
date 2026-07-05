@@ -2919,6 +2919,7 @@ body {
   gap: 18px;
   padding: 0 18px;
   position: relative;
+  margin-left: 30px;
 }
 
 .score-bar-group {
