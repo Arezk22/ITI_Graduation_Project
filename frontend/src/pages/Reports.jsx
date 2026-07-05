@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import OwnerLayout from "../components/OwnerLayout";
+import {
+  RiskPill,
+  RecommendationPill,
+  StatusBanner,
+} from "../components/ReportBadges";
 import { getAllTenders } from "../services/tenderApi";
 import {
   fetchTenderReport,
@@ -10,8 +15,6 @@ import {
   formatMoney,
   formatDate,
   scoreTone,
-  riskTone,
-  recommendationTone,
   formatTenderId,
   formatCategory,
 } from "../services/reportService";
@@ -404,56 +407,6 @@ function Metric({ label, value, hint, invert }) {
       <span className="rp-metric-label">{label}</span>
       <span className="rp-metric-value">{has ? formatScore(value) : "—"}</span>
       {hint && <span className="rp-metric-hint">{hint}</span>}
-    </div>
-  );
-}
-
-function RiskPill({ sub }) {
-  const level = sub.risk_result?.overall_risk;
-  if (!level) return <span>{formatScore(sub.risk_score)}</span>;
-  return <span className={`rp-pill ${riskTone(level)}`}>{level}</span>;
-}
-
-function RecommendationPill({ sub }) {
-  const level = recommendationText(sub);
-  return <span className={`rp-pill ${recommendationTone(level)}`}>{level}</span>;
-}
-
-function StatusBanner({ status, message }) {
-  const map = {
-    pending: {
-      icon: "bi-hourglass",
-      cls: "pending",
-      text: message || "Analysis has not started yet.",
-    },
-    processing: {
-      icon: "bi-arrow-repeat",
-      cls: "processing",
-      text: message || "Analysis is in progress. Check back shortly.",
-    },
-    failed: {
-      icon: "bi-x-octagon",
-      cls: "error",
-      text: message || "Analysis failed for this tender.",
-    },
-    "Invalid Documents": {
-      icon: "bi-file-earmark-break",
-      cls: "warning",
-      text:
-        message ||
-        "One or more uploaded documents had low extraction confidence. Please re-upload clearer files.",
-    },
-  };
-  const cfg = map[status] || {
-    icon: "bi-info-circle",
-    cls: "pending",
-    text: message || "Report is not available yet.",
-  };
-
-  return (
-    <div className={`report-state-banner ${cfg.cls}`}>
-      <i className={`bi ${cfg.icon}`}></i>
-      {cfg.text}
     </div>
   );
 }
