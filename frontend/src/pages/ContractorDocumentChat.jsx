@@ -31,10 +31,14 @@ function DocumentChat() {
     if (!trimmedMessage || !selectedTenderId) {
       return;
     }
+
+    // 1. إظهار رسالة المستخدم فوراً فيتغير الـ State بدون انتظار السيرفر
+    const userMessageId = `user-${Date.now()}`;
     setMessages((prev) => [
       ...prev,
-      { id: `user-${Date.now()}`, role: "user", content: trimmedMessage },
+      { id: userMessageId, role: "user", content: trimmedMessage },
     ]);
+
     setMessage("");
     setSending(true);
     setError("");
@@ -57,16 +61,15 @@ function DocumentChat() {
       const sendResponse = await sendChatMessage(chatId, trimmedMessage);
       const assistantAnswer = sendResponse.data.answer || "";
 
+      // 2. إضافة رد الـ AI فقط بعد ما يرجع من السيرفر بنجاح
       setMessages((current) => [
         ...current,
-        { id: `user-${Date.now()}`, role: "user", content: trimmedMessage },
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
           content: assistantAnswer,
         },
       ]);
-      setMessage("");
     } catch (err) {
       console.error("Send message error:", err.response?.data || err);
       setError("Unable to send message. Please try again.");
@@ -92,20 +95,20 @@ function DocumentChat() {
         console.log("Attempting to delete chat:", chatId);
         const response = await deleteChat(chatId);
         console.log("Delete response:", response);
-        
-        // Update state to remove the chat
+
         const updatedChats = chats.filter((c) => c.id !== chatId);
         console.log("Updated chats list:", updatedChats);
         setChats(updatedChats);
-        
+
         if (activeChatId === chatId) {
           console.log("Deleted chat was active, clearing active chat");
           setActiveChatId(null);
           setMessages([]);
         }
-        setError(""); // Clear any previous errors
+        setError("");
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.message || err.toString();
+        const errorMsg =
+          err.response?.data?.error || err.message || err.toString();
         console.error("Delete chat error:", errorMsg);
         setError("Unable to delete chat. " + errorMsg);
       }
@@ -186,8 +189,8 @@ function DocumentChat() {
   return (
     <ContractorLayout activePage="document-chat">
       <section className="gpt-chat-container">
-        {/* القائمة الجانبية الداكنة - كـ ChatGPT Sidebar */}
-        <aside className="gpt-sidebar">
+        {/* القائمة الجانبية الداكنة */}
+        <aside className="gpt-sidebar ">
           <div className="sidebar-top">
             <button className="gpt-new-chat-btn" onClick={handleAddNewChat}>
               <i className="bi bi-plus-lg"></i>
@@ -268,25 +271,54 @@ function DocumentChat() {
             <span>BuildTender AI v2.0</span>
           </header>
 
-          <div className="gpt-messages-container">
+          <div
+            className="gpt-messages-container"
+            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+          >
             {error && <div className="gpt-alert-error">{error}</div>}
 
-            {/* رسالة الترحيب الافتراضية بنظام كتل ChatGPT */}
-            <div className="gpt-row assistant-row">
-              <div className="gpt-avatar assistant-avatar">
-                <i className="bi bi-robot"></i>
-              </div>
-              <div className="gpt-content">
-                <h5>BuildTender Assistant</h5>
-                <p>
-                  Hello! I'm your AI assistant grounded in your tender
-                  documents. Ask me anything about{" "}
-                  <strong>{selectedTender?.title || "this tender"}</strong>.
-                </p>
-                <p>
-                  I can analyze the scope of work, Bill of Quantities (BOQ), and
-                  penalty clauses efficiently.
-                </p>
+            {/* رسالة الترحيب الافتراضية للـ AI (على الشمال) */}
+            <div
+              className="gpt-row assistant-row"
+              style={{
+                display: "flex",
+                justifyContent: "flex-start",
+                width: "100%",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  maxWidth: "75%",
+                }}
+              >
+                <div
+                  className="gpt-avatar assistant-avatar"
+                  style={{ marginRight: "10px" }}
+                >
+                  <i className="bi bi-robot"></i>
+                </div>
+                <div
+                  className="gpt-content"
+                  style={{
+                    backgroundColor: "#f0f0f0",
+                    padding: "12px",
+                    borderRadius: "8px",
+                  }}
+                >
+                  <h5>BuildTender Assistant</h5>
+                  <p>
+                    Hello! I'm your AI assistant grounded in your tender
+                    documents. Ask me anything about{" "}
+                    <strong>{selectedTender?.title || "this tender"}</strong>.
+                  </p>
+                  <p>
+                    I can analyze the scope of work, Bill of Quantities (BOQ),
+                    and penalty clauses efficiently.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -296,37 +328,102 @@ function DocumentChat() {
                 Loading conversation...
               </div>
             ) : (
-              messages.map((msg) => (
+              messages.map((msg) => {
+                const isUser = msg.role !== "assistant";
+                return (
+                  <div
+                    key={msg.id}
+                    className={`gpt-row ${isUser ? "user-row" : "assistant-row"}`}
+                    style={{
+                      display: "flex",
+                      justifyContent: isUser ? "flex-end" : "flex-start",
+                      width: "100%",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: isUser ? "row-reverse" : "row",
+                        alignItems: "flex-start",
+                        maxWidth: "75%",
+                      }}
+                    >
+                      <div
+                        className={`gpt-avatar ${isUser ? "user-avatar" : "assistant-avatar"}`}
+                        style={{
+                          [isUser ? "marginLeft" : "marginRight"]: "10px",
+                        }}
+                      >
+                        <i
+                          className={
+                            isUser ? "bi bi-person-fill" : "bi bi-robot"
+                          }
+                        ></i>
+                      </div>
+                      <div
+                        className="gpt-content"
+                        style={{
+                          backgroundColor: "#f0f0f0",
+                          color: isUser ? "#fff" : "#000",
+                          padding: "12px",
+                          borderRadius: "8px",
+                          textAlign: "left",
+                        }}
+                      >
+                        <h5>{isUser ? "You" : "BuildTender AI"}</h5>
+                        <p style={{ margin: 0 }}>{msg.content}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+
+            {/* مؤشر جاري الكتابة يظهر بجهة الشمال بجانب رد الـ AI المتوقع */}
+            {sending && (
+              <div
+                className="gpt-row assistant-row"
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-start",
+                  width: "100%",
+                }}
+              >
                 <div
-                  key={msg.id}
-                  className={`gpt-row ${msg.role === "assistant" ? "assistant-row" : "user-row"}`}
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    maxWidth: "75%",
+                  }}
                 >
                   <div
-                    className={`gpt-avatar ${msg.role === "assistant" ? "assistant-avatar" : "user-avatar"}`}
+                    className="gpt-avatar assistant-avatar"
+                    style={{ marginRight: "10px" }}
                   >
-                    <i
-                      className={
-                        msg.role === "assistant"
-                          ? "bi bi-robot"
-                          : "bi bi-person-fill"
-                      }
-                    ></i>
+                    <i className="bi bi-robot"></i>
                   </div>
-                  <div className="gpt-content">
-                    <h5>
-                      {msg.role === "assistant" ? "BuildTender AI" : "You"}
-                    </h5>
-                    <p>{msg.content}</p>
+                  <div
+                    className="gpt-content"
+                    style={{
+                      backgroundColor: "#f0f0f0",
+                      padding: "12px",
+                      borderRadius: "8px",
+                      fontStyle: "italic",
+                      color: "#666",
+                    }}
+                  >
+                    <span className="spinner-border spinner-border-sm me-2"></span>
+                    BuildTender AI is thinking...
                   </div>
                 </div>
-              ))
+              </div>
             )}
           </div>
 
-          {/* الجزء السفلي العائم للأسئلة والمستطيل الاحترافي */}
+          {/* الجزء السفلي العائم */}
           <div className="gpt-footer-area">
             <div className="gpt-footer-wrapper">
-              {/* الأسئلة المقترحة كبطاقات فوق حقل الكتابة مباشرة */}
               <div className="gpt-suggestions-grid">
                 {questions.map((question) => (
                   <button
@@ -340,7 +437,6 @@ function DocumentChat() {
                 ))}
               </div>
 
-              {/* صندوق المدخلات مثل ChatGPT تماماً */}
               <div className="gpt-input-container">
                 <textarea
                   placeholder="Message BuildTender AI..."
@@ -359,11 +455,7 @@ function DocumentChat() {
                   onClick={handleSendMessage}
                   disabled={sending || !message.trim()}
                 >
-                  {sending ? (
-                    <span className="spinner-border spinner-border-sm"></span>
-                  ) : (
-                    <i className="bi bi-arrow-up-circle-fill"></i>
-                  )}
+                  <i className="bi bi-arrow-up-circle-fill"></i>
                 </button>
               </div>
               <p className="gpt-disclaimer">

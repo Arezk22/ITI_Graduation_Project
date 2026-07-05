@@ -91,9 +91,11 @@ body {
 .browser-dots span:nth-child(1) {
   background: #ef4444;
 }
+
 .browser-dots span:nth-child(2) {
   background: #f59e0b;
 }
+
 .browser-dots span:nth-child(3) {
   background: #22c55e;
 }
@@ -512,7 +514,7 @@ body {
   margin-bottom: 28px;
 }
 
-.auth-content > p {
+.auth-content>p {
   color: #a7bddc;
   font-size: 22px;
   line-height: 1.6;
@@ -585,7 +587,7 @@ body {
   margin-bottom: 10px;
 }
 
-.auth-form > p {
+.auth-form>p {
   color: #64748b;
   font-size: 20px;
   margin-bottom: 36px;
@@ -785,14 +787,17 @@ body {
 .auth-back-link:hover {
   color: #1f49c6;
 }
+
 /* -------------------------------------------contractor Documentchat ------------------------------------------ */
 
 /* الحاوية الأساسية للشاشة بالكامل */
 .gpt-chat-container {
   display: flex;
   height: calc(100vh - 60px);
-  background-color: #ffffff; /* خلفية بيضاء نقية */
-  color: #2d2d2d; /* نصوص داكنة مريحة للعين */
+  background-color: #ffffff;
+  /* خلفية بيضاء نقية */
+  color: #2d2d2d;
+  /* نصوص داكنة مريحة للعين */
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -802,7 +807,7 @@ body {
   background-color: #f9f9f9;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 15px;
   border-right: 1px solid #e5e5e5;
 }
 
@@ -825,6 +830,7 @@ body {
   text-align: left;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
+
 .gpt-new-chat-btn:hover {
   background-color: #f4f4f4;
   border-color: #c5c5c5;
@@ -834,6 +840,7 @@ body {
   margin-top: 20px;
   margin-bottom: 15px;
 }
+
 .sidebar-label {
   font-size: 0.75rem;
   color: #8e8ea0;
@@ -849,6 +856,7 @@ body {
   overflow-y: auto;
   margin-top: 10px;
 }
+
 .history-title {
   font-size: 0.75rem;
   color: #b4b4b4;
@@ -856,6 +864,7 @@ body {
   margin-bottom: 8px;
   font-weight: bold;
 }
+
 .gpt-history-item {
   display: flex;
   align-items: center;
@@ -868,15 +877,18 @@ body {
   color: #4d4d4d;
   transition: background 0.2s;
 }
+
 .gpt-history-item:hover {
   background-color: #ececec;
   color: #000;
 }
+
 .gpt-history-item.active {
   background-color: #e2e2e2;
   color: #000;
   font-weight: 500;
 }
+
 .gpt-item-title {
   display: flex;
   align-items: center;
@@ -885,15 +897,18 @@ body {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
 .gpt-delete-btn {
   background: transparent;
   border: none;
   color: #999;
   display: none;
 }
+
 .gpt-history-item:hover .gpt-delete-btn {
   display: block;
 }
+
 .gpt-delete-btn:hover {
   color: #ff4d4d;
 }
@@ -906,6 +921,7 @@ body {
   flex-direction: column;
   position: relative;
 }
+
 .gpt-chat-header {
   height: 45px;
   display: flex;
@@ -922,17 +938,17 @@ body {
   overflow-y: auto;
   padding-bottom: 180px;
 }
+
 .gpt-row {
   display: flex;
   padding: 24px calc((100% - 720px) / 2);
   gap: 20px;
   border-bottom: 1px solid #f0f0f0;
 }
+
 .user-row {
-  background-color: #ffffff; /* شات المستخدم بخلفية بيضاء صريحة */
-}
-.assistant-row {
-  background-color: #f7f7f8; /* ردود الـ AI بخلفية رمادية خفيفة جداً للتمييز الفاخر */
+  background-color: #ffffff;
+  /* شات المستخدم بخلفية بيضاء صريحة */
 }
 
 /* الأفاتار (الرموز الشخصية) */
@@ -946,13 +962,17 @@ body {
   font-size: 1.1rem;
   flex-shrink: 0;
 }
+
 .user-avatar {
   background-color: #e2f7ed;
-  color: #19c37d; /* اخضر مريح */
+  color: #19c37d;
+  /* اخضر مريح */
 }
+
 .assistant-avatar {
   background-color: #e7f1ff;
-  color: #0d6efd; /* أزرق براند البناء */
+  color: #0d6efd;
+  /* أزرق براند البناء */
 }
 
 .gpt-content h5 {
@@ -961,6 +981,7 @@ body {
   color: #6f6f7f;
   font-weight: 600;
 }
+
 .gpt-content p {
   font-size: 0.95rem;
   line-height: 1.6;
@@ -979,6 +1000,7 @@ body {
   display: flex;
   justify-content: center;
 }
+
 .gpt-footer-wrapper {
   width: 720px;
   max-width: 90%;
@@ -993,6 +1015,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+
 .gpt-suggestion-card {
   background-color: #ffffff;
   border: 1px solid #e5e5e5;
@@ -1009,10 +1032,12 @@ body {
     border-color 0.2s;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
+
 .gpt-suggestion-card:hover {
   background-color: #f7f7f8;
   border-color: #d1d1d6;
 }
+
 .card-text {
   font-size: 0.85rem;
   font-weight: 500;
@@ -1020,6 +1045,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .card-icon {
   font-size: 1.2rem;
   color: #b4b4b4;
@@ -1035,6 +1061,7 @@ body {
   align-items: center;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
 }
+
 .gpt-input-container textarea {
   flex-grow: 1;
   background: transparent;
@@ -1044,13 +1071,16 @@ body {
   outline: none;
   font-size: 0.95rem;
 }
+
 .gpt-input-container textarea::placeholder {
   color: #8e8ea0;
 }
+
 .gpt-send-btn {
   background: transparent;
   border: none;
-  color: #19c37d; /* زر السهم الأخضر الخاص بـ ChatGPT */
+  color: #19c37d;
+  /* زر السهم الأخضر الخاص بـ ChatGPT */
   font-size: 1.6rem;
   cursor: pointer;
   display: flex;
@@ -1060,10 +1090,12 @@ body {
     transform 0.1s,
     color 0.2s;
 }
+
 .gpt-send-btn:disabled {
   color: #e5e5e5;
   cursor: not-allowed;
 }
+
 .gpt-send-btn:hover:not(:disabled) {
   transform: scale(1.05);
 }
@@ -1092,6 +1124,7 @@ body {
   position: sticky;
   top: 0;
   width: 250px;
+  z-index: 999999;
 }
 
 .sidebar-brand {
@@ -1315,14 +1348,17 @@ body {
   background: #eff6ff;
   color: #2563eb;
 }
+
 .stat-icon.green {
   background: #ecfdf5;
   color: #059669;
 }
+
 .stat-icon.purple {
   background: #f3e8ff;
   color: #7c3aed;
 }
+
 .stat-icon.red {
   background: #fef2f2;
   color: #ef4444;
@@ -1349,12 +1385,15 @@ body {
 .owner-stat-card small.blue {
   color: #2563eb;
 }
+
 .owner-stat-card small.green {
   color: #059669;
 }
+
 .owner-stat-card small.purple {
   color: #7c3aed;
 }
+
 .owner-stat-card small.red {
   color: #ef4444;
 }
@@ -1399,6 +1438,7 @@ body {
 .blue-dot {
   background: #2563eb;
 }
+
 .orange-dot {
   background: #f97316;
 }
@@ -1615,6 +1655,7 @@ body {
   background: #2b405f;
   color: #fb7185;
 }
+
 /* ========================================= */
 .owner-sidebar {
   display: flex;
@@ -1692,6 +1733,7 @@ body {
     font-size: 11px;
   }
 }
+
 /* ===================added code================= */
 
 .real-chart {
@@ -1753,6 +1795,7 @@ body {
   padding-left: 48px;
   padding-right: 12px;
 }
+
 /* -------------------------------------------- Owner all tenders -------------------------------------- */
 .all-tenders-header {
   align-items: center;
@@ -1800,6 +1843,7 @@ body {
     width: 100%;
   }
 }
+
 .status-badge.closed {
   background: #fee2e2;
   color: #dc2626;
@@ -1812,6 +1856,7 @@ body {
   justify-content: center;
   min-width: 30px;
 }
+
 /* -------------------------------------------- create tender -------------------------------------- */
 
 .create-tender-content {
@@ -2012,6 +2057,7 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
 .evaluation-weights-section {
   margin-top: 22px;
 }
@@ -2097,6 +2143,7 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
 /* -------------------------------------------------------- Notifications ---------------------------------------------- */
 
 /* .notification-icon-btn {
@@ -3119,14 +3166,17 @@ body {
   background: #ecfdf5;
   color: #059669;
 }
+
 .ai-metric-icon.red {
   background: #fef2f2;
   color: #ef4444;
 }
+
 .ai-metric-icon.orange {
   background: #fff7ed;
   color: #f59e0b;
 }
+
 .ai-metric-icon.purple {
   background: #f3e8ff;
   color: #7c3aed;
@@ -3141,12 +3191,15 @@ body {
 .ai-metric-card h3.green {
   color: #059669;
 }
+
 .ai-metric-card h3.red {
   color: #ef4444;
 }
+
 .ai-metric-card h3.orange {
   color: #f59e0b;
 }
+
 .ai-metric-card h3.purple {
   color: #7c3aed;
 }
@@ -3168,7 +3221,7 @@ body {
   overflow: hidden;
 }
 
-.ai-card > h5 {
+.ai-card>h5 {
   padding: 20px 24px;
   border-bottom: 1px solid #e5e7eb;
   margin: 0;
@@ -3609,6 +3662,7 @@ body {
 .review-link-btn:hover {
   text-decoration: underline;
 }
+
 /* ---------------------------------------------------------------------- Document Chat --------------------------------------------------------------- */
 .document-chat-page {
   display: grid;
@@ -3822,6 +3876,7 @@ body {
     display: none;
   }
 }
+
 .chat-tender-dropdown-wrap {
   position: relative;
   margin-top: 18px;
@@ -4900,12 +4955,15 @@ body {
 .contractor-stats div:nth-child(1) h3 {
   color: #2563eb;
 }
+
 .contractor-stats div:nth-child(2) h3 {
   color: #059669;
 }
+
 .contractor-stats div:nth-child(3) h3 {
   color: #7c3aed;
 }
+
 .contractor-stats div:nth-child(4) h3 {
   color: #f97316;
 }
@@ -5082,6 +5140,7 @@ body {
     justify-self: start;
   }
 }
+
 /* ------------------------------------------------------------------------ tender details ---------------------------------------------------------- */
 
 .tender-details-content {
@@ -5367,6 +5426,7 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
 .tender-details-content {
   padding: 24px;
   max-width: 1180px;
@@ -5438,6 +5498,7 @@ body {
 .document-item p {
   font-size: 13px;
 }
+
 .tender-submissions-table {
   font-size: 12px;
 }
@@ -5463,6 +5524,7 @@ body {
   padding: 4px 10px;
   font-size: 11px;
 }
+
 .document-item {
   padding: 10px;
 }
@@ -5539,6 +5601,7 @@ body {
 .status-indicator.active {
   color: #16a34a;
 }
+
 /* ============================================================================== */
 .tender-title-dropdown {
   border: none;
@@ -5593,15 +5656,17 @@ body {
 .contractor-name-btn:not(:disabled):hover {
   color: #2563eb;
 }
+
 /* ============================================================================== */
 
 .owner-page-wrapper {
   padding: 24px;
 }
 
-.owner-page-wrapper > section {
+.owner-page-wrapper>section {
   padding: 0 !important;
 }
+
 .owner-page-wrapper.no-page-padding {
   padding: 0;
 }
@@ -5665,14 +5730,17 @@ body {
   background: #fff7ed;
   color: #f59e0b;
 }
+
 .contractor-stat-icon.blue {
   background: #eff6ff;
   color: #2563eb;
 }
+
 .contractor-stat-icon.green {
   background: #ecfdf5;
   color: #059669;
 }
+
 .contractor-stat-icon.purple {
   background: #f3e8ff;
   color: #7c3aed;
@@ -5696,12 +5764,15 @@ body {
 .contractor-stat-card small.orange {
   color: #f97316;
 }
+
 .contractor-stat-card small.blue {
   color: #2563eb;
 }
+
 .contractor-stat-card small.green {
   color: #059669;
 }
+
 .contractor-stat-card small.purple {
   color: #7c3aed;
 }
@@ -6033,6 +6104,7 @@ body {
     justify-content: flex-start;
   }
 }
+
 /* ================================================== */
 .contractor-filter-wrap {
   position: relative;
@@ -6144,6 +6216,7 @@ body {
   padding: 9px 16px;
   font-weight: 800;
 }
+
 /* ================================================== */
 .trust-chart-full {
   display: flex;
@@ -6262,6 +6335,7 @@ body {
 .annual-tooltip span {
   display: block;
 }
+
 /* ================================================== contractor all proposals ====================================== */
 
 .contractor-proposal-row {
@@ -6404,6 +6478,7 @@ body {
 .annual-tooltip span {
   display: block;
 }
+
 @media (max-width: 768px) {
   .all-proposals-header {
     flex-direction: column;
@@ -6414,6 +6489,7 @@ body {
     width: 100%;
   }
 }
+
 /* ======================== contractor all proposals added========================== */
 .proposal-filter-wrap {
   width: 280px;
@@ -6489,6 +6565,7 @@ body {
   background: #eff6ff;
   color: #2563eb;
 }
+
 /* ================================================== */
 .available-tenders-scroll {
   max-height: 390px;
@@ -6621,7 +6698,7 @@ body {
   align-items: flex-start;
 }
 
-.upload-title > span {
+.upload-title>span {
   width: 34px;
   height: 34px;
   background: #eff6ff;
@@ -6915,7 +6992,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px; /* دي اللي هتفصل الأيقونة عن الكلام */
+  gap: 8px;
+  /* دي اللي هتفصل الأيقونة عن الكلام */
 }
 
 .tender-action-btn i {
@@ -7118,6 +7196,7 @@ body {
   color: #64748b;
   margin: 0;
 }
+
 @media (max-width: 768px) {
   .modal-form-grid {
     grid-template-columns: 1fr;
@@ -7196,6 +7275,7 @@ body {
   opacity: 0.85;
   cursor: not-allowed;
 }
+
 .all-tenders-header,
 .all-tenders-actions,
 .dashboard-card {
@@ -7287,6 +7367,7 @@ body {
     width: 100%;
   }
 }
+
 @media (max-width: 992px) {
   .contractor-details-header {
     flex-direction: column;
@@ -7296,6 +7377,7 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
 .owner-profile-title .owner-company-name {
   margin: 3px 0;
   color: #64748b;
@@ -7316,6 +7398,7 @@ body {
 .owner-email-link:hover {
   text-decoration: underline;
 }
+
 /* ========================================== contractor profile view & proposal details  ========================================= */
 .evaluation-project-subtitle {
   color: #64748b;
@@ -7462,6 +7545,7 @@ select {
 
 /* Header responsive */
 @media (max-width: 992px) {
+
   .evaluation-header,
   .all-tenders-header,
   .all-proposals-header,
@@ -7489,6 +7573,7 @@ select {
 
 /* Tablet */
 @media (max-width: 768px) {
+
   .evaluation-content,
   .contractor-profile-content,
   .dashboard-content,
@@ -7611,6 +7696,7 @@ select {
     min-width: 600px;
   }
 }
+
 /* ============================= */
 /* Responsive Sidebar */
 /* ============================= */
