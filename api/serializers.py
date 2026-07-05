@@ -51,8 +51,9 @@ class TendersSerializer(serializers.ModelSerializer):
             'id', 'owner', 'owner_company_name', 'owner_email', 'title', 'description',
             'project_category', 'location', 'budget', 'start_date', 'duration_months',
             'deadline_at', 'status', 'is_active', 'total_submissions', 'created_at',
+            'analyzed_at',
         ]
-        read_only_fields = ['owner', 'created_at', 'is_active']
+        read_only_fields = ['owner', 'created_at', 'is_active', 'analyzed_at']
 
     def get_total_submissions(self, obj):
         # Use the annotated value when available (list view) to avoid N+1 counts.
@@ -177,14 +178,14 @@ class TenderSubmissionsSerializer(serializers.ModelSerializer):
         model = TenderSubmissions
         fields = [
             'id', 'tender', 'contractor', 'contractor_company_name', 'contractor_email', 'status',
-            'technical_score', 'financial_score', 'risk_score', 'final_score',
+            'need_review', 'technical_score', 'financial_score', 'risk_score', 'final_score',
             'rank', 'recommendation', 'structured_data', 'justification',
             'validation_result', 'risk_result', 'technical_result', 'financial_result',
             'submitted_at', 'files',
         ]
         read_only_fields = [
             'tender', 'contractor', 'contractor_company_name', 'contractor_email', 'files',
-            'technical_score', 'financial_score', 'risk_score', 'final_score',
+            'need_review', 'technical_score', 'financial_score', 'risk_score', 'final_score',
             'rank', 'recommendation', 'structured_data', 'justification',
             'validation_result', 'risk_result', 'technical_result', 'financial_result',
             'submitted_at',

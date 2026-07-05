@@ -1,22 +1,29 @@
+// Evaluation page: fetches the shaped evaluation report and presents it.
+// All business logic lives in reportService / evaluationService; the table,
+// chart and banner are standalone components.
 import { useEffect, useMemo, useState } from "react";
-import OwnerLayout from "../components/OwnerLayout";
 import { useNavigate } from "react-router-dom";
-import { getAllTenders, getTenderEvaluation } from "../services/tenderApi";
-import { getTenderSubmissions } from "../services/proposalApi";
+import OwnerLayout from "../components/OwnerLayout";
+import AiRecommendationBanner from "../components/AiRecommendationBanner";
+import ContractorComparisonTable from "../components/ContractorComparisonTable";
+import BidPriceChart from "../components/BidPriceChart";
+import { StatusBanner } from "../components/ReportBadges";
+import { getAllTenders } from "../services/tenderApi";
+import { fetchTenderReport } from "../services/reportService";
+import { PROCESSING_POLL_MS } from "../services/evaluationService";
 
 function Evaluation() {
   const navigate = useNavigate();
 
   const [tenders, setTenders] = useState([]);
   const [selectedTenderId, setSelectedTenderId] = useState("");
-  const [submissions, setSubmissions] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loadingTenders, setLoadingTenders] = useState(true);
-  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [loadingEvaluation, setLoadingEvaluation] = useState(false);
-  const [analysisStatus, setAnalysisStatus] = useState(null);
-  const [aiTenderData, setAiTenderData] = useState(null);
-  const [aiSubmissions, setAiSubmissions] = useState([]);
+
+  // Shaped evaluation report (same model as the Reports page): submissions
+  // ranked best -> worst, plus status/message/winner.
+  const [report, setReport] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,7 +39,6 @@ function Evaluation() {
         setTenders(list);
 
         if (list.length > 0) {
-          setLoadingSubmissions(true);
           setSelectedTenderId(String(list[0].id));
         }
       })
@@ -52,61 +58,33 @@ function Evaluation() {
 
   useEffect(() => {
     if (!selectedTenderId) return;
+
+    let cancelled = false;
+
     setLoadingEvaluation(true);
-    getTenderEvaluation(selectedTenderId)
-      .then((response) => {
-        const { status, tender, submissions } = response.data;
-        setAnalysisStatus(status);
-        if (status === "completed") {
-          setAiTenderData(tender);
-          setAiSubmissions(submissions);
-        }
+
+    fetchTenderReport(selectedTenderId)
+      .then((shaped) => {
+        if (!cancelled) setReport(shaped);
       })
       .catch((error) => {
         console.error(
           "Load tender evaluation error:",
           error.response?.data || error,
         );
-        setAnalysisStatus("failed");
-      })
-      .finally(() => {
-        setLoadingEvaluation(false);
-      });
-  }, [selectedTenderId]);
-
-  useEffect(() => {
-    if (!selectedTenderId) return;
-
-    let cancelled = false;
-
-    setLoadingSubmissions(true);
-
-    getTenderSubmissions(selectedTenderId)
-      .then((response) => {
-        if (cancelled) return;
-
-        const list = Array.isArray(response.data)
-          ? response.data
-          : response.data.submissions || response.data.results || [];
-
-        console.log("TENDER SUBMISSIONS:", list);
-
-        setSubmissions(list);
-      })
-      .catch((error) => {
-        if (cancelled) return;
-
-        console.error(
-          "Load tender submissions error:",
-          error.response?.data || error,
-        );
-
-        setSubmissions([]);
-      })
-      .finally(() => {
         if (!cancelled) {
-          setLoadingSubmissions(false);
+          setReport({
+            status: "failed",
+            isCompleted: false,
+            message: error.response?.data?.message || "",
+            tender: null,
+            submissions: [],
+            winner: null,
+          });
         }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEvaluation(false);
       });
 
     return () => {
@@ -118,20 +96,36 @@ function Evaluation() {
     return tenders.find((tender) => String(tender.id) === selectedTenderId);
   }, [tenders, selectedTenderId]);
 
-  const displaySubmissions =
-    analysisStatus === "completed" && aiSubmissions.length > 0
-      ? aiSubmissions
-      : submissions;
-  const visibleSubmissions = displaySubmissions.slice(0, 5);
+  const analysisStatus = report?.status || null;
+  const isCompleted = report?.isCompleted || false;
+  const rankedSubmissions = useMemo(() => report?.submissions || [], [report]);
+  const winner = report?.winner || null;
 
-  const chartSubmissions = useMemo(() => {
-    return visibleSubmissions
-      .map((submission, index) => ({
-        name: getContractorName(submission, index),
-        price: Number(submission.financial_result?.total_bid_price || 0),
-      }))
-      .filter((item) => item.price > 0);
-  }, [visibleSubmissions]);
+  // While the analysis is processing, silently re-fetch so the table appears
+  // without a manual refresh (no loading spinner flicker).
+  useEffect(() => {
+    if (!selectedTenderId || analysisStatus !== "processing") return;
+
+    let cancelled = false;
+
+    const timer = setInterval(() => {
+      fetchTenderReport(selectedTenderId)
+        .then((shaped) => {
+          if (!cancelled) setReport(shaped);
+        })
+        .catch((error) => {
+          console.error(
+            "Poll tender evaluation error:",
+            error.response?.data || error,
+          );
+        });
+    }, PROCESSING_POLL_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [selectedTenderId, analysisStatus]);
 
   return (
     <OwnerLayout activePage="evaluation">
@@ -174,7 +168,6 @@ function Evaluation() {
                           String(tender.id) === selectedTenderId ? "active" : ""
                         }
                         onClick={() => {
-                          setLoadingSubmissions(true);
                           setSelectedTenderId(String(tender.id));
                           setDropdownOpen(false);
                         }}
@@ -188,7 +181,9 @@ function Evaluation() {
             </div>
 
             <p className="evaluation-project-subtitle">
-              {displaySubmissions.length} submissions
+              {loadingEvaluation
+                ? "Loading submissions..."
+                : `${rankedSubmissions.length} submissions`}
             </p>
           </div>
 
@@ -211,319 +206,35 @@ function Evaluation() {
           </div>
         </div>
 
-        <div className="ai-recommendation">
-          <div className="ai-icon">
-            <i className="bi bi-cpu"></i>
+        <AiRecommendationBanner
+          loading={loadingEvaluation}
+          status={analysisStatus}
+          isCompleted={isCompleted}
+          winner={winner}
+        />
+
+        {loadingEvaluation ? (
+          <div className="report-state-banner loading mt-4">
+            <i className="bi bi-arrow-repeat spin"></i>
+            Loading evaluation…
           </div>
-
-          <div>
-            <h5>
-              AI Recommendation{" "}
-              <span>
-                {loadingEvaluation
-                  ? "Loading..."
-                  : analysisStatus === "completed"
-                    ? "Ready"
-                    : analysisStatus === "Invalid Documents"
-                      ? "Invalid"
-                      : "Pending"}
-              </span>
-            </h5>
-
-            <p>
-              {loadingEvaluation
-                ? "Fetching AI evaluation results..."
-                : analysisStatus === "completed"
-                  ? "AI analysis completed. View contractor evaluations, risk scores, and recommendations below."
-                  : analysisStatus === "Invalid Documents"
-                    ? "The tender documents could not be analyzed. Please re-upload clearer documents."
-                    : "AI evaluation will appear here after proposal analysis is completed. Contractor scores, risks, and recommendation will be generated based on submitted proposal documents."}
-            </p>
+        ) : !isCompleted ? (
+          <div className="mt-4">
+            <StatusBanner status={analysisStatus} message={report?.message} />
           </div>
+        ) : (
+          <>
+            <ContractorComparisonTable
+              tenderId={selectedTenderId}
+              submissions={rankedSubmissions}
+            />
 
-          <div className="rank-badge muted-rank">
-            {loadingEvaluation ? (
-              <>
-                <i className="bi bi-arrow-repeat"></i>
-                Loading...
-              </>
-            ) : analysisStatus === "completed" ? (
-              <>
-                <i className="bi bi-check-circle"></i>
-                Completed
-              </>
-            ) : analysisStatus === "processing" ? (
-              <>
-                <i className="bi bi-arrow-repeat"></i>
-                Processing
-              </>
-            ) : analysisStatus === "Invalid Documents" ? (
-              <>
-                <i className="bi bi-exclamation-triangle"></i>
-                Invalid
-              </>
-            ) : (
-              <>
-                <i className="bi bi-hourglass-split"></i>
-                Pending
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="dashboard-card mt-4">
-          <div className="card-header-clean evaluation-table-header">
-            <h5>
-              Contractor Comparison
-              <span className="submission-count-circle">
-                {displaySubmissions.length}
-              </span>
-            </h5>
-          </div>
-
-          <div className="evaluation-table-wrap no-horizontal-scroll">
-            <table className="table evaluation-table align-middle">
-              <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>Contractor</th>
-                  <th>Bid Price</th>
-                  <th>Technical</th>
-                  <th>Experience</th>
-                  <th>Compliance</th>
-                  <th>Trust</th>
-                  <th>Risk</th>
-                  <th>Final Score</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {loadingSubmissions ? (
-                  <tr>
-                    <td colSpan="10" className="text-center text-muted py-4">
-                      Loading submissions...
-                    </td>
-                  </tr>
-                ) : visibleSubmissions.length === 0 ? (
-                  <tr>
-                    <td colSpan="10" className="text-center text-muted py-4">
-                      No submissions yet.
-                    </td>
-                  </tr>
-                ) : (
-                  visibleSubmissions.map((submission, index) => (
-                    <tr key={submission.id || index}>
-                      <td>
-                        <span className="eval-rank">{index + 1}</span>
-                      </td>
-
-                      <td>
-                        <strong>{getContractorName(submission, index)}</strong>
-                      </td>
-
-                      <td>{formatBidPrice(submission)}</td>
-                      <td>
-                        {submission.technical_score ??
-                          submission.evaluation?.technical_score ??
-                          "—"}
-                      </td>
-                      <td>
-                        {submission.experience_score ??
-                          submission.evaluation?.experience_score ??
-                          "—"}
-                      </td>
-                      <td>
-                        {submission.validation_result?.compliance_score ?? "—"}
-                      </td>
-                      <td>
-                        {100 - (submission.risk_score ) ?? "—"}
-                      </td>
-                      <td>
-                        {submission.risk_result?.overall_risk ?? "—"}
-                      </td>
-                      <td>
-                        {submission.final_score ??
-                          submission.evaluation?.final_score ??
-                          submission.overall_score ??
-                          "—"}
-                      </td>
-
-                      <td>
-                        <div className="evaluation-row-actions">
-                          <button
-                            className="proposal-btn"
-                            onClick={() =>
-                              navigate(
-                                `/owner/proposal-details/${selectedTenderId}/${submission.id}`,
-                              )
-                            }
-                          >
-                            Bid
-                          </button>
-
-                          <button
-                            className="profile-btn"
-                            onClick={() =>
-                              navigate(
-                                `/owner/contractor-profile/${getContractorId(
-                                  submission,
-                                )}`,
-                              )
-                            }
-                          >
-                            Profile
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="row g-4 mt-1">
-          <div className="col-lg-12">
-            <div className="dashboard-card eval-chart-card">
-              <h5>Bid Price Comparison</h5>
-
-              <div className="contractor-score-chart">
-                <div className="score-axis">
-                  {getPriceAxisLabels(chartSubmissions).map((value, idx) => (
-                    <span key={idx}>{value}</span>
-                  ))}
-                </div>
-
-                <div className="score-chart-bars">
-                  {chartSubmissions.length === 0 ? (
-                    <div className="empty-chart-message">
-                      No bid prices available yet.
-                    </div>
-                  ) : (
-                    chartSubmissions.map((item, index) => (
-                      <div
-                        className="score-bar-group"
-                        key={`${item.name}-${index}`}
-                      >
-                        <div className="score-bar-area">
-                          <span
-                            className="score-bar"
-                            style={{
-                              height: `${getBidBarHeight(
-                                item.price,
-                                chartSubmissions,
-                              )}%`,
-                            }}
-                            title={`$${item.price.toLocaleString()}`}
-                          ></span>
-                        </div>
-
-                        <p title={item.name}>{shortName(item.name)}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <p className="chart-note">
-                Bid price values will appear after financial proposal analysis.
-              </p>
-            </div>
-          </div>
-        </div>
+            <BidPriceChart submissions={rankedSubmissions} />
+          </>
+        )}
       </section>
     </OwnerLayout>
   );
-}
-
-function getContractorName(submission, index) {
-  return (
-    submission.contractor_company_name ||
-    submission.contractor?.company_name ||
-    submission.company_name ||
-    submission.contractor_name ||
-    submission.user?.company_name ||
-    submission.user?.first_name ||
-    `Contractor ${index + 1}`
-  );
-}
-
-function getContractorId(submission) {
-  return (
-    submission.contractor_id ||
-    submission.contractor?.id ||
-    submission.contractor ||
-    submission.user?.id ||
-    submission.id
-  );
-}
-
-function formatBidPrice(submission) {
-  const value = submission.financial_result?.total_bid_price ?? "-";
-  const number = Number(value);
-
-  if (Number.isNaN(number)) return value;
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(number);
-}
-
-function getBidBarHeight(price, allItems) {
-  if (!price || Number(price) <= 0) return 2;
-
-  const maxPrice = Math.max(...allItems.map((item) => Number(item.price || 0)));
-
-  if (!maxPrice) return 2;
-
-  return Math.max((Number(price) / maxPrice) * 100, 4);
-}
-
-function shortName(name) {
-  if (!name) return "—";
-
-  const parts = name.split(" ").filter(Boolean);
-
-  if (parts.length === 1) return parts[0];
-
-  return parts.slice(0, 2).join(" ");
-}
-
-function getPriceAxisLabels(chartSubmissions) {
-  if (chartSubmissions.length === 0) {
-    return ["$0"];
-  }
-
-  const maxPrice = Math.max(...chartSubmissions.map((item) => item.price));
-
-  if (maxPrice === 0) {
-    return ["$0"];
-  }
-
-  const labels = [];
-  const step = maxPrice / 5;
-
-  for (let i = 5; i >= 0; i--) {
-    const value = Math.round(step * i);
-    labels.push(formatAxisPrice(value));
-  }
-
-  return labels;
-}
-
-function formatAxisPrice(value) {
-  if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `$${(value / 1000).toFixed(0)}K`;
-  }
-  return `$${value}`;
 }
 
 export default Evaluation;
