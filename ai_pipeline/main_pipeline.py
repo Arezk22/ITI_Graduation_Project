@@ -70,9 +70,11 @@ def index_files_for_rag(files,type):
             files[0].submission.save(update_fields=["need_review"])
         return
     
-    files[0].tender.is_active=True
+    
     if type=="tender":
             id = files[0].tender.id
+            files[0].tender.is_active=True
+            files[0].tender.save(update_fields=["is_active"])
     elif type == "submission":
             id = files[0].submission.id
     

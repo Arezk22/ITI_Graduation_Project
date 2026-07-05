@@ -329,7 +329,7 @@ class EvaluationWorkflow:
         final_score=[]
         for sub in submissions:  
             print(f"⭕final score for sub {sub.id}")          
-            if not state["validation_results"][sub.id]["mandatory_passed"]:
+            if not state["validation_results"][sub.id].mandatory_passed:
                 overall_score=0
                 sub.status="rejected"
                 sub.save()
@@ -489,6 +489,10 @@ class EvaluationWorkflow:
             recommendation_result=recommendation_result.model_dump(),
         )
         print("📁.. Saving into db Successfully .. ✅")
+        notify.delay({
+                    "event":"ANALYSIS_COMPLETED",
+                    "sub":submissions.first(),
+                })
         
     def run(self, initial_state: dict):
         return self.app.invoke(initial_state)
