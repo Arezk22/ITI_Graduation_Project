@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
 import OwnerLayout from "../components/OwnerLayout";
 import {
@@ -20,8 +21,10 @@ import {
 } from "../services/reportService";
 
 function Reports() {
+  const navigate = useNavigate();
+  const { tenderId: routeTenderId } = useParams();
+
   const [tenders, setTenders] = useState([]);
-  const [selectedTenderId, setSelectedTenderId] = useState("");
   const [tenderDropdownOpen, setTenderDropdownOpen] = useState(false);
   const [loadingTenders, setLoadingTenders] = useState(true);
 
@@ -40,10 +43,6 @@ function Reports() {
           : response.data.tenders || response.data.results || [];
 
         setTenders(list);
-
-        if (list.length > 0) {
-          setSelectedTenderId(String(list[0].id));
-        }
       })
       .catch((error) => {
         console.error("Load tenders error:", error.response?.data || error);
@@ -53,6 +52,19 @@ function Reports() {
         setLoadingTenders(false);
       });
   }, []);
+
+  // Selected tender follows the URL: /owner/reports/:tenderId deep-links
+  // to that tender; without a (valid) param, default to the first tender.
+  const selectedTenderId = useMemo(() => {
+    if (
+      routeTenderId &&
+      tenders.some((tender) => String(tender.id) === String(routeTenderId))
+    ) {
+      return String(routeTenderId);
+    }
+
+    return tenders.length ? String(tenders[0].id) : "";
+  }, [tenders, routeTenderId]);
 
   // Fetch + shape the report whenever the selected tender changes.
   useEffect(() => {
@@ -139,7 +151,7 @@ function Reports() {
                         String(tender.id) === selectedTenderId ? "active" : ""
                       }
                       onClick={() => {
-                        setSelectedTenderId(String(tender.id));
+                        navigate(`/owner/reports/${tender.id}`);
                         setTenderDropdownOpen(false);
                       }}
                     >
