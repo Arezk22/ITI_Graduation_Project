@@ -2,7 +2,7 @@
 // Data fetching uses reportService (same shaped report as Reports/Evaluation);
 // all derivation logic lives in aiAnalysisService.
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import OwnerLayout from "../components/OwnerLayout";
 import { StatusBanner } from "../components/ReportBadges";
 import {
@@ -26,9 +26,9 @@ import {
 
 function AIAnalysis() {
   const navigate = useNavigate();
+  const { tenderId: routeTenderId } = useParams();
 
   const [tenders, setTenders] = useState([]);
-  const [selectedTenderId, setSelectedTenderId] = useState("");
   const [tenderDropdownOpen, setTenderDropdownOpen] = useState(false);
   const [loadingTenders, setLoadingTenders] = useState(true);
 
@@ -43,10 +43,6 @@ function AIAnalysis() {
           : response.data.tenders || response.data.results || [];
 
         setTenders(list);
-
-        if (list.length > 0) {
-          setSelectedTenderId(String(list[0].id));
-        }
       })
       .catch((error) => {
         console.error("Load tenders error:", error.response?.data || error);
@@ -56,6 +52,19 @@ function AIAnalysis() {
         setLoadingTenders(false);
       });
   }, []);
+
+  // Selected tender follows the URL: /owner/ai-analysis/:tenderId deep-links
+  // to that tender; without a (valid) param, default to the first tender.
+  const selectedTenderId = useMemo(() => {
+    if (
+      routeTenderId &&
+      tenders.some((tender) => String(tender.id) === String(routeTenderId))
+    ) {
+      return String(routeTenderId);
+    }
+
+    return tenders.length ? String(tenders[0].id) : "";
+  }, [tenders, routeTenderId]);
 
   useEffect(() => {
     if (!selectedTenderId) return;
@@ -143,7 +152,7 @@ function AIAnalysis() {
                           String(tender.id) === selectedTenderId ? "active" : ""
                         }
                         onClick={() => {
-                          setSelectedTenderId(String(tender.id));
+                          navigate(`/owner/ai-analysis/${tender.id}`);
                           setTenderDropdownOpen(false);
                         }}
                       >

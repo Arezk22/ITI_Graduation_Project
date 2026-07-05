@@ -78,6 +78,41 @@ function ContractorProfileView() {
     return Math.round((validScores.reduce((a, b) => a + b, 0) / validScores.length) * 100) / 100;
   }, [awardedSubmissions]);
 
+  const scoreHistory = useMemo(() => {
+    const buckets = new Map();
+
+    submissions.forEach((submission) => {
+      const score = Number(submission.final_score);
+
+      if (submission.final_score == null || Number.isNaN(score)) return;
+
+      const date = new Date(submission.submitted_at);
+
+      if (Number.isNaN(date.getTime())) return;
+
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+      if (!buckets.has(key)) {
+        buckets.set(key, { total: 0, count: 0, date });
+      }
+
+      const bucket = buckets.get(key);
+      bucket.total += score;
+      bucket.count += 1;
+    });
+
+    return [...buckets.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-7)
+      .map(([, bucket]) => ({
+        month: bucket.date.toLocaleDateString("en-US", {
+          month: "short",
+          year: "2-digit",
+        }),
+        value: Math.round(bucket.total / bucket.count),
+      }));
+  }, [submissions]);
+
   const annualAwardData = useMemo(() => {
     const years = [2022, 2023, 2024, 2025, 2026];
 
@@ -163,56 +198,63 @@ function ContractorProfileView() {
 
         <div className="dashboard-card profile-chart-card mt-4">
           <div className="card-header-clean">
-            <h5>Trust Score History</h5>
+            <h5>AI Score History</h5>
           </div>
 
-          <div className="trust-chart-full">
-            <div className="trust-y-axis">
-              {[100, 90, 80, 70].map((value) => (
-                <span key={value}>{value}</span>
-              ))}
+          {scoreHistory.length === 0 ? (
+            <div className="text-muted py-3">
+              No scored submissions yet. Scores will appear here once this
+              contractor's proposals are evaluated.
             </div>
-
-            <div className="trust-chart-area">
-              <svg viewBox="0 0 700 220" preserveAspectRatio="none">
-                {[100, 90, 80, 70].map((value) => (
-                  <line
-                    key={value}
-                    x1="0"
-                    x2="700"
-                    y1={getTrustY(value)}
-                    y2={getTrustY(value)}
-                    className="trust-grid-line"
-                  />
-                ))}
-
-                <path
-                  d={buildTrustPath()}
-                  fill="none"
-                  stroke="#2563eb"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-
-                {trustData.map((item, index) => (
-                  <circle
-                    key={item.month}
-                    cx={getTrustX(index)}
-                    cy={getTrustY(item.value)}
-                    r="5"
-                    fill="#2563eb"
-                  />
-                ))}
-              </svg>
-
-              <div className="chart-months">
-                {trustData.map((item) => (
-                  <span key={item.month}>{item.month}</span>
+          ) : (
+            <div className="trust-chart-full">
+              <div className="trust-y-axis">
+                {[100, 75, 50, 25, 0].map((value) => (
+                  <span key={value}>{value}</span>
                 ))}
               </div>
+
+              <div className="trust-chart-area">
+                <svg viewBox="0 0 700 220" preserveAspectRatio="none">
+                  {[100, 75, 50, 25, 0].map((value) => (
+                    <line
+                      key={value}
+                      x1="0"
+                      x2="700"
+                      y1={getTrustY(value)}
+                      y2={getTrustY(value)}
+                      className="trust-grid-line"
+                    />
+                  ))}
+
+                  <path
+                    d={buildTrustPath(scoreHistory)}
+                    fill="none"
+                    stroke="#2563eb"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+
+                  {scoreHistory.map((item, index) => (
+                    <circle
+                      key={item.month}
+                      cx={getTrustX(index, scoreHistory.length)}
+                      cy={getTrustY(item.value)}
+                      r="5"
+                      fill="#2563eb"
+                    />
+                  ))}
+                </svg>
+
+                <div className="chart-months">
+                  {scoreHistory.map((item) => (
+                    <span key={item.month}>{item.month}</span>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="dashboard-card mt-4">
@@ -324,19 +366,9 @@ function ContractorProfileView() {
   );
 }
 
-const trustData = [
-  { month: "Dec", value: 78 },
-  { month: "Jan", value: 80 },
-  { month: "Feb", value: 81 },
-  { month: "Mar", value: 84 },
-  { month: "Apr", value: 82 },
-  { month: "May", value: 86 },
-  { month: "Jun", value: 88 },
-];
-
-function buildTrustPath() {
-  const points = trustData.map((item, index) => ({
-    x: getTrustX(index),
+function buildTrustPath(data) {
+  const points = data.map((item, index) => ({
+    x: getTrustX(index, data.length),
     y: getTrustY(item.value),
   }));
 
@@ -355,12 +387,14 @@ function buildTrustPath() {
   return path;
 }
 
-function getTrustX(index) {
-  return 20 + index * 110;
+function getTrustX(index, total) {
+  if (total <= 1) return 350;
+
+  return 20 + index * (660 / (total - 1));
 }
 
 function getTrustY(value) {
-  const min = 70;
+  const min = 0;
   const max = 100;
   const chartHeight = 180;
 

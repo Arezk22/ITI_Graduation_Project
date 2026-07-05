@@ -56,9 +56,9 @@ function App() {
         <Route path="/owner/dashboard" element={<OwnerDashboard />} />
         <Route path="/owner/create-tender" element={<CreateTender />} />
         {/* <Route path="/owner/notifications" element={<Notifications />} /> */}
-        <Route path="/owner/evaluation" element={<Evaluation />} />
-        <Route path="/owner/ai-analysis" element={<AIAnalysis />} />
-        <Route path="/owner/reports" element={<Reports />} />
+        <Route path="/owner/evaluation/:tenderId?" element={<Evaluation />} />
+        <Route path="/owner/ai-analysis/:tenderId?" element={<AIAnalysis />} />
+        <Route path="/owner/reports/:tenderId?" element={<Reports />} />
         {/* <Route path="/owner/contractor/profile" element={<ContractorProfile />} /> */}
         <Route path="/owner/tender-details" element={<TenderDetails />} />
         <Route path="/owner/tender-details/:id" element={<TenderDetails />} />

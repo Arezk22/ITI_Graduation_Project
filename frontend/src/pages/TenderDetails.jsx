@@ -452,7 +452,7 @@ function TenderDetails() {
 
             <button
               className="btn view-eval-btn"
-              onClick={() => navigate("/owner/evaluation")}
+              onClick={() => navigate(`/owner/evaluation/${id}`)}
             >
               View Evaluation
               <i className="bi bi-chevron-right"></i>
@@ -473,11 +473,11 @@ function TenderDetails() {
               </div>
 
               <div className="summary-links">
-                <button onClick={() => navigate("/owner/ai-analysis")}>
+                <button onClick={() => navigate(`/owner/ai-analysis/${id}`)}>
                   Full AI Report <i className="bi bi-chevron-right"></i>
                 </button>
 
-                <button onClick={() => navigate("/owner/evaluation")}>
+                <button onClick={() => navigate(`/owner/evaluation/${id}`)}>
                   Evaluation Dashboard <i className="bi bi-chevron-right"></i>
                 </button>
               </div>
