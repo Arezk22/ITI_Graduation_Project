@@ -127,7 +127,8 @@ class TenderDetailSerializer(serializers.ModelSerializer):
             'id', 'owner', 'title', 'description', 'project_category', 'location',
             'budget', 'start_date', 'duration_months', 'deadline_at',
             'status', 'winning_submission_id', 'total_submissions', 'structured_data',
-            'comparison_result', 'recommendation_result', 'created_at', 'files',
+            'comparison_result', 'recommendation_result', 'analysis_status',
+            'analyzed_at', 'awarded_at', 'created_at', 'files',
             'evaluation_rules',
         ]
         read_only_fields = fields
