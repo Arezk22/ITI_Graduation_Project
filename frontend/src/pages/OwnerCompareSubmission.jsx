@@ -113,10 +113,14 @@ function OwnerCompareSubmission() {
                       <td>
                         <span
                           className={`badge ${getSubmissionStatusBadgeClass(
-                            submission.status
+                            submission.status,
+                            tender?.status === "awarded"
                           )}`}
                         >
-                          {formatSubmissionStatus(submission.status)}
+                          {formatSubmissionStatus(
+                            submission.status,
+                            tender?.status === "awarded"
+                          )}
                         </span>
                       </td>
 
@@ -150,14 +154,19 @@ function formatDate(value) {
   });
 }
 
-function formatSubmissionStatus(status) {
+function formatSubmissionStatus(status, tenderAwarded) {
   if (status === "accepted" || status === "awarded") return "Awarded";
+  if (status === "rejected" || tenderAwarded) return "Rejected";
   return "Under Review";
 }
 
-function getSubmissionStatusBadgeClass(status) {
+function getSubmissionStatusBadgeClass(status, tenderAwarded) {
   if (status === "accepted" || status === "awarded") {
     return "bg-success-subtle text-success-emphasis";
+  }
+
+  if (status === "rejected" || tenderAwarded) {
+    return "bg-danger-subtle text-danger-emphasis";
   }
 
   return "bg-warning-subtle text-warning-emphasis";

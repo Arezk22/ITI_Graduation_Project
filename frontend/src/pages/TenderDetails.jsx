@@ -509,6 +509,7 @@ function TenderDetails() {
                 tenderId={tender.id}
                 navigate={navigate}
                 emptyText="No submissions received yet."
+                tenderAwarded={tender.status === "awarded"}
               />
             </div>
 
@@ -570,25 +571,16 @@ function TenderDetails() {
             <div className="details-card mt-4">
               <h6 className="side-card-title">TENDER TIMELINE</h6>
 
-              <TimelineItem
-                done
-                title="Tender Published"
-                date={formatDate(tender.created_at)}
-                text="Tender posted successfully"
-              />
-
-              <TimelineItem
-                active
-                title="Submission Deadline"
-                date={formatDate(tender.deadline_at)}
-                text="Technical and financial proposals due"
-              />
-
-              <TimelineItem
-                title="AI Evaluation"
-                date="After submission deadline"
-              />
-              <TimelineItem title="Contract Award" date="To be scheduled" />
+              {buildTenderTimeline(tender, submissionsCount).map((step) => (
+                <TimelineItem
+                  key={step.title}
+                  done={step.done}
+                  active={step.active}
+                  title={step.title}
+                  date={step.date}
+                  text={step.text}
+                />
+              ))}
             </div>
 
             <div className="tender-actions-panel mt-4">
@@ -827,6 +819,7 @@ function SubmissionsTable({
   tenderId,
   navigate,
   emptyText,
+  tenderAwarded,
 }) {
   return (
     <div className="table-responsive">
@@ -874,9 +867,10 @@ function SubmissionsTable({
                   <span
                     className={`badge ${getSubmissionStatusBadgeClass(
                       submission.status,
+                      tenderAwarded,
                     )}`}
                   >
-                    {formatSubmissionStatus(submission.status)}
+                    {formatSubmissionStatus(submission.status, tenderAwarded)}
                   </span>
                 </td>
 
@@ -949,6 +943,76 @@ function TimelineItem({ done, active, title, date, text }) {
   );
 }
 
+function buildTenderTimeline(tender, submissionsCount) {
+  const now = new Date();
+  const deadline = tender?.deadline_at ? new Date(tender.deadline_at) : null;
+
+  const deadlinePassed =
+    (deadline && deadline < now) ||
+    tender?.status === "closed" ||
+    tender?.status === "awarded";
+
+  const evaluationDone =
+    tender?.analysis_status === "completed" ||
+    Boolean(tender?.comparison_result || tender?.recommendation_result);
+
+  const evaluationRunning = tender?.analysis_status === "processing";
+  const evaluationFailed = tender?.analysis_status === "failed";
+
+  const isAwarded = tender?.status === "awarded";
+
+  const steps = [
+    {
+      title: "Tender Published",
+      done: true,
+      date: formatDate(tender?.created_at),
+      text: "Tender posted successfully",
+    },
+    {
+      title: "Submission Deadline",
+      done: deadlinePassed,
+      date: formatDate(tender?.deadline_at),
+      text: deadlinePassed
+        ? `Submissions closed · ${submissionsCount} proposal${
+            submissionsCount === 1 ? "" : "s"
+          } received`
+        : "Technical and financial proposals due",
+    },
+    {
+      title: "AI Evaluation",
+      done: evaluationDone,
+      date: evaluationDone
+        ? tender?.analyzed_at
+          ? formatDate(tender.analyzed_at)
+          : "Completed"
+        : evaluationRunning
+          ? "In progress"
+          : evaluationFailed
+            ? "Failed"
+            : "After submission deadline",
+      text: evaluationDone
+        ? "Proposals compared and ranked"
+        : evaluationRunning
+          ? "AI is analyzing the submitted proposals"
+          : evaluationFailed
+            ? "Evaluation failed — please contact support"
+            : undefined,
+    },
+    {
+      title: "Contract Award",
+      done: isAwarded,
+      date: isAwarded ? formatDate(tender?.awarded_at) : "To be scheduled",
+      text: isAwarded ? "Tender awarded to winning contractor" : undefined,
+    },
+  ];
+
+  // Highlight the first stage that is not finished yet.
+  const firstPending = steps.find((step) => !step.done);
+  if (firstPending) firstPending.active = true;
+
+  return steps;
+}
+
 function getTenderDisplayStatus(tender) {
   const deadline = tender?.deadline_at ? new Date(tender.deadline_at) : null;
   const today = new Date();
@@ -985,14 +1049,19 @@ function formatDate(value) {
   });
 }
 
-function formatSubmissionStatus(status) {
+function formatSubmissionStatus(status, tenderAwarded) {
   if (status === "accepted" || status === "awarded") return "Awarded";
+  if (status === "rejected" || tenderAwarded) return "Rejected";
   return "Under Review";
 }
 
-function getSubmissionStatusBadgeClass(status) {
+function getSubmissionStatusBadgeClass(status, tenderAwarded) {
   if (status === "accepted" || status === "awarded") {
     return "bg-success-subtle text-success-emphasis";
+  }
+
+  if (status === "rejected" || tenderAwarded) {
+    return "bg-danger-subtle text-danger-emphasis";
   }
 
   return "bg-warning-subtle text-warning-emphasis";
