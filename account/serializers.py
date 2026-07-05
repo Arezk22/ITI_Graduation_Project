@@ -8,6 +8,13 @@ from account.models import ContractorProfiles
 Users = get_user_model()
 
 
+class GoogleRegisterSerializer(serializers.Serializer):
+    id_token = serializers.CharField()
+    role = serializers.ChoiceField(
+        choices=["owner", "contractor"]
+    )
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     ROLE_CHOICES = [
         choice[0]

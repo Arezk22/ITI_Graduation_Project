@@ -6,7 +6,8 @@ import {
   login,
   saveTokens,
 } from "../services/authApi";
-
+import { GoogleLogin } from '@react-oauth/google'
+import axios from "axios";
 function OwnerSignUp() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -261,9 +262,33 @@ function OwnerSignUp() {
             <span>or continue with</span>
           </div>
 
-          <div className="social-buttons">
-            <button type="button">Google</button>
-            <button type="button">Microsoft</button>
+          <div className="social-buttons d-flex justify-content-center align-content-center">
+            <GoogleLogin
+              onSuccess={
+                async (credentialResponse) => {
+                  try {
+                      const response = await axios.post(
+                          "http://127.0.0.1:8000/api/v1/google/register/",
+                          {
+                              id_token: credentialResponse.credential,
+                              role: "owner",
+                          }
+                      );
+
+                      console.log(response.data);
+
+                  } catch (err) {
+    console.log(err);
+    console.log(err.message);
+    console.log(err.code);
+    console.log(err.config);
+}
+    }}
+              size="large"
+              width="250px"
+              theme="filled_blue"   
+              shape="pill"
+              text="signup_with"/>
           </div>
 
           <p className="signup-text">

@@ -250,3 +250,7 @@ EMAIL_HOST_USER = os.getenv("EMAIL")
 EMAIL_HOST_PASSWORD = os.getenv("APP_PASS")
 
 DEFAULT_FROM_EMAIL = f"Tender Evaluation System <{EMAIL_HOST_USER}>"
+
+
+# Google
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")

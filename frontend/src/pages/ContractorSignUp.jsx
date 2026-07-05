@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { mapRegisterErrors, register, saveTokens } from "../services/authApi";
+import { GoogleLogin } from '@react-oauth/google'
 
 function ContractorSignUp() {
   const navigate = useNavigate();
@@ -256,9 +257,16 @@ function ContractorSignUp() {
             <span>or continue with</span>
           </div>
 
-          <div className="social-buttons">
-            <button type="button">Google</button>
-            <button type="button">Microsoft</button>
+          <div className="social-buttons d-flex justify-content-center align-content-center">
+            <GoogleLogin
+              onSuccess={(credentialResponse)=>{
+                  console.log(credentialResponse.credential)
+              }}
+              size="large"
+              width="250px"
+              theme="filled_blue"   
+              shape="pill"
+              text="signup_with"/>
           </div>
 
           <p className="signup-text">

@@ -13,7 +13,35 @@ from .serializers import (
     ContractorProfileSerializer,
     EmailTokenObtainPairSerializer,
     RegisterSerializer,
+    GoogleRegisterSerializer
 )
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from django.conf import settings
+
+# POST /api/v1/google/register/
+class GoogleRegisterView(APIView):
+
+    permission_classes=[AllowAny]
+
+    def post(self,request):
+
+        serializer=GoogleRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        google_token = serializer.validated_data["id_token"]
+        role = serializer.validated_data["role"]
+        info = id_token.verify_oauth2_token(
+                google_token,
+                requests.Request(),
+                settings.GOOGLE_CLIENT_ID
+            )
+        email = info["email"]
+        name = info.get("name", "")
+        picture = info.get("picture")
+        email_verified = info.get("email_verified", False)
+        
+
+        return Response({"message": "وصلت"})
 
 
 class RegisterAPIView(APIView):

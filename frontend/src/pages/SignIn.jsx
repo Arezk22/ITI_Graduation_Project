@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login, saveTokens } from "../services/authApi";
+import { GoogleLogin } from '@react-oauth/google'
 
 function SignIn() {
   const navigate = useNavigate();
@@ -217,10 +218,19 @@ const handleSubmit = async (e) => {
             <span>or continue with</span>
           </div>
 
-          <div className="social-buttons">
-            <button type="button">Google</button>
-            <button type="button">Microsoft</button>
+          <div className="social-buttons d-flex justify-content-center align-content-center">
+            <GoogleLogin
+              onSuccess={(credentialResponse)=>{
+                  console.log(credentialResponse.credential)
+              }}
+              size="large"
+              width="250px"
+              theme="filled_blue"   
+              shape="pill"
+              text="signin_with"/>
           </div>
+
+          
 
           <p className="signup-text">
             Don't have an account? <Link to="/signup">Sign up free</Link>
