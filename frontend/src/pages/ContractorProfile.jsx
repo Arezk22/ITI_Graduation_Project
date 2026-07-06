@@ -99,13 +99,6 @@ function ContractorProfile() {
             </div>
           </div>
 
-          <div className="trust-score-box">
-            <h3>
-              <i className="bi bi-star-fill"></i> 88 <span>/100</span>
-            </h3>
-            <p>Trust Score</p>
-          </div>
-
           <div className="contractor-stats">
             <div>
               <h3>{acceptedSubmissions.length}</h3>
@@ -122,64 +115,6 @@ function ContractorProfile() {
               <p>Win Rate</p>
             </div>
 
-            <div>
-              <h3>91/100</h3>
-              <p>Avg Delivery Score</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="dashboard-card profile-chart-card mt-4">
-          <div className="card-header-clean">
-            <h5>Trust Score History</h5>
-          </div>
-
-          <div className="trust-chart-full">
-            <div className="trust-y-axis">
-              {[100, 90, 80, 70].map((value) => (
-                <span key={value}>{value}</span>
-              ))}
-            </div>
-
-            <div className="trust-chart-area">
-              <svg viewBox="0 0 700 220" preserveAspectRatio="none">
-                {[100, 90, 80, 70].map((value) => (
-                  <line
-                    key={value}
-                    x1="0"
-                    x2="700"
-                    y1={getTrustY(value)}
-                    y2={getTrustY(value)}
-                    className="trust-grid-line"
-                  />
-                ))}
-
-                <path
-                  d={buildTrustPath()}
-                  fill="none"
-                  stroke="#2563eb"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-
-                {trustData.map((item, index) => (
-                  <circle
-                    key={item.month}
-                    cx={getTrustX(index)}
-                    cy={getTrustY(item.value)}
-                    r="5"
-                    fill="#2563eb"
-                  />
-                ))}
-              </svg>
-
-              <div className="chart-months">
-                {trustData.map((item) => (
-                  <span key={item.month}>{item.month}</span>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -285,49 +220,6 @@ function ContractorProfile() {
       </section>
     </ContractorLayout>
   );
-}
-
-const trustData = [
-  { month: "Dec", value: 78 },
-  { month: "Jan", value: 80 },
-  { month: "Feb", value: 81 },
-  { month: "Mar", value: 84 },
-  { month: "Apr", value: 82 },
-  { month: "May", value: 86 },
-  { month: "Jun", value: 88 },
-];
-
-function buildTrustPath() {
-  const points = trustData.map((item, index) => ({
-    x: getTrustX(index),
-    y: getTrustY(item.value),
-  }));
-
-  if (!points.length) return "";
-
-  let path = `M ${points[0].x} ${points[0].y}`;
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const current = points[i];
-    const next = points[i + 1];
-    const midX = (current.x + next.x) / 2;
-
-    path += ` C ${midX} ${current.y}, ${midX} ${next.y}, ${next.x} ${next.y}`;
-  }
-
-  return path;
-}
-
-function getTrustX(index) {
-  return 20 + index * 110;
-}
-
-function getTrustY(value) {
-  const min = 70;
-  const max = 100;
-  const chartHeight = 180;
-
-  return 190 - ((value - min) / (max - min)) * chartHeight;
 }
 
 function isAwardedSubmission(submission) {

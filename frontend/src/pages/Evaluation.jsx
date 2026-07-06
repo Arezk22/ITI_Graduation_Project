@@ -2,7 +2,7 @@
 // All business logic lives in reportService / evaluationService; the table,
 // chart and banner are standalone components.
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import OwnerLayout from "../components/OwnerLayout";
 import AiRecommendationBanner from "../components/AiRecommendationBanner";
 import ContractorComparisonTable from "../components/ContractorComparisonTable";
@@ -14,9 +14,9 @@ import { PROCESSING_POLL_MS } from "../services/evaluationService";
 
 function Evaluation() {
   const navigate = useNavigate();
+  const { tenderId: routeTenderId } = useParams();
 
   const [tenders, setTenders] = useState([]);
-  const [selectedTenderId, setSelectedTenderId] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loadingTenders, setLoadingTenders] = useState(true);
   const [loadingEvaluation, setLoadingEvaluation] = useState(false);
@@ -37,10 +37,6 @@ function Evaluation() {
           : response.data.tenders || response.data.results || [];
 
         setTenders(list);
-
-        if (list.length > 0) {
-          setSelectedTenderId(String(list[0].id));
-        }
       })
       .catch((error) => {
         console.error("Load tenders error:", error.response?.data || error);
@@ -55,6 +51,19 @@ function Evaluation() {
       cancelled = true;
     };
   }, []);
+
+  // Selected tender follows the URL: /owner/evaluation/:tenderId deep-links
+  // to that tender; without a (valid) param, default to the first tender.
+  const selectedTenderId = useMemo(() => {
+    if (
+      routeTenderId &&
+      tenders.some((tender) => String(tender.id) === String(routeTenderId))
+    ) {
+      return String(routeTenderId);
+    }
+
+    return tenders.length ? String(tenders[0].id) : "";
+  }, [tenders, routeTenderId]);
 
   useEffect(() => {
     if (!selectedTenderId) return;
@@ -168,7 +177,7 @@ function Evaluation() {
                           String(tender.id) === selectedTenderId ? "active" : ""
                         }
                         onClick={() => {
-                          setSelectedTenderId(String(tender.id));
+                          navigate(`/owner/evaluation/${tender.id}`);
                           setDropdownOpen(false);
                         }}
                       >
@@ -190,7 +199,7 @@ function Evaluation() {
           <div className="evaluation-actions">
             <button
               className="btn ai-report-btn"
-              onClick={() => navigate("/owner/ai-analysis")}
+              onClick={() => navigate(`/owner/ai-analysis/${selectedTenderId}`)}
             >
               <i className="bi bi-cpu"></i>
               AI Risk Report
@@ -198,7 +207,7 @@ function Evaluation() {
 
             <button
               className="btn export-report-btn"
-              onClick={() => navigate("/owner/reports")}
+              onClick={() => navigate(`/owner/reports/${selectedTenderId}`)}
             >
               <i className="bi bi-download"></i>
               Export Report

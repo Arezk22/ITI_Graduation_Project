@@ -157,14 +157,6 @@ function ContractorDashboard() {
 
         <div className="row g-4">
           <StatCard
-            icon="bi-star"
-            value="88/100"
-            title="Trust Score"
-            note="+2 this month"
-            color="orange"
-          />
-
-          <StatCard
             icon="bi-file-earmark-check"
             value={activeProposals.length}
             title="Active Proposals"
@@ -182,9 +174,8 @@ function ContractorDashboard() {
 
           <StatCard
             icon="bi-arrow-up-right"
-            value="86"
+            value={getAvgAiScore(proposals)}
             title="Avg AI Score"
-            note="Top 15% nationally"
             color="purple"
           />
         </div>
@@ -330,15 +321,17 @@ function ContractorDashboard() {
 
 function StatCard({ icon, value, title, note, color }) {
   return (
-    <div className="col-lg-3 col-md-6">
+    <div className="col-lg-4 col-md-6">
       <div className="contractor-stat-card">
         <div className={`contractor-stat-icon ${color}`}>
           <i className={`bi ${icon}`}></i>
         </div>
 
         <h3>{value}</h3>
+        <div style={{display:"flex" , flexDirection: "row", alignItems: "center", justifyContent: "space-between"}}>
         <p>{title}</p>
-        <small className={color}>{note}</small>
+        {note && <small className={color}>{note}</small>}
+        </div>
       </div>
     </div>
   );
@@ -456,6 +449,18 @@ function normalizeStatusClass(status) {
   if (normalized === "accepted") return "under-review";
 
   return normalized;
+}
+
+function getAvgAiScore(proposals) {
+  const scores = proposals
+    .map((proposal) => proposal.final_score)
+    .filter((score) => score != null);
+
+  if (!scores.length) return "N/A";
+
+  const avg = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+
+  return `${Math.round(avg)}/100`;
 }
 
 function getWinRate(proposals) {

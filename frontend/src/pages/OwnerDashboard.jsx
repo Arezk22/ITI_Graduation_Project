@@ -93,6 +93,13 @@ function OwnerDashboard() {
     return getMonthlyChartData(tenders, tenderSubmissions);
   }, [tenders, tenderSubmissions]);
 
+  const chartMax = useMemo(() => getChartMax(chartData), [chartData]);
+
+  const chartTicks = useMemo(
+    () => [0, 0.25, 0.5, 0.75, 1].map((fraction) => fraction * chartMax),
+    [chartMax],
+  );
+
   const recentTenders = useMemo(() => {
     return [...tenders]
       .sort((a, b) => {
@@ -172,8 +179,8 @@ function OwnerDashboard() {
               <div className="real-chart">
                 <svg viewBox="0 0 760 300" preserveAspectRatio="none">
                   {/* Y axis labels + grid lines */}
-                  {[0, 15, 30, 45, 60].map((value) => {
-                    const y = getChartY(value, 60);
+                  {chartTicks.map((value) => {
+                    const y = getChartY(value, chartMax);
 
                     return (
                       <g key={value}>
@@ -194,7 +201,7 @@ function OwnerDashboard() {
 
                   {/* Smooth lines */}
                   <path
-                    d={buildSmoothPath(chartData, "tenders")}
+                    d={buildSmoothPath(chartData, "tenders", chartMax)}
                     fill="none"
                     stroke="#2563eb"
                     strokeWidth="3"
@@ -204,7 +211,7 @@ function OwnerDashboard() {
                   />
 
                   <path
-                    d={buildSmoothPath(chartData, "bids")}
+                    d={buildSmoothPath(chartData, "bids", chartMax)}
                     fill="none"
                     stroke="#f97316"
                     strokeWidth="3"
@@ -247,7 +254,7 @@ function OwnerDashboard() {
 
                             <circle
                               cx={x}
-                              cy={getChartY(item.tenders, 60)}
+                              cy={getChartY(item.tenders, chartMax)}
                               r="6"
                               fill="#2563eb"
                               className="chart-hover-dot"
@@ -255,7 +262,7 @@ function OwnerDashboard() {
 
                             <circle
                               cx={x}
-                              cy={getChartY(item.bids, 60)}
+                              cy={getChartY(item.bids, chartMax)}
                               r="6"
                               fill="#f97316"
                               className="chart-hover-dot"
@@ -434,13 +441,32 @@ function getBidsThisWeek(tender, tenderSubmissions) {
 }
 
 function getMonthlyChartData(tenders, tenderSubmissions = {}) {
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+  // Rolling window: last 6 months ending at the current month.
+  const now = new Date();
+  const months = [];
 
-  return months.map((month, index) => {
-    const tendersInMonth = tenders.filter((tender) => {
-      if (!tender.created_at) return false;
-      return new Date(tender.created_at).getMonth() === index;
-    }).length;
+  for (let offset = 5; offset >= 0; offset--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+
+    months.push({
+      year: date.getFullYear(),
+      monthIndex: date.getMonth(),
+      label: date.toLocaleDateString("en-US", { month: "short" }),
+    });
+  }
+
+  const isInMonth = (value, { year, monthIndex }) => {
+    if (!value) return false;
+
+    const date = new Date(value);
+
+    return date.getFullYear() === year && date.getMonth() === monthIndex;
+  };
+
+  return months.map((month) => {
+    const tendersInMonth = tenders.filter((tender) =>
+      isInMonth(tender.created_at, month),
+    ).length;
 
     const bidsInMonth = tenders.reduce((sum, tender) => {
       const submissions =
@@ -448,21 +474,29 @@ function getMonthlyChartData(tenders, tenderSubmissions = {}) {
 
       if (!Array.isArray(submissions)) return sum;
 
-      const count = submissions.filter((submission) => {
-        const date = submission.created_at || submission.submitted_at;
-        if (!date) return false;
-        return new Date(date).getMonth() === index;
-      }).length;
+      const count = submissions.filter((submission) =>
+        isInMonth(submission.submitted_at || submission.created_at, month),
+      ).length;
 
       return sum + count;
     }, 0);
 
     return {
-      month,
+      month: month.label,
       tenders: tendersInMonth,
       bids: bidsInMonth,
     };
   });
+}
+
+function getChartMax(chartData) {
+  const highest = chartData.reduce(
+    (max, item) => Math.max(max, item.tenders, item.bids),
+    0,
+  );
+
+  // Round up to a multiple of 4 so the 5 axis ticks are whole numbers.
+  return Math.max(4, Math.ceil(highest / 4) * 4);
 }
 
 
@@ -477,12 +511,12 @@ function getChartY(value, max = 60) {
   return 240 - (safeValue / max) * 200;
 }
 
-function buildSmoothPath(chartData, key) {
+function buildSmoothPath(chartData, key, max) {
   if (!chartData.length) return "";
 
   const points = chartData.map((item, index) => ({
     x: getChartX(index, chartData.length),
-    y: getChartY(item[key], 60),
+    y: getChartY(item[key], max),
   }));
 
   if (points.length === 1) {
