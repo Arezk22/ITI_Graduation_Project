@@ -1057,11 +1057,11 @@ function formatSubmissionStatus(status, tenderAwarded) {
 
 function getSubmissionStatusBadgeClass(status, tenderAwarded) {
   if (status === "accepted" || status === "awarded") {
-    return "bg-success-subtle text-success-emphasis";
+    return "pill";
   }
 
   if (status === "rejected" || tenderAwarded) {
-    return "bg-danger-subtle text-danger-emphasis";
+    return "pill regected";
   }
 
   return "bg-warning-subtle text-warning-emphasis";

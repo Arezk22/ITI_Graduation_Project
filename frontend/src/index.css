@@ -1541,8 +1541,8 @@ body {
 }
 
 .status-badge.awarded {
-  background: #ffedd5;
-  color: #ea580c;
+  background: #dcfce7;
+  color: #059669;
 }
 
 .risk {
@@ -1566,10 +1566,6 @@ body {
 @media (max-width: 992px) {
   .owner-layout {
     grid-template-columns: 1fr;
-  }
-
-  .owner-sidebar {
-    display: none;
   }
 
   .dashboard-title {
@@ -3234,7 +3230,7 @@ body {
 
 .validation-row {
   display: grid;
-  grid-template-columns: 34px 1fr 1.4fr 90px;
+  grid-template-columns: 34px 1fr 10fr 80px;
   align-items: center;
   padding: 17px 24px;
   border-bottom: 1px solid #eef2f7;
@@ -3266,7 +3262,7 @@ body {
   margin: 0;
   color: #64748b;
   font-size: 14px;
-  text-align: right;
+  text-align: left;
 }
 
 .validation-row b {
@@ -5171,8 +5167,10 @@ body {
 .tender-tags b {
   background: #dcfce7;
   color: #059669;
-  padding: 4px 10px;
+  padding: 4px 8px;
   border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .tender-details-header h2 {
@@ -7620,6 +7618,21 @@ select {
   }
 }
 
+.pill {
+  display: inline-block;
+  padding: 0.35em 0.65em;
+  border-radius: 0.375rem;
+  font-size: 0.75em;
+  font-weight: 700;
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.pill.regected {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
 /* Tablet */
 @media (max-width: 768px) {
 
@@ -7916,5 +7929,504 @@ select {
     left: 12px;
     width: 42px;
     height: 42px;
+  }
+}
+
+/* ============================================================================== */
+/* ============================ RESPONSIVE ENHANCEMENTS ========================= */
+/* ============================================================================== */
+
+/* ---------- Global safety net ---------- */
+img,
+svg,
+video {
+  max-width: 100%;
+}
+
+/* ---------- Mobile sidebar drawer (owner + contractor layouts) ---------- */
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .owner-layout,
+  .owner-layout.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .owner-sidebar {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 280px;
+    max-width: 85vw;
+    padding: 22px 18px;
+    transform: translateX(0);
+    transition: transform 0.25s ease;
+    box-shadow: 20px 0 45px rgba(15, 23, 42, 0.3);
+    overflow-y: auto;
+  }
+
+  .owner-layout.sidebar-collapsed .owner-sidebar {
+    transform: translateX(-100%);
+    padding: 22px 18px;
+    overflow-y: auto;
+    box-shadow: none;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 99999;
+  }
+}
+
+/* ---------- Topbar + dashboard shell ---------- */
+@media (max-width: 576px) {
+  .owner-topbar {
+    padding: 0 14px;
+    gap: 12px;
+  }
+
+  .dashboard-content {
+    padding: 24px 14px 50px;
+  }
+
+  .owner-page-wrapper {
+    padding: 16px 14px;
+  }
+
+  .new-tender-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ---------- Landing page ---------- */
+@media (max-width: 576px) {
+  .hero-section {
+    padding: 56px 0 48px;
+  }
+
+  .hero-text {
+    font-size: 16px;
+    margin: 18px auto 32px;
+  }
+
+  .preview-card {
+    padding: 16px;
+  }
+
+  .features-section,
+  .how-section,
+  .cta-section {
+    padding: 56px 0;
+  }
+
+  .cta-box {
+    padding: 36px 20px;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+  }
+
+  .cta-primary-btn,
+  .cta-secondary-btn {
+    width: 100%;
+  }
+
+  .legal-hero {
+    padding: 48px 16px;
+  }
+}
+
+/* ---------- Auth pages ---------- */
+@media (max-width: 576px) {
+  .auth-right {
+    padding: 28px 16px;
+  }
+
+  .auth-form > p {
+    font-size: 16px;
+    margin-bottom: 24px;
+  }
+
+  .auth-input,
+  .auth-submit {
+    height: 50px;
+    font-size: 16px;
+  }
+
+  .social-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .signup-text {
+    font-size: 16px;
+  }
+
+  .signup-role-card {
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .signup-role-icon {
+    width: 46px;
+    height: 46px;
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .role-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Contractor document chat (gpt style) ---------- */
+@media (max-width: 1200px) {
+  .gpt-row {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .gpt-chat-container {
+    flex-direction: column;
+  }
+
+  .gpt-sidebar {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 12px 15px;
+  }
+
+  .sidebar-dropdown-area {
+    margin-top: 10px;
+    margin-bottom: 5px;
+  }
+
+  .gpt-history-section {
+    display: none;
+  }
+
+  .gpt-row {
+    padding: 18px 16px;
+  }
+
+  .gpt-footer-wrapper {
+    max-width: calc(100% - 24px);
+  }
+}
+
+@media (max-width: 576px) {
+  .gpt-suggestions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Owner document chat ---------- */
+@media (max-width: 992px) {
+  .document-chat-page {
+    height: auto;
+    min-height: calc(100vh - 72px);
+  }
+
+  .document-panel {
+    display: flex;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .document-panel .scope-section,
+  .document-panel .suggested-section,
+  .document-panel .history-section {
+    display: none;
+  }
+
+  .chat-area {
+    height: auto;
+    min-height: 60vh;
+  }
+
+  .chat-messages {
+    padding: 18px 14px;
+  }
+
+  .chat-bottom {
+    padding: 14px 14px 10px;
+  }
+
+  .chat-bubble {
+    font-size: 15px;
+    padding: 18px;
+  }
+
+  .send-chat-btn {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+}
+
+/* ---------- Create tender ---------- */
+@media (max-width: 576px) {
+  .create-tender-content {
+    padding: 24px 14px 50px;
+  }
+
+  .form-body {
+    padding: 20px 16px;
+  }
+
+  .form-actions {
+    padding: 16px;
+  }
+
+  .criteria-grid,
+  .evaluation-weights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tender-steps {
+    gap: 8px;
+  }
+
+  .step-item {
+    font-size: 13px;
+  }
+
+  .step-item span {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* ---------- Evaluation ---------- */
+@media (max-width: 576px) {
+  .evaluation-content {
+    padding: 24px 14px 50px;
+  }
+
+  .ai-recommendation {
+    flex-direction: column;
+  }
+
+  .rank-badge {
+    position: static;
+    margin-top: 4px;
+  }
+
+  .tender-dropdown-btn span {
+    font-size: 16px;
+  }
+}
+
+/* ---------- AI analysis ---------- */
+@media (max-width: 576px) {
+  .ai-analysis-content {
+    padding: 24px 14px 50px;
+  }
+
+  .risk-issue {
+    padding: 16px;
+  }
+
+  .risk-issue-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .risk-issue-header h5 {
+    flex-wrap: wrap;
+  }
+
+  .missing-doc-row {
+    grid-template-columns: 42px 1fr;
+    margin: 14px;
+  }
+
+  .missing-doc-row a {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+/* ---------- Reports / printable report ---------- */
+@media (max-width: 768px) {
+  .rp-section {
+    overflow-x: auto;
+  }
+
+  .rp-table {
+    min-width: 640px;
+  }
+}
+
+/* ---------- Tender details ---------- */
+@media (max-width: 576px) {
+  .tender-details-content {
+    padding: 20px 14px 50px;
+  }
+
+  .tender-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .tender-header-actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .tender-title-dropdown {
+    min-width: 0;
+    width: 100%;
+    font-size: 22px;
+  }
+
+  .tender-actions-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Contractor dashboard ---------- */
+@media (max-width: 768px) {
+  .contractor-dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .contractor-dashboard-header p {
+    font-size: 22px;
+  }
+
+  .available-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .contractor-filter-wrap {
+    width: 100%;
+  }
+
+  .mini-search {
+    width: 100%;
+  }
+
+  .available-tenders-header {
+    padding: 18px 16px;
+  }
+
+  .available-tender-row {
+    padding: 16px;
+  }
+
+  .tender-row-right {
+    flex-wrap: wrap;
+  }
+
+  .available-tender-actions {
+    margin-left: 0;
+    min-width: 0;
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .available-action-buttons {
+    flex-wrap: wrap;
+  }
+
+  .proposal-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .proposal-actions-right {
+    min-width: 0;
+  }
+
+  .owner-table th,
+  .owner-table td {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 576px) {
+  .proposal-main-info h6,
+  .tender-row-left h6 {
+    font-size: 16px;
+  }
+}
+
+/* ---------- Submit proposal ---------- */
+@media (max-width: 576px) {
+  .proposal-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .cancel-proposal-btn,
+  .submit-proposal-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .upload-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+/* ---------- Contractor tender details ---------- */
+@media (max-width: 576px) {
+  .contractor-tender-details-content {
+    padding: 18px 14px;
+  }
+
+  .contractor-details-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .contractor-project-title-block h2 {
+    font-size: 21px;
+  }
+}
+
+/* ---------- App toast ---------- */
+@media (max-width: 576px) {
+  .app-toast {
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+}
+
+/* ---------- Very small phones ---------- */
+@media (max-width: 400px) {
+  html {
+    font-size: 13px;
+  }
+
+  .hero-badge {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .owner-sidebar {
+    width: 260px;
   }
 }
