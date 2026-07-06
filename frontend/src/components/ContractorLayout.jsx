@@ -16,7 +16,7 @@ function getInitials(name) {
 
 function ContractorLayout({ activePage, children }) {
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 992);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
 
@@ -136,6 +136,13 @@ const handleSignOut = () => {
           </div>
         </div>
       </aside>
+
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       <main className="owner-main">
         <header className="owner-topbar">

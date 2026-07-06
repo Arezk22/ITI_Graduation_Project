@@ -20,7 +20,7 @@ function OwnerLayout({ activePage, children }) {
   // const data = ownerDashboardData;
   const navigate = useNavigate();
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 992);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   const userName = localStorage.getItem("userName") || "User";
@@ -163,6 +163,13 @@ const userInitials = getInitials(userName);
           </div>
         </div>
       </aside>
+
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       <main className="owner-main">
         <header className="owner-topbar">

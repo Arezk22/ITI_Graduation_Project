@@ -328,8 +328,10 @@ function StatCard({ icon, value, title, note, color }) {
         </div>
 
         <h3>{value}</h3>
+        <div style={{display:"flex" , flexDirection: "row", alignItems: "center", justifyContent: "space-between"}}>
         <p>{title}</p>
         {note && <small className={color}>{note}</small>}
+        </div>
       </div>
     </div>
   );
