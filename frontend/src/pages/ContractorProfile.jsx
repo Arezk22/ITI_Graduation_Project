@@ -91,8 +91,7 @@ function ContractorProfile() {
                 </span>
 
                 <span>
-                  <i className="bi bi-currency-dollar"></i>{" "}
-                  {formatShortMoney(getAverageProjectValue(acceptedSubmissions))}{" "}
+                  {formatMoney(getAverageProjectValue(acceptedSubmissions))}{" "}
                   avg project value
                 </span>
               </div>
@@ -106,7 +105,7 @@ function ContractorProfile() {
             </div>
 
             <div>
-              <h3>{formatShortMoney(totalProjectValue)}</h3>
+              <h3>{formatMoney(totalProjectValue)}</h3>
               <p>Total Project Value</p>
             </div>
 
@@ -139,10 +138,19 @@ function ContractorProfile() {
             ) : acceptedSubmissions.length === 0 ? (
               <div className="text-muted py-3">No awarded projects yet.</div>
             ) : (
-              visibleAwardedSubmissions.map((submission) => (
+              visibleAwardedSubmissions.map((submission) => {
+                const tenderId = submission.tender?.id || submission.tender_id;
+
+                return (
                 <div
                   className="profile-project-row contractor-proposal-row"
                   key={submission.id}
+                  style={{ cursor: tenderId ? "pointer" : "default" }}
+                  onClick={() => {
+                    if (tenderId) {
+                      navigate(`/contractor/tender-details/${tenderId}`);
+                    }
+                  }}
                 >
                   <div className="proposal-project-info">
                     <h5>
@@ -152,24 +160,25 @@ function ContractorProfile() {
                         {formatCategory(submission.tender?.project_category)}
                       </span>
                     </h5>
-
                     <p>
-                      <i className="bi bi-currency-dollar"></i>{" "}
+                      {submission.tender?.description ||
+                        "No description provided."}
+                    </p>
+                    <p>
                       {formatMoney(submission.tender?.budget)}{" "}
-                      <i className="bi bi-calendar ms-2"></i> Awarded{" "}
+                    </p>
+                  </div>
+
+                  <i className="bi bi-calendar ms-5"></i> Awarded{" "}
                       {formatDate(
                         submission.accepted_at ||
                           submission.tender?.awarded_at ||
                           submission.submitted_at
                       )}
-                    </p>
-                  </div>
 
-                  <span className="completed-badge proposal-status-badge">
-                    Awarded
-                  </span>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -266,25 +275,10 @@ function formatMoney(value) {
 
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "EGP",
     maximumFractionDigits: 0,
+    notation: "compact",
   }).format(number);
-}
-
-function formatShortMoney(value) {
-  const number = Number(value || 0);
-
-  if (!number) return "$0";
-
-  if (number >= 1000000) {
-    return `$${Math.round(number / 1000000)}M+`;
-  }
-
-  if (number >= 1000) {
-    return `$${Math.round(number / 1000)}K+`;
-  }
-
-  return `$${number}`;
 }
 
 function formatCategory(category) {

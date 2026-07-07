@@ -146,7 +146,7 @@ class TenderMinimalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenders
         fields = [
-            'id', 'title', 'project_category', 'location', 'deadline_at',
+            'id', 'title', 'description', 'project_category', 'location', 'deadline_at',
             'budget', 'status',
         ]
         read_only_fields = fields

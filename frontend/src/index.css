@@ -4954,10 +4954,12 @@ body {
 
 .contractor-stats {
   margin-top: 26px;
-  padding-top: 22px;
+  padding: 22px 22px 0 22px;
   border-top: 1px solid #e5e7eb;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* display: grid; */
+  /* grid-template-columns: repeat(4, 1fr); */
+  display: flex;
+  justify-content: space-between;
   text-align: center;
 }
 
@@ -6412,7 +6414,14 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
+  padding: 10px;
   width: 100%;
+  border-radius: 12px;
+  transition: background 0.2s ease;
+}
+
+.contractor-proposal-row:hover {
+  background: #eff6ff;
 }
 
 .proposal-project-info {
