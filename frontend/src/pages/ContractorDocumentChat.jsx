@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ContractorLayout from "../components/ContractorLayout";
 import { getAllTenders } from "../services/tenderApi";
 import {
@@ -36,6 +36,11 @@ function DocumentChat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
+  // Set while creating a chat during send, so the activeChatId effect doesn't
+  // fetch the (still empty) chat from the server and wipe the optimistic
+  // user message.
+  const skipNextMessagesLoad = useRef(false);
+
   const questions = [
     "What are the concrete specifications for the foundation work?",
     "Summarize the MEP scope of work",
@@ -69,8 +74,9 @@ function DocumentChat() {
             : "Document Chat",
         );
         chatId = createResponse.data.id;
+        skipNextMessagesLoad.current = true;
         setActiveChatId(chatId);
-        await loadChats(selectedTenderId);
+        await loadChats(selectedTenderId, chatId);
       }
 
       const sendResponse = await sendChatMessage(chatId, trimmedMessage);
@@ -135,7 +141,7 @@ function DocumentChat() {
     return tenders.find((tender) => String(tender.id) === selectedTenderId);
   }, [tenders, selectedTenderId]);
 
-  const loadChats = async (tenderId) => {
+  const loadChats = async (tenderId, preferredChatId = null) => {
     setError("");
     try {
       const response = await getChats(tenderId);
@@ -144,7 +150,9 @@ function DocumentChat() {
         : response.data.tenders || response.data.results || [];
       setChats(list);
 
-      if (list.length > 0) {
+      if (preferredChatId) {
+        setActiveChatId(preferredChatId);
+      } else if (list.length > 0) {
         setActiveChatId(list[0].id);
       } else {
         setActiveChatId(null);
@@ -197,9 +205,12 @@ function DocumentChat() {
   }, [selectedTenderId]);
 
   useEffect(() => {
-    if (activeChatId) {
-      loadChatMessages(activeChatId);
+    if (!activeChatId) return;
+    if (skipNextMessagesLoad.current) {
+      skipNextMessagesLoad.current = false;
+      return;
     }
+    loadChatMessages(activeChatId);
   }, [activeChatId]);
 
   return (
@@ -430,7 +441,7 @@ function DocumentChat() {
                     }}
                   >
                     <span className="spinner-border spinner-border-sm me-2"></span>
-                    BuildTender AI is thinking...
+                    BuildTender AI is searching the documents...
                   </div>
                 </div>
               </div>
