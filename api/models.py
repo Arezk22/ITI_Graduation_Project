@@ -38,6 +38,13 @@ class Tenders(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tenders"
     )
 
+    awarded_to = models.ForeignKey(
+        ContractorProfiles,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="awarded_tenders",
+    )
     title = models.CharField(max_length=255)
     description = models.TextField()
 

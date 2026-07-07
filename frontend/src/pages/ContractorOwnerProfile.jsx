@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ContractorLayout from "../components/ContractorLayout";
 import { getAllTenders } from "../services/tenderApi";
-import { getTenderSubmissions } from "../services/proposalApi";
 
 function ContractorOwnerProfile() {
   const navigate = useNavigate();
@@ -11,7 +10,6 @@ function ContractorOwnerProfile() {
 
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tenderSubmissions, setTenderSubmissions] = useState({});
   const [hoveredMonth, setHoveredMonth] = useState(null);
 
   useEffect(() => {
@@ -39,32 +37,6 @@ function ContractorOwnerProfile() {
       });
   }, [ownerId]);
 
-  useEffect(() => {
-    if (!tenders.length) return;
-
-    Promise.allSettled(
-      tenders.map((tender) =>
-        getTenderSubmissions(tender.id).then((response) => [
-          tender.id,
-          Array.isArray(response.data)
-            ? response.data
-            : response.data.submissions || [],
-        ])
-      )
-    ).then((results) => {
-      const submissionsMap = {};
-
-      results.forEach((result) => {
-        if (result.status === "fulfilled") {
-          const [tenderId, submissions] = result.value;
-          submissionsMap[tenderId] = submissions;
-        }
-      });
-
-      setTenderSubmissions(submissionsMap);
-    });
-  }, [tenders]);
-
   const ownerInfo = useMemo(() => {
     return getOwnerInfo(tenders, ownerId);
   }, [tenders, ownerId]);
@@ -76,18 +48,19 @@ function ContractorOwnerProfile() {
   ).length;
 
   const totalBids = tenders.reduce((sum, tender) => {
-    const subs = tenderSubmissions[tender.id];
-
-    if (Array.isArray(subs)) {
-      return sum + subs.length;
-    }
-
     return sum + getBidsCount(tender);
   }, 0);
 
   const chartData = useMemo(() => {
-    return getMonthlyChartData(tenders, tenderSubmissions);
-  }, [tenders, tenderSubmissions]);
+    return getMonthlyChartData(tenders);
+  }, [tenders]);
+
+  const chartMax = useMemo(() => getChartMax(chartData), [chartData]);
+
+  const chartTicks = useMemo(
+    () => [0, 0.25, 0.5, 0.75, 1].map((fraction) => fraction * chartMax),
+    [chartMax],
+  );
 
   const recentTenders = useMemo(() => {
     return [...tenders]
@@ -173,8 +146,8 @@ function ContractorOwnerProfile() {
 
               <div className="real-chart">
                 <svg viewBox="0 0 760 300" preserveAspectRatio="none">
-                  {[0, 15, 30, 45, 60].map((value) => {
-                    const y = getChartY(value, 60);
+                  {chartTicks.map((value) => {
+                    const y = getChartY(value, chartMax);
 
                     return (
                       <g key={value}>
@@ -194,7 +167,7 @@ function ContractorOwnerProfile() {
                   })}
 
                   <path
-                    d={buildSmoothPath(chartData, "tenders")}
+                    d={buildSmoothPath(chartData, "tenders", chartMax)}
                     fill="none"
                     stroke="#2563eb"
                     strokeWidth="3"
@@ -204,7 +177,7 @@ function ContractorOwnerProfile() {
                   />
 
                   <path
-                    d={buildSmoothPath(chartData, "bids")}
+                    d={buildSmoothPath(chartData, "bids", chartMax)}
                     fill="none"
                     stroke="#f97316"
                     strokeWidth="3"
@@ -245,7 +218,7 @@ function ContractorOwnerProfile() {
 
                             <circle
                               cx={x}
-                              cy={getChartY(item.tenders, 60)}
+                              cy={getChartY(item.tenders, chartMax)}
                               r="6"
                               fill="#2563eb"
                               className="chart-hover-dot"
@@ -253,7 +226,7 @@ function ContractorOwnerProfile() {
 
                             <circle
                               cx={x}
-                              cy={getChartY(item.bids, 60)}
+                              cy={getChartY(item.bids, chartMax)}
                               r="6"
                               fill="#f97316"
                               className="chart-hover-dot"
@@ -277,7 +250,16 @@ function ContractorOwnerProfile() {
                   >
                     <strong>{hoveredMonth.month}</strong>
                     <span>Tenders: {hoveredMonth.tenders}</span>
-                    <span>Bids: {hoveredMonth.bids}</span>
+                    {hoveredMonth.tenderBids?.length ? (
+                      hoveredMonth.tenderBids.map((item) => (
+                        <span key={item.id}>
+                          {item.title}: {item.bids}{" "}
+                          {item.bids === 1 ? "bid" : "bids"}
+                        </span>
+                      ))
+                    ) : (
+                      <span>Submitted Bids: 0</span>
+                    )}
                   </div>
                 )}
 
@@ -355,7 +337,7 @@ function ContractorOwnerProfile() {
                           </span>
                         </td>
 
-                        <td>{getBidsCountFromMap(tender, tenderSubmissions)}</td>
+                        <td>{getBidsCount(tender)}</td>
 
                         <td>
                           <i className="bi bi-clock me-1"></i>
@@ -430,51 +412,61 @@ function getBidsCount(tender) {
   );
 }
 
-function getBidsCountFromMap(tender, tenderSubmissions) {
-  const subs = tenderSubmissions[tender.id];
+function getMonthlyChartData(tenders) {
+  // Rolling window: last 6 months ending at the current month.
+  const now = new Date();
+  const months = [];
 
-  if (Array.isArray(subs)) {
-    return subs.length;
+  for (let offset = 5; offset >= 0; offset--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+
+    months.push({
+      year: date.getFullYear(),
+      monthIndex: date.getMonth(),
+      label: date.toLocaleDateString("en-US", { month: "short" }),
+    });
   }
 
-  return getBidsCount(tender);
-}
+  const isInMonth = (value, { year, monthIndex }) => {
+    if (!value) return false;
 
-function getMonthlyChartData(tenders, tenderSubmissions = {}) {
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+    const date = new Date(value);
 
-  return months.map((month, index) => {
-    const tendersInMonth = tenders.filter((tender) => {
-      if (!tender.created_at) return false;
-      return new Date(tender.created_at).getMonth() === index;
-    }).length;
+    return date.getFullYear() === year && date.getMonth() === monthIndex;
+  };
 
-    const bidsInMonth = tenders.reduce((sum, tender) => {
-      const submissions =
-        tenderSubmissions[tender.id] ||
-        tender.submissions ||
-        tender.proposals ||
-        [];
+  return months.map((month) => {
+    const tendersInMonth = tenders.filter((tender) =>
+      isInMonth(tender.created_at, month),
+    );
 
-      if (!Array.isArray(submissions)) return sum;
+    // Contractors cannot fetch per-submission dates (owner-only endpoint),
+    // so attribute each tender's bid count to its creation month.
+    const tenderBids = tendersInMonth.map((tender) => ({
+      id: tender.id,
+      title: tender.title,
+      bids: getBidsCount(tender),
+    }));
 
-      const count = submissions.filter((submission) => {
-        const date = submission.created_at || submission.submitted_at;
-
-        if (!date) return false;
-
-        return new Date(date).getMonth() === index;
-      }).length;
-
-      return sum + count;
-    }, 0);
+    const bidsInMonth = tenderBids.reduce((sum, item) => sum + item.bids, 0);
 
     return {
-      month,
-      tenders: tendersInMonth,
+      month: month.label,
+      tenders: tendersInMonth.length,
       bids: bidsInMonth,
+      tenderBids,
     };
   });
+}
+
+function getChartMax(chartData) {
+  const highest = chartData.reduce(
+    (max, item) => Math.max(max, item.tenders, item.bids),
+    0,
+  );
+
+  // Round up to a multiple of 4 so the 5 axis ticks are whole numbers.
+  return Math.max(4, Math.ceil(highest / 4) * 4);
 }
 
 function getChartX(index, total) {
@@ -487,12 +479,12 @@ function getChartY(value, max = 60) {
   return 240 - (safeValue / max) * 200;
 }
 
-function buildSmoothPath(chartData, key) {
+function buildSmoothPath(chartData, key, max) {
   if (!chartData.length) return "";
 
   const points = chartData.map((item, index) => ({
     x: getChartX(index, chartData.length),
-    y: getChartY(item[key], 60),
+    y: getChartY(item[key], max),
   }));
 
   if (points.length === 1) {

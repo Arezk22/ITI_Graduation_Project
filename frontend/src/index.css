@@ -5083,10 +5083,11 @@ body {
 .completed-badge {
   background: #dcfce7;
   color: #059669;
-  padding: 7px 12px;
+  padding: 5px 13px;
   border-radius: 999px;
   font-weight: 800;
   justify-self: end;
+  font-size: 12px;
 }
 
 .annual-chart {
@@ -5829,6 +5830,11 @@ body {
   width: 100%;
   padding: 16px 20px;
   border-bottom: 1px solid #e9edf5;
+  transition: background 0.2s ease;
+}
+
+.proposal-row:hover {
+  background: #eff6ff;
 }
 
 .proposal-row:last-child {
@@ -5907,6 +5913,11 @@ body {
 .proposal-status.rejected {
   background: #fee2e2;
   color: #dc2626;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid #fecaca;
 }
 
 .proposal-status.submitted {
@@ -6073,6 +6084,7 @@ body {
   padding: 4px 8px;
   border-radius: 10px;
   font-size: 12px;
+  border: 1px solid #dbeafe;
   font-weight: 800;
 }
 
@@ -6286,6 +6298,7 @@ body {
   padding: 4px 8px;
   font-size: 12px;
   font-weight: 800;
+  border: 1px solid #dbeafe;
 }
 
 /* ================================================== */
@@ -6432,7 +6445,6 @@ body {
 .proposal-status-badge {
   margin-left: auto;
   white-space: nowrap;
-  min-width: 120px;
   text-align: center;
   display: inline-flex;
   justify-content: center;
@@ -6672,10 +6684,11 @@ body {
 
 .clickable-tender-row {
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .clickable-tender-row:hover {
-  background: #f8fafc;
+  background: #eff6ff;
 }
 
 .days-left {
