@@ -100,9 +100,16 @@ def get_vector_store(connection_string: str, collection_name: str) -> PGVector:
     """
     تهيئة الاتصال بـ pgvector وإرجاع كائن VectorStore.
     """
+    # embeddings = OpenAIEmbeddings(
+    #     model="text-embedding-3-small", 
+    #     api_key=os.getenv("OPEN_AI_KEY")
+    # )
+    
+    # openroter
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small", 
-        api_key=os.getenv("OPEN_AI_KEY")
+        api_key=os.getenv("OPENROUTER_API_KEY"),
+            base_url=os.getenv("OPENAI_API_BASE")
     )
 
     # تهيئة الاتصال بقاعدة بيانات PostgreSQL بملحق pgvector
