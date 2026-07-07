@@ -262,10 +262,13 @@ class AwardTenderView(APIView):
         with transaction.atomic():
             tender.status = "awarded"
             tender.awarded_at = timezone.now()
-            tender.save(update_fields=["status", "awarded_at"])
+            tender.awarded_to_id = contractor_id
+            tender.save(update_fields=["status", "awarded_at", "awarded_to"])
 
             submission.status = "accepted"
             submission.save(update_fields=["status"])
+
+            tender.submissions.exclude(pk=submission.pk).update(status="rejected")
 
             ContractorProfiles.objects.filter(pk=contractor_id).update(
                 total_wins=F("total_wins") + 1

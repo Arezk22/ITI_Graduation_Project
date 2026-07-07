@@ -63,10 +63,19 @@ function ContractorAwardedProjects() {
             ) : awardedSubmissions.length === 0 ? (
               <div className="text-muted py-3">No awarded projects yet.</div>
             ) : (
-              awardedSubmissions.map((submission) => (
+              awardedSubmissions.map((submission) => {
+                const tenderId = submission.tender?.id || submission.tender_id;
+
+                return (
                 <div
                   className="profile-project-row contractor-proposal-row"
                   key={submission.id}
+                  style={{ cursor: tenderId ? "pointer" : "default" }}
+                  onClick={() => {
+                    if (tenderId) {
+                      navigate(`/contractor/tender-details/${tenderId}`);
+                    }
+                  }}
                 >
                   <div className="proposal-project-info">
                     <h5>
@@ -78,22 +87,23 @@ function ContractorAwardedProjects() {
                     </h5>
 
                     <p>
-                      <i className="bi bi-currency-dollar"></i>{" "}
+                      {submission.tender?.description ||
+                        "No description provided."}
+                    </p>
+                    <p>
                       {formatMoney(submission.tender?.budget)}{" "}
-                      <i className="bi bi-calendar ms-2"></i> Awarded{" "}
+                    </p>
+                  </div>
+
+                  <i className="bi bi-calendar ms-2"></i> Awarded{" "}
                       {formatDate(
                         submission.accepted_at ||
                           submission.tender?.awarded_at ||
                           submission.submitted_at
                       )}
-                    </p>
-                  </div>
-
-                  <span className="completed-badge proposal-status-badge">
-                    Awarded
-                  </span>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -132,7 +142,7 @@ function formatMoney(value) {
 
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "EGP",
     maximumFractionDigits: 0,
   }).format(number);
 }

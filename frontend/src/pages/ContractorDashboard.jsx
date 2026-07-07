@@ -218,6 +218,7 @@ function ContractorDashboard() {
                 visibleProposals.map((proposal) => (
                   <ProposalRow
                     key={proposal.id}
+                    id={proposal.tender?.id || proposal.tender_id}
                     title={proposal.tender?.title || "Untitled Tender"}
                     date={`Submitted ${formatDate(proposal.submitted_at)}`}
                     score={
@@ -337,27 +338,35 @@ function StatCard({ icon, value, title, note, color }) {
   );
 }
 
-function ProposalRow({ title, date, score, status, rank, trophy }) {
+function ProposalRow({ id, title, date, score, status, rank, trophy }) {
+  const navigate = useNavigate();
   const normalizedStatus = normalizeStatusClass(status);
 
   return (
-    <div className="proposal-row">
+    <div className="proposal-row"
+     onClick={() => {
+          if (id) {
+            navigate(`/contractor/tender-details/${id}`);
+          }
+        }
+      }
+      style={{ cursor: id ? "pointer" : "default" }}
+      >
       <div className="proposal-main-info">
         <h6>{title}</h6>
+        {rank && <span className="proposal-rank">{rank}</span>}
         <p>{date}</p>
       </div>
-
-      {score && (
-        <div className="proposal-score">
-          <strong>{score}</strong>
-          <span>AI Score</span>
-        </div>
-      )}
 
       <div className="proposal-actions-right">
         <span className={`proposal-status ${normalizedStatus}`}>{status}</span>
 
-        {rank && <b className="proposal-rank">{rank}</b>}
+        {score && (
+          <div className="proposal-score">
+          <strong>{score}</strong>
+          <span>AI Score</span>
+          </div>
+      )}
         {trophy && <i className="bi bi-trophy-fill trophy-icon"></i>}
       </div>
     </div>
@@ -435,8 +444,8 @@ function TenderRow({ tender, isAlreadySubmitted = false, onOpen }) {
 function isAwardedProposal(proposal) {
   return (
     proposal.status === "accepted" ||
-    proposal.status === "awarded" ||
-    proposal.tender?.status === "awarded"
+    (proposal.tender?.awarded_to != null &&
+      proposal.tender.awarded_to === proposal.contractor)
   );
 }
 
