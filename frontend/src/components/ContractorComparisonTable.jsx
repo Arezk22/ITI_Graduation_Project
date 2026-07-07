@@ -36,14 +36,13 @@ function ContractorComparisonTable({ tenderId, submissions }) {
               <th>Risk</th>
               <th>Bid Price</th>
               <th>Recommendation</th>
-              <th>Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {submissions.length === 0 ? (
               <tr>
-                <td colSpan="12" className="text-center text-muted py-4">
+                <td colSpan="11" className="text-center text-muted py-4">
                   No submissions analyzed yet.
                 </td>
               </tr>
@@ -51,20 +50,35 @@ function ContractorComparisonTable({ tenderId, submissions }) {
               submissions.map((sub, index) => (
                 <tr
                   key={sub.id || index}
-                  className={index === 0 ? "rp-row-top" : ""}
+                  className={`clickable-table-row ${index === 0 ? "rp-row-top" : ""}`}
+                  onClick={() =>
+                    navigate(`/owner/proposal-details/${tenderId}/${sub.id}`)
+                  }
                 >
                   <td>
                     <span className="rp-rank">{index + 1}</span>
                   </td>
 
-                  <td className="rp-contractor-cell">{contractorName(sub)}</td>
+                  <td className="rp-contractor-cell">
+                    <button
+                      className="contractor-name-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(
+                          `/owner/contractor-profile/${getContractorId(sub)}`,
+                        );
+                      }}
+                    >
+                      {contractorName(sub)}
+                    </button>
+                  </td>
 
                   <td>
                     <strong>{formatScore(sub.final_score)}</strong>
                   </td>
                   <td>{formatScore(sub.technical_score)}</td>
                   <td>{formatScore(sub.financial_score)}</td>
-                  <td>{formatScore(sub.experience_score)}</td>
+                  <td>{formatScore(sub.structured_data?.experience_years)} yrs</td>
                   <td>
                     {formatScore(sub.validation_result?.compliance_score)}
                   </td>
@@ -75,32 +89,6 @@ function ContractorComparisonTable({ tenderId, submissions }) {
                   <td>{formatMoney(sub.financial_result?.total_bid_price)}</td>
                   <td>
                     <RecommendationPill sub={sub} />
-                  </td>
-
-                  <td>
-                    <div className="evaluation-row-actions">
-                      <button
-                        className="proposal-btn"
-                        onClick={() =>
-                          navigate(
-                            `/owner/proposal-details/${tenderId}/${sub.id}`,
-                          )
-                        }
-                      >
-                        Bid
-                      </button>
-
-                      <button
-                        className="profile-btn"
-                        onClick={() =>
-                          navigate(
-                            `/owner/contractor-profile/${getContractorId(sub)}`,
-                          )
-                        }
-                      >
-                        Profile
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))

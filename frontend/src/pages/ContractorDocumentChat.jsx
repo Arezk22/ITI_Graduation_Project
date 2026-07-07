@@ -9,6 +9,21 @@ import {
   sendChatMessage,
 } from "../services/chatApi";
 
+const formatReferences = (references) => {
+  if (!Array.isArray(references)) return null;
+  const labels = [];
+  for (const ref of references) {
+    const meta = ref?.metadata || {};
+    if (!meta.file_category) continue;
+    const label =
+      meta.page != null
+        ? `${meta.file_category} (page ${meta.page})`
+        : meta.file_category;
+    if (!labels.includes(label)) labels.push(label);
+  }
+  return labels.length ? labels.join(", ") : null;
+};
+
 function DocumentChat() {
   const [tenders, setTenders] = useState([]);
   const [selectedTenderId, setSelectedTenderId] = useState("");
@@ -59,7 +74,7 @@ function DocumentChat() {
       }
 
       const sendResponse = await sendChatMessage(chatId, trimmedMessage);
-      const assistantAnswer = sendResponse.data.answer || "";
+      const assistantAnswer = sendResponse.data || "";
 
       // 2. إضافة رد الـ AI فقط بعد ما يرجع من السيرفر بنجاح
       setMessages((current) => [
@@ -67,7 +82,8 @@ function DocumentChat() {
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
-          content: assistantAnswer,
+          content: assistantAnswer.answer,
+          reference: formatReferences(assistantAnswer.references),
         },
       ]);
     } catch (err) {
@@ -189,7 +205,6 @@ function DocumentChat() {
   return (
     <ContractorLayout activePage="document-chat">
       <section className="gpt-chat-container">
-        {/* القائمة الجانبية الداكنة */}
         <aside className="gpt-sidebar ">
           <div className="sidebar-top">
             <button className="gpt-new-chat-btn" onClick={handleAddNewChat}>
@@ -265,9 +280,8 @@ function DocumentChat() {
           </div>
         </aside>
 
-        {/* منطقة المحادثة الرئيسية الواسعة */}
-        <main className="gpt-main-chat">
-          <header className="gpt-chat-header">
+        <main style={{borderRadius:`30px`}} className="gpt-main-chat  overflow-hidden">
+          <header  className="gpt-chat-header">
             <span>BuildTender AI v2.0</span>
           </header>
 
@@ -277,7 +291,6 @@ function DocumentChat() {
           >
             {error && <div className="gpt-alert-error">{error}</div>}
 
-            {/* رسالة الترحيب الافتراضية للـ AI (على الشمال) */}
             <div
               className="gpt-row assistant-row"
               style={{
@@ -301,12 +314,7 @@ function DocumentChat() {
                   <i className="bi bi-robot"></i>
                 </div>
                 <div
-                  className="gpt-content"
-                  style={{
-                    backgroundColor: "#f0f0f0",
-                    padding: "12px",
-                    borderRadius: "8px",
-                  }}
+                  className="gpt-content assistant-message"
                 >
                   <h5>BuildTender Assistant</h5>
                   <p>
@@ -361,17 +369,26 @@ function DocumentChat() {
                         ></i>
                       </div>
                       <div
-                        className="gpt-content"
+                        className={`gpt-content ${isUser ? "user-message" : "assistant-message"}`}
                         style={{
-                          backgroundColor: "#f0f0f0",
                           color: isUser ? "#fff" : "#000",
-                          padding: "12px",
-                          borderRadius: "8px",
                           textAlign: "left",
                         }}
                       >
                         <h5>{isUser ? "You" : "BuildTender AI"}</h5>
                         <p style={{ margin: 0 }}>{msg.content}</p>
+                        {msg.reference && (
+                          <p
+                            style={{
+                              margin: 0,
+                              fontStyle: "italic",
+                              fontSize: "0.85em",
+                              opacity: 0.75,
+                            }}
+                          >
+                            References: {msg.reference}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -379,7 +396,6 @@ function DocumentChat() {
               })
             )}
 
-            {/* مؤشر جاري الكتابة يظهر بجهة الشمال بجانب رد الـ AI المتوقع */}
             {sending && (
               <div
                 className="gpt-row assistant-row"
